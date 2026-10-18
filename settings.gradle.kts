@@ -1,6 +1,5 @@
-rootProject.name = "Visionary"
-
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         google {
             mavenContent {
@@ -27,5 +26,12 @@ dependencyResolutionManagement {
     }
 }
 
-include(":androidApp")
-include(":shared")
+rootProject.name = "Visionary"
+
+include(":androidApp", ":composeApp")
+include(":core:common", ":core:mvi", ":core:navigation", ":core:designsystem", ":core:database", ":core:testing")
+include(":domain", ":data", ":platform")
+include(
+    ":features:onboarding", ":features:home", ":features:gallery",
+    ":features:search", ":features:scanner", ":features:vault", ":features:settings",
+)
