@@ -5,6 +5,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
+
+object AppTheme {
+    val colorScheme: AppColors
+        @Composable
+        @ReadOnlyComposable
+        get() = AppColors()
+}
 
 private val DarkColorScheme = darkColorScheme()
 private val LightColorScheme = lightColorScheme()
