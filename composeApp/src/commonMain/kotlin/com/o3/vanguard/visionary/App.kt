@@ -35,7 +35,8 @@ fun App() {
         LaunchedEffect(Unit) {
             startRoute = when (resolveStart()) {
                 StartDestination.ONBOARDING -> AppRoute.Onboarding
-                StartDestination.HOME -> AppRoute.Home
+                // The searchable gallery is the primary experience, matching the Android reference app.
+                StartDestination.HOME -> AppRoute.Search()
             }
         }
 

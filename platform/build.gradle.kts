@@ -19,6 +19,7 @@ kotlin {
             implementation(libs.mlkit.text.recognition)
             implementation(libs.mlkit.image.labeling)
             implementation(libs.mlkit.document.scanner)
+            implementation(libs.kotlinx.coroutines.play.services)
             implementation(libs.androidx.biometric)
             implementation(libs.androidx.work.runtime)
         }

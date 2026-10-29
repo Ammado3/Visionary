@@ -24,10 +24,12 @@ class KmpFeatureConventionPlugin : Plugin<Project> {
                         implementation(project(":core:designsystem"))
 
                         implementation(compose.dependencies.material3)
+                        implementation(compose.dependencies.materialIconsExtended)
 
                         implementation(libs.findLibrary("koin-compose").get())
                         implementation(libs.findLibrary("koin-compose-viewmodel").get())
                         implementation(libs.findLibrary("lifecycle-runtime-compose").get())
+                        implementation(libs.findLibrary("coil-compose").get())
                     }
                 }
             }

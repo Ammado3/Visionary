@@ -20,13 +20,17 @@ class ObserveIndexProgressUseCase(private val indexRepository: IndexRepository) 
     operator fun invoke(): Flow<IndexProgress> = indexRepository.observeProgress()
 }
 
+class RebuildIndexUseCase(private val indexRepository: IndexRepository) {
+    suspend operator fun invoke(): AppResult<Unit> = indexRepository.rebuild()
+}
+
 class ObserveMediaUseCase(private val mediaRepository: MediaRepository) {
     operator fun invoke(kind: CollectionKind): Flow<List<MediaItem>> = mediaRepository.observeMedia(kind)
 }
 
 class SearchMediaUseCase(private val searchRepository: SearchRepository) {
-    operator fun invoke(query: String, filter: SearchFilter): Flow<List<SearchHit>> =
-        if (query.isBlank()) flowOf(emptyList()) else searchRepository.search(query.trim(), filter)
+    operator fun invoke(query: String, filter: SearchFilter, mode: SearchMode = SearchMode.FUZZY): Flow<List<SearchHit>> =
+        if (query.isBlank()) flowOf(emptyList()) else searchRepository.search(query.trim(), filter, mode)
 }
 
 enum class StartDestination { ONBOARDING, HOME }

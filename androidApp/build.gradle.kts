@@ -5,6 +5,8 @@ plugins {
 dependencies {
     implementation(project(":composeApp"))
     implementation(project(":core:common"))
+    implementation(project(":domain"))
+    implementation(project(":data"))
     implementation(project(":platform"))
 
     implementation(libs.koin.android)

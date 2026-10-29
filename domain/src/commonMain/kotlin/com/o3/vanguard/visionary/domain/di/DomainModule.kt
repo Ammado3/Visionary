@@ -8,6 +8,7 @@ val domainModule = module {
     factoryOf(::ObserveCollectionsUseCase)
     factoryOf(::ObserveRecentFindsUseCase)
     factoryOf(::ObserveIndexProgressUseCase)
+    factoryOf(::RebuildIndexUseCase)
     factoryOf(::ObserveMediaUseCase)
     factoryOf(::SearchMediaUseCase)
     factoryOf(::ResolveStartRouteUseCase)

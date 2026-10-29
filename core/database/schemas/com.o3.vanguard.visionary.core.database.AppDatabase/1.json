@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "e08a430928cc9703cc1490f41e72aed6",
+    "identityHash": "db57337ebba22827175902738aa81c4f",
     "entities": [
       {
         "tableName": "media_item",
@@ -113,7 +113,7 @@
       },
       {
         "tableName": "media_text",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`mediaId` INTEGER NOT NULL, `fullText` TEXT NOT NULL, `searchText` TEXT NOT NULL, `labelsText` TEXT NOT NULL, `blocksJson` TEXT NOT NULL, `wordCount` INTEGER NOT NULL, `textCoverage` REAL NOT NULL, PRIMARY KEY(`mediaId`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`mediaId` INTEGER NOT NULL, `fullText` TEXT NOT NULL, `searchText` TEXT NOT NULL, `labelsText` TEXT NOT NULL, `blocksJson` TEXT NOT NULL, `wordCount` INTEGER NOT NULL, `textCoverage` REAL NOT NULL, `embedding` BLOB, `confidence` REAL NOT NULL, `lastIndexed` INTEGER NOT NULL, PRIMARY KEY(`mediaId`))",
         "fields": [
           {
             "fieldPath": "mediaId",
@@ -155,6 +155,23 @@
             "fieldPath": "textCoverage",
             "columnName": "textCoverage",
             "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "embedding",
+            "columnName": "embedding",
+            "affinity": "BLOB"
+          },
+          {
+            "fieldPath": "confidence",
+            "columnName": "confidence",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastIndexed",
+            "columnName": "lastIndexed",
+            "affinity": "INTEGER",
             "notNull": true
           }
         ],
@@ -352,7 +369,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e08a430928cc9703cc1490f41e72aed6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'db57337ebba22827175902738aa81c4f')"
     ]
   }
 }
