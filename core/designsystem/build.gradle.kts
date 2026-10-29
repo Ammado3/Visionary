@@ -1,3 +1,4 @@
+
 plugins {
     id("visionary.kmp.compose")
 }
@@ -11,7 +12,16 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":core:common"))
             implementation(compose.material3)
+            implementation(compose.materialIconsExtended)
+            implementation(libs.composeUiToolingPreview)
             implementation(libs.coil.compose)
+
+            // Compose Multiplatform resources
+            implementation(compose.components.resources)
+        }
+
+        androidMain.dependencies {
+            implementation(libs.composeUiTooling)
         }
     }
 }
