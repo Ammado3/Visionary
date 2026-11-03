@@ -276,6 +276,14 @@ class RoomIndexRepository(
         var failed = 0
         media.forEach { item ->
             try {
+                // Persist every media item, including videos. OCR and image labeling
+                // are only available for still images.
+                db.mediaDao().upsert(listOf(item.toEntity()))
+                if (item.category == MediaCategory.VIDEO) {
+                    indexed++
+                    progress.value = IndexProgress(media.size, indexed, media.size - indexed - failed, failed, IndexState.RUNNING)
+                    return@forEach
+                }
                 val ocr = (ocrEngine.recognizeText(item.uri) as? AppResult.Ok)?.value
                 val labelsList = (labelEngine.labelImage(item.uri) as? AppResult.Ok)?.value.orEmpty()
 
@@ -296,7 +304,6 @@ class RoomIndexRepository(
                 val embeddingArray = vectorSearchEngine.generateEmbedding(combinedTerms)
                 val embeddingBytes = embeddingArray.toByteArray()
 
-                db.mediaDao().upsert(listOf(item.toEntity()))
                 db.mediaDao().upsertText(
                     listOf(
                         MediaTextEntity(

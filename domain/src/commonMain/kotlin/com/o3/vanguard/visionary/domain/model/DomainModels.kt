@@ -7,7 +7,7 @@ value class MediaId(val value: Long)
 
 enum class MediaOrigin { LIBRARY, APP_SCAN }
 
-enum class MediaCategory { PHOTO, SCREENSHOT, DOCUMENT, RECEIPT, SCAN }
+enum class MediaCategory { PHOTO, VIDEO, SCREENSHOT, DOCUMENT, RECEIPT, SCAN }
 
 data class NormalizedRect(
     val left: Float,
@@ -114,6 +114,14 @@ enum class CollectionKind(val id: String) {
 data class CollectionSummary(
     val kind: CollectionKind,
     val count: Int,
+    val coverUri: String?,
+)
+
+data class StorageAlbum(
+    val id: String,
+    val name: String,
+    val itemCount: Int,
+    val videoCount: Int,
     val coverUri: String?,
 )
 

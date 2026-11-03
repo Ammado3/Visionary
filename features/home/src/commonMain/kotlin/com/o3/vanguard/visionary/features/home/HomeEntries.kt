@@ -10,6 +10,7 @@ fun EntryProviderScope<NavKey>.homeEntries(navigator: Navigator) {
         HomeRoute(
             onOpenCollection = { navigator.navigate(AppRoute.Gallery(it.id)) },
             onOpenSearch = { navigator.navigate(AppRoute.Search()) },
+            onOpenAlbums = { navigator.replaceTop(AppRoute.Albums) },
             onOpenViewer = { navigator.navigate(AppRoute.Viewer(it.value)) },
             onOpenScanner = { navigator.navigate(AppRoute.Scanner) },
             onOpenVault = { navigator.navigate(AppRoute.VaultLock) },

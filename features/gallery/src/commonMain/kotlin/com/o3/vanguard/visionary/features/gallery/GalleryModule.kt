@@ -5,5 +5,5 @@ import org.koin.dsl.module
 
 val galleryModule = module {
     viewModel { (kindId: String) -> GalleryViewModel(kindId, get()) }
-    viewModel { (mediaIdValue: Long, highlight: String?) -> ViewerViewModel(mediaIdValue, highlight, get()) }
+    viewModel { (mediaIdValue: Long, highlight: String?) -> ViewerViewModel(mediaIdValue, highlight, get(), get()) }
 }

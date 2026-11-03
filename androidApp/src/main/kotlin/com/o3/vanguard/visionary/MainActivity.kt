@@ -5,8 +5,11 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.ui.graphics.toArgb
+import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
 import androidx.lifecycle.lifecycleScope
 import com.o3.vanguard.visionary.domain.repository.IndexRepository
 import kotlinx.coroutines.launch
@@ -17,7 +20,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        val systemBarColor = VisionaryColors.colorF4FDF7.toArgb()
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(systemBarColor, systemBarColor),
+            navigationBarStyle = SystemBarStyle.light(systemBarColor, systemBarColor)
+        )
         setContent {
             App()
         }
@@ -25,12 +32,15 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun requestMediaAccessIfNeeded() {
-        val permission = if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_IMAGES
-        else Manifest.permission.READ_EXTERNAL_STORAGE
-        if (checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED) {
+        val permissions = if (Build.VERSION.SDK_INT >= 33) {
+            arrayOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO)
+        } else {
+            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+        if (permissions.all { checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED }) {
             startIndexing()
         } else {
-            requestPermissions(arrayOf(permission), MEDIA_PERMISSION_REQUEST)
+            requestPermissions(permissions, MEDIA_PERMISSION_REQUEST)
         }
     }
 
@@ -40,7 +50,7 @@ class MainActivity : ComponentActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == MEDIA_PERMISSION_REQUEST && grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == MEDIA_PERMISSION_REQUEST && grantResults.any { it == PackageManager.PERMISSION_GRANTED }) {
             startIndexing()
         }
     }

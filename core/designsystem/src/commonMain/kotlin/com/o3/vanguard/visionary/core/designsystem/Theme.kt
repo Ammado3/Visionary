@@ -6,8 +6,18 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
-private val DarkColorScheme = darkColorScheme()
-private val LightColorScheme = lightColorScheme()
+private val DarkColorScheme = darkColorScheme(
+    primary = VisionaryColors.color007847,
+    background = VisionaryColors.colorF4FDF7,
+    surface = VisionaryColors.colorF4FDF7,
+)
+private val LightColorScheme = lightColorScheme(
+    primary = VisionaryColors.color007847,
+    background = VisionaryColors.colorF4FDF7,
+    surface = VisionaryColors.colorF4FDF7,
+    onBackground = VisionaryColors.color0B1B14,
+    onSurface = VisionaryColors.color0B1B14,
+)
 
 @Composable
 fun VisionaryTheme(

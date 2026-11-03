@@ -36,15 +36,11 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-internal val SplashBackground = Color(0xFFF4FDF7)
 internal const val SPLASH_DURATION_MS = 3_000L
-
-private val SplashPrimary = Color(0xFF007847)
-private val SplashText = Color(0xFF0B1B14)
-private val SplashSecondaryText = Color(0xFF496156)
 
 private val SplashIconVector: ImageVector by lazy {
     ImageVector.Builder(
@@ -54,8 +50,8 @@ private val SplashIconVector: ImageVector by lazy {
         viewportWidth = 122f,
         viewportHeight = 122f
     ).apply {
-        val green = SolidColor(Color(0xFF007847))
-        val bgGreen = SolidColor(Color(0xFFF4FDF7))
+        val green = SolidColor(VisionaryColors.color007847)
+        val bgGreen = SolidColor(VisionaryColors.colorF4FDF7)
 
         addPath(
             pathData = addPathNodes("M12,11L100,11A11,11 0,0 1,111 22L111,110A11,11 0,0 1,100 121L12,121A11,11 0,0 1,1 110L1,22A11,11 0,0 1,12 11z"),
@@ -185,7 +181,7 @@ fun SplashScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(SplashBackground)
+            .background(VisionaryColors.colorF4FDF7)
             .padding(bottom = 30.dp)
     ) {
 
@@ -210,7 +206,7 @@ fun SplashScreen(
             // App Title
             Text(
                 text = "AI Gallery",
-                color = SplashText,
+                color = VisionaryColors.color0B1B14,
                 fontSize = 24.sp,
                 lineHeight = 32.sp
             )
@@ -220,7 +216,7 @@ fun SplashScreen(
             // App Description
             Text(
                 text = "Every photo, within reach.",
-                color = SplashSecondaryText,
+                color = VisionaryColors.color496156,
                 fontSize = 14.sp,
                 lineHeight = 20.sp
             )
@@ -234,7 +230,7 @@ fun SplashScreen(
             LoadingDots(
                 dotCount = 3,
                 dotSize = 8.dp,
-                activeColor = SplashPrimary
+                activeColor = VisionaryColors.color007847
             )
         }
     }
@@ -245,7 +241,7 @@ private fun LoadingDots(
     modifier: Modifier = Modifier,
     dotCount: Int = 3,
     dotSize: Dp = 8.dp,
-    activeColor: Color = SplashPrimary,
+    activeColor: Color = VisionaryColors.color007847,
     bounceHeight: Dp = 6.dp,
     dotAnimationDuration: Int = 400,
     delayBetweenDots: Int = 120,

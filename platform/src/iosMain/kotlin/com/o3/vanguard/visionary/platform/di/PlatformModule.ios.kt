@@ -10,6 +10,7 @@ actual val platformModule: Module = module {
     single { AppDirectories() }
     single<PermissionGateway> { IosStubPermissionGateway() }
     single<MediaSourceEngine> { IosStubMediaSourceEngine() }
+    single<StorageAlbumSourceEngine> { IosStubStorageAlbumSourceEngine() }
     single<MediaDeleteGateway> { IosStubMediaDeleteGateway() }
     single<OcrEngine> { IosStubOcrEngine() }
     single<ImageLabelEngine> { IosStubImageLabelEngine() }

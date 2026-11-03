@@ -11,6 +11,7 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":core:common"))
             implementation(compose.material3)
+            implementation(compose.materialIconsExtended)
             implementation(libs.coil.compose)
         }
     }

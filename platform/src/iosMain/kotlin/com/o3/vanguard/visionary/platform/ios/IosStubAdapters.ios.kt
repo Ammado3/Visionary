@@ -18,6 +18,10 @@ class IosStubMediaSourceEngine : MediaSourceEngine {
     override suspend fun queryAllLibraryIds(): AppResult<Set<Long>> = AppResult.Ok(emptySet())
 }
 
+class IosStubStorageAlbumSourceEngine : StorageAlbumSourceEngine {
+    override suspend fun loadAlbums(): AppResult<List<StorageAlbum>> = AppResult.Ok(emptyList())
+}
+
 class IosStubMediaDeleteGateway : MediaDeleteGateway {
     override suspend fun requestDelete(uris: List<String>): DeleteConsentResult =
         DeleteConsentResult.NotPossible("iOS media delete gateway stub")

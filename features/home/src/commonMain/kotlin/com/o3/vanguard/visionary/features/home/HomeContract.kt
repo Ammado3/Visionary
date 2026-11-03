@@ -21,6 +21,7 @@ sealed interface HomeIntent : UiIntent {
     data class OnCollectionClicked(val kind: CollectionKind) : HomeIntent
     data class OnRecentClicked(val id: MediaId) : HomeIntent
     data object OnSearchClicked : HomeIntent
+    data object OnAlbumsClicked : HomeIntent
     data object OnScanClicked : HomeIntent
     data object OnVaultClicked : HomeIntent
     data object OnSettingsClicked : HomeIntent
@@ -31,6 +32,7 @@ sealed interface HomeEvent : UiEvent {
     data class OpenCollection(val kind: CollectionKind) : HomeEvent
     data class OpenViewer(val id: MediaId) : HomeEvent
     data object OpenSearch : HomeEvent
+    data object OpenAlbums : HomeEvent
     data object OpenScanner : HomeEvent
     data object OpenVault : HomeEvent
     data object OpenSettings : HomeEvent

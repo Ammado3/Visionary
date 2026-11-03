@@ -3,6 +3,7 @@ package com.o3.vanguard.visionary.domain.usecase
 import com.o3.vanguard.visionary.core.common.AppResult
 import com.o3.vanguard.visionary.domain.model.*
 import com.o3.vanguard.visionary.domain.port.ScannerPort
+import com.o3.vanguard.visionary.domain.port.StorageAlbumSourceEngine
 import com.o3.vanguard.visionary.domain.repository.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -26,6 +27,14 @@ class RebuildIndexUseCase(private val indexRepository: IndexRepository) {
 
 class ObserveMediaUseCase(private val mediaRepository: MediaRepository) {
     operator fun invoke(kind: CollectionKind): Flow<List<MediaItem>> = mediaRepository.observeMedia(kind)
+}
+
+class ObserveItemUseCase(private val mediaRepository: MediaRepository) {
+    operator fun invoke(id: MediaId): Flow<MediaItem?> = mediaRepository.observeItem(id)
+}
+
+class ObserveStorageAlbumsUseCase(private val source: StorageAlbumSourceEngine) {
+    suspend operator fun invoke(): AppResult<List<StorageAlbum>> = source.loadAlbums()
 }
 
 class SearchMediaUseCase(private val searchRepository: SearchRepository) {

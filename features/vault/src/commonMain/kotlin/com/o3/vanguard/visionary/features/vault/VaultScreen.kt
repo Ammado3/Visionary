@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -13,12 +16,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.o3.vanguard.visionary.core.mvi.CollectEvents
+import com.o3.vanguard.visionary.core.designsystem.AppBottomNavigation
+import com.o3.vanguard.visionary.core.designsystem.AppTab
+import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun VaultLockRoute(
     onUnlocked: () -> Unit,
     onBack: () -> Unit,
+    onNavigate: (AppTab) -> Unit,
     viewModel: VaultViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -29,34 +36,41 @@ fun VaultLockRoute(
             else -> {}
         }
     }
-    VaultLockScreen(state = state, onIntent = viewModel::onIntent)
+    VaultLockScreen(state = state, onIntent = viewModel::onIntent, onNavigate = onNavigate)
 }
 
 @Composable
 fun VaultLockScreen(
     state: VaultState,
     onIntent: (VaultIntent) -> Unit,
+    onNavigate: (AppTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(modifier = modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text("Biometric Vault", style = MaterialTheme.typography.headlineLarge)
-            Spacer(modifier = Modifier.height(24.dp))
-            if (state.authenticating) {
-                CircularProgressIndicator()
-            } else {
-                Button(onClick = { onIntent(VaultIntent.OnUnlockClicked) }) {
-                    Text("Unlock Vault")
+    Surface(modifier = modifier.fillMaxSize(), color = VisionaryColors.colorF4FDF7) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 20.dp, vertical = 56.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+            ) {
+                Surface(
+                    modifier = Modifier.size(80.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    color = VisionaryColors.color1A007847,
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.PhotoLibrary, null, Modifier.size(36.dp), tint = VisionaryColors.color007847)
+                    }
                 }
+                Text("Keep special moments\nprivate.", style = MaterialTheme.typography.headlineMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                Text("Move selected photos and videos into\na protected area, separate from your\neveryday gallery.", color = VisionaryColors.color496156, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                Button(onClick = { onIntent(VaultIntent.OnUnlockClicked) }, modifier = Modifier.fillMaxWidth()) {
+                    if (state.authenticating) CircularProgressIndicator(Modifier.size(20.dp), color = VisionaryColors.colorFFFFFFFF)
+                    else Text("Set Up Vault")
+                }
+                Text("You can change Vault settings anytime.", style = MaterialTheme.typography.bodySmall, color = VisionaryColors.color496156)
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { onIntent(VaultIntent.OnBackClicked) }) {
-                Text("Back")
-            }
+            AppBottomNavigation(AppTab.VAULT, onNavigate)
         }
     }
 }

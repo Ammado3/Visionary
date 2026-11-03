@@ -5,6 +5,7 @@ import com.o3.vanguard.visionary.core.mvi.BaseMviViewModel
 import com.o3.vanguard.visionary.domain.model.CollectionKind
 import com.o3.vanguard.visionary.domain.model.MediaId
 import com.o3.vanguard.visionary.domain.usecase.MoveToVaultUseCase
+import com.o3.vanguard.visionary.domain.usecase.ObserveItemUseCase
 import com.o3.vanguard.visionary.domain.usecase.ObserveMediaUseCase
 import kotlinx.coroutines.launch
 
@@ -34,9 +35,18 @@ class ViewerViewModel(
     mediaIdValue: Long,
     highlight: String?,
     private val moveToVaultUseCase: MoveToVaultUseCase,
+    observeItem: ObserveItemUseCase,
 ) : BaseMviViewModel<ViewerState, ViewerIntent, ViewerEvent>(
     ViewerState(mediaId = MediaId(mediaIdValue), highlightText = highlight)
 ) {
+    init {
+        viewModelScope.launch {
+            observeItem(MediaId(mediaIdValue)).collect { item ->
+                updateState { copy(item = item) }
+            }
+        }
+    }
+
     override fun onIntent(intent: ViewerIntent) {
         when (intent) {
             ViewerIntent.OnBackClicked -> sendEvent(ViewerEvent.NavigateBack)

@@ -28,6 +28,13 @@ import com.o3.vanguard.visionary.screens.SPLASH_DURATION_MS
 import com.o3.vanguard.visionary.screens.SplashScreen
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
+import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
 
 @Composable
 fun App() {
@@ -58,22 +65,27 @@ private fun AppNavHost(start: AppRoute) {
     val backStack = rememberNavBackStack(AppNavSavedStateConfig, start)
     val navigator = remember(backStack) { Navigator(backStack) }
 
-    NavDisplay(
-        backStack = backStack,
-        onBack = { navigator.back() },
-        entryDecorators = listOf(
-            rememberSaveableStateHolderNavEntryDecorator(),
-            rememberViewModelStoreNavEntryDecorator(),
-        ),
-        entryProvider = entryProvider {
-            onboardingEntries(navigator)
-            homeEntries(navigator)
-            galleryEntries(navigator)
-            searchEntries(navigator)
-            scannerEntries(navigator)
-            vaultEntries(navigator)
-            settingsEntries(navigator)
-        },
-    )
+    Surface(modifier = Modifier.fillMaxSize(), color = VisionaryColors.colorF4FDF7) {
+        Scaffold { paddingValues ->
+            NavDisplay(
+                modifier = Modifier.fillMaxSize().padding(paddingValues).consumeWindowInsets(paddingValues),
+                backStack = backStack,
+                onBack = { navigator.back() },
+                entryDecorators = listOf(
+                    rememberSaveableStateHolderNavEntryDecorator(),
+                    rememberViewModelStoreNavEntryDecorator(),
+                ),
+                entryProvider = entryProvider {
+                    onboardingEntries(navigator)
+                    homeEntries(navigator)
+                    galleryEntries(navigator)
+                    searchEntries(navigator)
+                    scannerEntries(navigator)
+                    vaultEntries(navigator)
+                    settingsEntries(navigator)
+                },
+            )
+        }
+    }
 }
 

@@ -10,6 +10,7 @@ import kotlinx.serialization.modules.polymorphic
 sealed interface AppRoute : NavKey {
     @Serializable data object Onboarding : AppRoute
     @Serializable data object Home : AppRoute
+    @Serializable data object Albums : AppRoute
     @Serializable data class Gallery(val collectionId: String) : AppRoute
     @Serializable data class Viewer(val mediaId: Long, val highlight: String? = null) : AppRoute
     @Serializable data class Search(val initialQuery: String = "") : AppRoute
@@ -26,6 +27,7 @@ val AppNavSavedStateConfig = SavedStateConfiguration {
         polymorphic(NavKey::class) {
             subclass(AppRoute.Onboarding::class, AppRoute.Onboarding.serializer())
             subclass(AppRoute.Home::class, AppRoute.Home.serializer())
+            subclass(AppRoute.Albums::class, AppRoute.Albums.serializer())
             subclass(AppRoute.Gallery::class, AppRoute.Gallery.serializer())
             subclass(AppRoute.Viewer::class, AppRoute.Viewer.serializer())
             subclass(AppRoute.Search::class, AppRoute.Search.serializer())

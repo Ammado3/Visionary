@@ -10,6 +10,8 @@ val domainModule = module {
     factoryOf(::ObserveIndexProgressUseCase)
     factoryOf(::RebuildIndexUseCase)
     factoryOf(::ObserveMediaUseCase)
+    factoryOf(::ObserveItemUseCase)
+    factoryOf(::ObserveStorageAlbumsUseCase)
     factoryOf(::SearchMediaUseCase)
     factoryOf(::ResolveStartRouteUseCase)
     factoryOf(::MoveToVaultUseCase)

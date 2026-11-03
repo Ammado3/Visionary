@@ -67,7 +67,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -80,6 +79,9 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.o3.vanguard.visionary.core.mvi.CollectEvents
+import com.o3.vanguard.visionary.core.designsystem.AppBottomNavigation
+import com.o3.vanguard.visionary.core.designsystem.AppTab
+import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
 import com.o3.vanguard.visionary.domain.model.MediaId
 import com.o3.vanguard.visionary.domain.model.MediaItem
 import com.o3.vanguard.visionary.domain.model.SearchHit
@@ -92,6 +94,7 @@ fun SearchRoute(
     initialQuery: String,
     onOpenViewer: (MediaId, String) -> Unit,
     onBack: () -> Unit,
+    onNavigate: (AppTab) -> Unit,
     viewModel: SearchViewModel = koinViewModel { parametersOf(initialQuery) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -112,13 +115,14 @@ fun SearchRoute(
         }
     }
 
-    SearchScreen(state = state, onIntent = viewModel::onIntent)
+    SearchScreen(state = state, onIntent = viewModel::onIntent, onNavigate = onNavigate)
 }
 
 @Composable
 fun SearchScreen(
     state: SearchState,
     onIntent: (SearchIntent) -> Unit,
+    onNavigate: (AppTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val displayImages = if (state.query.isNotBlank() && state.results.isNotEmpty()) {
@@ -131,6 +135,9 @@ fun SearchScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        bottomBar = {
+            AppBottomNavigation(AppTab.SEARCH, onNavigate)
+        },
         topBar = {
             TopAppBar(
                 title = { Text("AI Gallery Search", fontWeight = FontWeight.Bold) },
@@ -559,8 +566,8 @@ fun ImageCard(
                         .background(
                             Brush.verticalGradient(
                                 colors = listOf(
-                                    Color.Transparent,
-                                    Color.Black.copy(alpha = 0.85f)
+                                    VisionaryColors.color00000000,
+                                    VisionaryColors.colorFF000000.copy(alpha = 0.85f)
                                 )
                             )
                         )
@@ -575,7 +582,7 @@ fun ImageCard(
                                 text = "Labels: " + image.labels.split(",").take(3).joinToString(" • "),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Color.White,
+                                color = VisionaryColors.colorFFFFFFFF,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -585,7 +592,7 @@ fun ImageCard(
                             Text(
                                 text = "Text: " + textPreview.replace("\n", " "),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = Color.LightGray,
+                                color = VisionaryColors.colorFFD3D3D3,
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.padding(top = 2.dp)
@@ -618,7 +625,7 @@ fun ImageDetailViewer(
     ) {
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = Color.Black
+            color = VisionaryColors.colorFF000000
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
 
@@ -644,14 +651,14 @@ fun ImageDetailViewer(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         TextButton(onClick = onDismiss) {
-                            Text("Back", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            Text("Back", color = VisionaryColors.colorFFFFFFFF, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         }
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
                                 text = image.fileName.ifBlank { "Photo" },
                                 style = MaterialTheme.typography.titleMedium.copy(
-                                    color = Color.White,
+                                    color = VisionaryColors.colorFFFFFFFF,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 16.sp
                                 ),
@@ -664,7 +671,7 @@ fun ImageDetailViewer(
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
                                 contentDescription = "More",
-                                tint = Color.White
+                                tint = VisionaryColors.colorFFFFFFFF
                             )
                         }
                     }
@@ -681,7 +688,7 @@ fun ImageDetailViewer(
                             Surface(
                                 onClick = { showOcrTextSheet = !showOcrTextSheet },
                                 shape = RoundedCornerShape(20.dp),
-                                color = Color.White.copy(alpha = 0.85f)
+                                color = VisionaryColors.colorFFFFFFFF.copy(alpha = 0.85f)
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
@@ -691,14 +698,14 @@ fun ImageDetailViewer(
                                         imageVector = Icons.Default.Info,
                                         contentDescription = null,
                                         modifier = Modifier.size(16.dp),
-                                        tint = Color.Black
+                                        tint = VisionaryColors.colorFF000000
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
                                         text = "OCR Text Available",
                                         style = MaterialTheme.typography.labelMedium.copy(
                                             fontWeight = FontWeight.SemiBold,
-                                            color = Color.Black
+                                            color = VisionaryColors.colorFF000000
                                         )
                                     )
                                 }
@@ -718,8 +725,8 @@ fun ImageDetailViewer(
                 ) {
                     Surface(
                         shape = RoundedCornerShape(16.dp),
-                        color = Color.DarkGray.copy(alpha = 0.95f),
-                        contentColor = Color.White
+                        color = VisionaryColors.colorFF444444.copy(alpha = 0.95f),
+                        contentColor = VisionaryColors.colorFFFFFFFF
                     ) {
                         Column(
                             modifier = Modifier
@@ -742,7 +749,7 @@ fun ImageDetailViewer(
                                 Text(
                                     text = detailTextPreview.orEmpty(),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White
+                                    color = VisionaryColors.colorFFFFFFFF
                                 )
                             }
                         }
@@ -754,7 +761,7 @@ fun ImageDetailViewer(
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.BottomCenter),
-                    color = Color.Black.copy(alpha = 0.9f)
+                    color = VisionaryColors.colorFF000000.copy(alpha = 0.9f)
                 ) {
                     Row(
                         modifier = Modifier
@@ -832,14 +839,14 @@ fun BottomViewerActionItem(
         Icon(
             imageVector = icon,
             contentDescription = label,
-            tint = Color.White,
+            tint = VisionaryColors.colorFFFFFFFF,
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall.copy(
-                color = Color.White,
+                color = VisionaryColors.colorFFFFFFFF,
                 fontSize = 12.sp
             )
         )
