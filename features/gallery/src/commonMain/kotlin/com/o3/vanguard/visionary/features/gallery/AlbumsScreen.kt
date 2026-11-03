@@ -15,9 +15,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
@@ -26,17 +29,26 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import coil3.compose.AsyncImage
 import com.o3.vanguard.visionary.core.common.AppResult
 import com.o3.vanguard.visionary.core.designsystem.AppBottomNavigation
@@ -54,6 +66,8 @@ fun AlbumsRoute(
     onSearch: () -> Unit,
     onVault: () -> Unit,
 ) {
+    var searchOpen by rememberSaveable { mutableStateOf(false) }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
     val observeAlbums = koinInject<ObserveStorageAlbumsUseCase>()
     val albumsResult by produceState<AppResult<List<StorageAlbum>>?>(initialValue = null, key1 = observeAlbums) {
         value = observeAlbums()
@@ -62,7 +76,16 @@ fun AlbumsRoute(
 
     Surface(Modifier.fillMaxSize(), color = VisionaryColors.colorF4FDF7) {
         Column(Modifier.fillMaxSize()) {
-            AlbumsHeader(onSearch = onSearch)
+            AlbumsHeader(
+                searchOpen = searchOpen,
+                query = searchQuery,
+                onSearch = { searchOpen = true },
+                onQueryChanged = { searchQuery = it },
+                onCloseSearch = {
+                    searchQuery = ""
+                    searchOpen = false
+                },
+            )
             if (albumsResult == null) {
                 Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = VisionaryColors.color007847)
@@ -76,13 +99,21 @@ fun AlbumsRoute(
                     Spacer(Modifier.height(24.dp))
                     Text("On this device", style = MaterialTheme.typography.bodyMedium, color = VisionaryColors.color496156)
                     Spacer(Modifier.height(16.dp))
+                    val visibleAlbums = albums.filter { album ->
+                        searchQuery.isBlank() || album.name.contains(searchQuery.trim(), ignoreCase = true)
+                    }
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
                         contentPadding = PaddingValues(bottom = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
-                        items(albums, key = { it.id }) { album ->
+                        if (visibleAlbums.isEmpty() && searchQuery.isNotBlank()) {
+                            item(span = { GridItemSpan(maxLineSpan) }) {
+                                AlbumSearchEmptyState(searchQuery)
+                            }
+                        }
+                        items(visibleAlbums, key = { it.id }) { album ->
                             Column(
                                 modifier = Modifier.clickable { onOpenAlbum(CollectionKind.ALL) },
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -124,7 +155,60 @@ fun AlbumsRoute(
 }
 
 @Composable
-private fun AlbumsHeader(onSearch: () -> Unit) {
+private fun AlbumSearchEmptyState(query: String) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 96.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(Icons.Default.Search, contentDescription = null, tint = VisionaryColors.color496156, modifier = Modifier.size(48.dp))
+        Spacer(Modifier.height(12.dp))
+        Text("No albums found", style = MaterialTheme.typography.titleMedium, color = VisionaryColors.color0B1B14)
+        Text("Nothing found for \"$query\"", color = VisionaryColors.color496156)
+    }
+}
+
+@Composable
+private fun AlbumsHeader(
+    searchOpen: Boolean,
+    query: String,
+    onSearch: () -> Unit,
+    onQueryChanged: (String) -> Unit,
+    onCloseSearch: () -> Unit,
+) {
+    if (searchOpen) {
+        val focusRequester = androidx.compose.runtime.remember { FocusRequester() }
+        val keyboardController = LocalSoftwareKeyboardController.current
+        LaunchedEffect(Unit) {
+            focusRequester.requestFocus()
+            keyboardController?.show()
+        }
+        Row(
+            Modifier.fillMaxWidth().height(80.dp).padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onCloseSearch) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Close search")
+            }
+            OutlinedTextField(
+                value = query,
+                onValueChange = onQueryChanged,
+                modifier = Modifier.weight(1f).focusRequester(focusRequester),
+                singleLine = true,
+                placeholder = { Text("Search albums") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                trailingIcon = if (query.isNotEmpty()) {
+                    { IconButton(onClick = { onQueryChanged("") }) { Icon(Icons.Default.Clear, "Clear search") } }
+                } else null,
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(32.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = VisionaryColors.colorF4FDF7,
+                    unfocusedContainerColor = VisionaryColors.colorF4FDF7,
+                ),
+            )
+        }
+        return
+    }
+
     Row(
         Modifier
             .fillMaxWidth()
