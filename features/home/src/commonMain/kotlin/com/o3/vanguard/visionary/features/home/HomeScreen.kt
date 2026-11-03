@@ -3,6 +3,7 @@ package com.o3.vanguard.visionary.features.home
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,6 +38,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -90,45 +92,46 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = VisionaryColors.colorF4FDF7) {
-        when {
-            state.loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = VisionaryColors.color007847)
-            }
+        Column(Modifier.fillMaxSize()) {
+            HomeHeader(
+                onMenuClick = { onIntent(HomeIntent.OnSettingsClicked) },
+                onSearchClick = { onIntent(HomeIntent.OnSearchClicked) },
+            )
+            Box(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                when {
+                    state.loading -> CircularProgressIndicator(color = VisionaryColors.color007847)
+                    state.error -> HomeError(onRetry = { onIntent(HomeIntent.OnRetryClicked) })
+                    else -> LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        state.indexProgress?.let { progress ->
+                            item { ProcessingCard(progress) }
+                        }
 
-            state.error -> HomeError(onRetry = { onIntent(HomeIntent.OnRetryClicked) })
-
-            else -> Column(Modifier.fillMaxSize()) {
-                HomeHeader(
-                    onMenuClick = { onIntent(HomeIntent.OnSettingsClicked) },
-                    onSearchClick = { onIntent(HomeIntent.OnSearchClicked) },
-                )
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    state.indexProgress?.let { progress ->
-                        item { ProcessingCard(progress) }
-                    }
-
-                    val media = state.recentFinds.sortedByDescending { it.takenAtMs }
-                    if (media.isEmpty()) {
-                        item { EmptyHomeState() }
-                    } else {
-                        groupHomeMedia(media).forEach { section ->
-                            item(key = section.title) {
-                                MediaSection(section.title, section.items, onIntent)
+                        val media = state.recentFinds.sortedByDescending { it.takenAtMs }
+                        if (media.isEmpty()) {
+                            item { EmptyHomeState() }
+                        } else {
+                            groupHomeMedia(media).forEach { section ->
+                                item(key = section.title) {
+                                    MediaSection(section.title, section.items, onIntent)
+                                }
                             }
                         }
                     }
                 }
-                HomeBottomNavigation(
-                    onPhotos = { },
-                    onAlbums = { onIntent(HomeIntent.OnAlbumsClicked) },
-                    onSearch = { onIntent(HomeIntent.OnSearchClicked) },
-                    onVault = { onIntent(HomeIntent.OnVaultClicked) },
-                )
             }
+            HomeBottomNavigation(
+                onPhotos = { },
+                onAlbums = { onIntent(HomeIntent.OnAlbumsClicked) },
+                onSearch = { onIntent(HomeIntent.OnSearchClicked) },
+                onVault = { onIntent(HomeIntent.OnVaultClicked) },
+            )
         }
     }
 }
@@ -344,7 +347,11 @@ private fun RowScope.NavigationItem(
     Column(
         modifier = Modifier
             .weight(1f)
-            .clickable(onClick = onClick)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick,
+            )
             .padding(vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp),

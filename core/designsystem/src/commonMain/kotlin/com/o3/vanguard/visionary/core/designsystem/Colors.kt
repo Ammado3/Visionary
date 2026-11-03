@@ -2,7 +2,7 @@ package com.o3.vanguard.visionary.core.designsystem
 
 import androidx.compose.ui.graphics.Color
 
-/** Shared Visionary color tokens. Names preserve the original hex value for easy lookup. */
+
 object VisionaryColors {
     val colorF4FDF7 = Color(0xFFF4FDF7)
     val color007847 = Color(0xFF007847)
