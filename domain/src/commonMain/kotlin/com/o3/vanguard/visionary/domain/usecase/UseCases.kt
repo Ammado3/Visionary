@@ -55,6 +55,11 @@ class MoveToVaultUseCase(private val vaultRepository: VaultRepository) {
     suspend operator fun invoke(id: MediaId): AppResult<Unit> = vaultRepository.moveToVault(id)
 }
 
+class DeleteMediaUseCase(private val mediaDeleteGateway: com.o3.vanguard.visionary.domain.port.MediaDeleteGateway) {
+    suspend operator fun invoke(uri: String): DeleteConsentResult =
+        mediaDeleteGateway.requestDelete(listOf(uri))
+}
+
 class StartScanUseCase(private val scannerPort: ScannerPort) {
     suspend operator fun invoke(): AppResult<ScannedDocument> = scannerPort.scan()
 }

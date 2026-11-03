@@ -182,7 +182,20 @@ class AndroidStorageAlbumSource(private val context: Context) : StorageAlbumSour
 }
 
 class AndroidMediaDeleteGateway(private val context: Context) : MediaDeleteGateway {
-    override suspend fun requestDelete(uris: List<String>): DeleteConsentResult = DeleteConsentResult.Deleted
+    override suspend fun requestDelete(uris: List<String>): DeleteConsentResult = try {
+        val deletedCount = uris.count { uri ->
+            context.contentResolver.delete(Uri.parse(uri), null, null) > 0
+        }
+        if (deletedCount == uris.size) {
+            DeleteConsentResult.Deleted
+        } else {
+            DeleteConsentResult.NotPossible("Some media could not be deleted")
+        }
+    } catch (error: SecurityException) {
+        DeleteConsentResult.NotPossible("Delete permission is required")
+    } catch (error: Throwable) {
+        DeleteConsentResult.NotPossible(error.message ?: "Media could not be deleted")
+    }
 }
 
 class MlKitOcrEngine(private val context: Context) : OcrEngine {

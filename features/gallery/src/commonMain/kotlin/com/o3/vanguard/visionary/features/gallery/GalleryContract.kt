@@ -35,6 +35,7 @@ data class ViewerState(
 sealed interface ViewerIntent : UiIntent {
     data object OnBackClicked : ViewerIntent
     data object OnMoveToVaultClicked : ViewerIntent
+    data object OnDeleteClicked : ViewerIntent
 }
 
 sealed interface ViewerEvent : UiEvent {

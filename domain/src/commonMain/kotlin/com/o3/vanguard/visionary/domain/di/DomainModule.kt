@@ -16,6 +16,7 @@ val domainModule = module {
     factoryOf(::SearchMediaUseCase)
     factoryOf(::ResolveStartRouteUseCase)
     factoryOf(::MoveToVaultUseCase)
+    factoryOf(::DeleteMediaUseCase)
     factoryOf(::StartScanUseCase)
     factoryOf(::SmartMediaClassifier)
     factoryOf(::EntityExtractor)

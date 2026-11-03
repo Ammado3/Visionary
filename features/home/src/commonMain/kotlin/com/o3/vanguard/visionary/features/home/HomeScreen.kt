@@ -16,13 +16,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
@@ -36,17 +38,26 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.o3.vanguard.visionary.core.mvi.CollectEvents
@@ -91,11 +102,21 @@ fun HomeScreen(
     onIntent: (HomeIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var searchOpen by rememberSaveable { mutableStateOf(false) }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+
     Surface(modifier = modifier.fillMaxSize(), color = VisionaryColors.colorF4FDF7) {
         Column(Modifier.fillMaxSize()) {
             HomeHeader(
                 onMenuClick = { onIntent(HomeIntent.OnSettingsClicked) },
-                onSearchClick = { onIntent(HomeIntent.OnSearchClicked) },
+                searchOpen = searchOpen,
+                query = searchQuery,
+                onSearchClick = { searchOpen = true },
+                onQueryChanged = { searchQuery = it },
+                onCloseSearch = {
+                    searchQuery = ""
+                    searchOpen = false
+                },
             )
             Box(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -104,22 +125,45 @@ fun HomeScreen(
                 when {
                     state.loading -> CircularProgressIndicator(color = VisionaryColors.color007847)
                     state.error -> HomeError(onRetry = { onIntent(HomeIntent.OnRetryClicked) })
-                    else -> LazyColumn(
+                    else -> LazyVerticalGrid(
+                        columns = GridCells.Fixed(3),
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         state.indexProgress?.let { progress ->
-                            item { ProcessingCard(progress) }
+                            item(span = { GridItemSpan(maxLineSpan) }) { ProcessingCard(progress) }
                         }
 
-                        val media = state.recentFinds.sortedByDescending { it.takenAtMs }
+                        val media = state.recentFinds
+                            .filter { searchQuery.isBlank() || it.matchesGalleryQuery(searchQuery) }
+                            .sortedByDescending { it.takenAtMs }
                         if (media.isEmpty()) {
-                            item { EmptyHomeState() }
+                            item(span = { GridItemSpan(maxLineSpan) }) {
+                                if (searchQuery.isBlank()) {
+                                    EmptyHomeState()
+                                } else {
+                                    SearchEmptyState(searchQuery)
+                                }
+                            }
                         } else {
                             groupHomeMedia(media).forEach { section ->
-                                item(key = section.title) {
-                                    MediaSection(section.title, section.items, onIntent)
+                                item(
+                                    key = "header_${section.title}",
+                                    span = { GridItemSpan(maxLineSpan) },
+                                ) {
+                                    Text(
+                                        text = section.title.uppercase(),
+                                        modifier = Modifier.padding(top = 12.dp, bottom = 8.dp),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = VisionaryColors.color496156,
+                                        letterSpacing = MaterialTheme.typography.labelMedium.letterSpacing * 1.4f,
+                                    )
+                                }
+                                items(section.items, key = { it.id.value }) { item ->
+                                    MediaTile(item, onIntent)
                                 }
                             }
                         }
@@ -180,7 +224,48 @@ private val MONTH_NAMES = listOf(
 )
 
 @Composable
-private fun HomeHeader(onMenuClick: () -> Unit, onSearchClick: () -> Unit) {
+private fun HomeHeader(
+    onMenuClick: () -> Unit,
+    searchOpen: Boolean,
+    query: String,
+    onSearchClick: () -> Unit,
+    onQueryChanged: (String) -> Unit,
+    onCloseSearch: () -> Unit,
+) {
+    if (searchOpen) {
+        val focusRequester = remember { FocusRequester() }
+        val keyboardController = LocalSoftwareKeyboardController.current
+        LaunchedEffect(Unit) {
+            focusRequester.requestFocus()
+            keyboardController?.show()
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onCloseSearch) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Close search")
+            }
+            OutlinedTextField(
+                value = query,
+                onValueChange = onQueryChanged,
+                modifier = Modifier.weight(1f).focusRequester(focusRequester),
+                singleLine = true,
+                placeholder = { Text("Search photos and videos") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                trailingIcon = if (query.isNotEmpty()) {
+                    { IconButton(onClick = { onQueryChanged("") }) { Icon(Icons.Default.Clear, "Clear search") } }
+                } else null,
+                shape = RoundedCornerShape(32.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = VisionaryColors.colorF4FDF7,
+                    unfocusedContainerColor = VisionaryColors.colorF4FDF7,
+                ),
+            )
+        }
+        return
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -206,6 +291,21 @@ private fun HomeHeader(onMenuClick: () -> Unit, onSearchClick: () -> Unit) {
             Icon(Icons.Default.MoreVert, contentDescription = "More options", tint = VisionaryColors.color0B1B14)
         }
     }
+}
+
+private fun MediaItem.matchesGalleryQuery(query: String): Boolean {
+    val normalizedQuery = query.trim().lowercase()
+    if (normalizedQuery.isEmpty()) return true
+    val searchableText = listOf(
+        fileName,
+        uri,
+        category.name,
+        textPreview.orEmpty(),
+        labels,
+        takenAtMs.toString(),
+        epochDate(takenAtMs).let { "${MONTH_NAMES[it.month - 1]} ${it.year}" },
+    )
+    return searchableText.any { it.lowercase().contains(normalizedQuery) }
 }
 
 @Composable
@@ -256,58 +356,33 @@ private fun ProcessingCard(progress: IndexProgress) {
 }
 
 @Composable
-private fun MediaSection(
-    title: String,
-    media: List<MediaItem>,
-    onIntent: (HomeIntent) -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(
-            text = title.uppercase(),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = VisionaryColors.color496156,
-            letterSpacing = MaterialTheme.typography.labelMedium.letterSpacing * 1.4f,
+private fun MediaTile(item: MediaItem, onIntent: (HomeIntent) -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(112.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (item.category == MediaCategory.VIDEO) VisionaryColors.color24352D else VisionaryColors.colorE4EEE8)
+            .clickable { onIntent(HomeIntent.OnRecentClicked(item.id)) },
+        contentAlignment = Alignment.Center,
+    ) {
+        AsyncImage(
+            model = item.uri,
+            contentDescription = item.fileName,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
         )
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(((media.size + 2) / 3 * 112).dp),
-            userScrollEnabled = false,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            items(media, key = { it.id.value }) { item ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(112.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (item.category == MediaCategory.VIDEO) VisionaryColors.color24352D else VisionaryColors.colorE4EEE8)
-                        .clickable { onIntent(HomeIntent.OnRecentClicked(item.id)) },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    AsyncImage(
-                        model = item.uri,
-                        contentDescription = item.fileName,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                    if (item.category == MediaCategory.VIDEO) {
-                        Surface(
-                            shape = RoundedCornerShape(50),
-                            color = VisionaryColors.colorFF000000.copy(alpha = 0.55f),
-                        ) {
-                            Icon(
-                                Icons.Default.PlayArrow,
-                                contentDescription = "Video",
-                                modifier = Modifier.padding(6.dp).size(24.dp),
-                            tint = VisionaryColors.colorFFFFFFFF,
-                            )
-                        }
-                    }
-                }
+        if (item.category == MediaCategory.VIDEO) {
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = VisionaryColors.colorFF000000.copy(alpha = 0.55f),
+            ) {
+                Icon(
+                    Icons.Default.PlayArrow,
+                    contentDescription = "Video",
+                    modifier = Modifier.padding(6.dp).size(24.dp),
+                    tint = VisionaryColors.colorFFFFFFFF,
+                )
             }
         }
     }
@@ -394,6 +469,19 @@ private fun EmptyHomeState() {
         Spacer(Modifier.height(12.dp))
         Text("Your gallery is ready", style = MaterialTheme.typography.titleMedium, color = VisionaryColors.color0B1B14)
         Text("Photos will appear here after indexing.", color = VisionaryColors.color496156)
+    }
+}
+
+@Composable
+private fun SearchEmptyState(query: String) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 96.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(Icons.Default.Search, contentDescription = null, tint = VisionaryColors.color496156, modifier = Modifier.size(48.dp))
+        Spacer(Modifier.height(12.dp))
+        Text("No matching photos or videos", style = MaterialTheme.typography.titleMedium, color = VisionaryColors.color0B1B14)
+        Text("Nothing found for \"$query\"", color = VisionaryColors.color496156)
     }
 }
 
