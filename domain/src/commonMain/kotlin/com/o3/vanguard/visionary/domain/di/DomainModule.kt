@@ -2,6 +2,7 @@ package com.o3.vanguard.visionary.domain.di
 
 import com.o3.vanguard.visionary.domain.usecase.*
 import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 val domainModule = module {
@@ -11,7 +12,7 @@ val domainModule = module {
     factoryOf(::RebuildIndexUseCase)
     factoryOf(::ObserveMediaUseCase)
     factoryOf(::ObserveItemUseCase)
-    factoryOf(::ObserveStorageAlbumsUseCase)
+    singleOf(::ObserveStorageAlbumsUseCase)
     factoryOf(::SearchMediaUseCase)
     factoryOf(::ResolveStartRouteUseCase)
     factoryOf(::MoveToVaultUseCase)
