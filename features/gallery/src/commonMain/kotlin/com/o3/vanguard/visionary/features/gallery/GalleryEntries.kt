@@ -26,6 +26,16 @@ fun EntryProviderScope<NavKey>.galleryEntries(navigator: Navigator) {
             mediaId = key.mediaId,
             highlight = key.highlight,
             onBack = { navigator.back() },
+            onShareToTeleport = { item ->
+                navigator.navigate(
+                    AppRoute.TeleportSender(
+                        uri = item.uri,
+                        displayName = item.fileName.ifBlank { "photo.jpg" },
+                        mimeType = "image/jpeg",
+                        sizeBytes = 0L,
+                    ),
+                )
+            },
         )
     }
 }

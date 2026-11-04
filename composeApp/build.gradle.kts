@@ -37,6 +37,21 @@ kotlin {
             implementation(libs.lifecycle.viewmodel.nav3)
             implementation(libs.nav3.ui)
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.coil.compose)
+        }
+        androidMain.dependencies {
+            implementation(libs.play.services.nearby)
+            implementation(libs.kotlinx.coroutines.play.services)
+            implementation(libs.androidx.material.icons.extended)
+            implementation(libs.androidx.camera.core)
+            implementation(libs.androidx.camera.camera2)
+            implementation(libs.androidx.camera.lifecycle)
+            implementation(libs.androidx.camera.view)
+            implementation(libs.mediapipe.tasks.vision)
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }

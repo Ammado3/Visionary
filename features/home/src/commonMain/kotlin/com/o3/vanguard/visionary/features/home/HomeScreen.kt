@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -79,6 +80,7 @@ fun HomeRoute(
     onOpenScanner: () -> Unit,
     onOpenVault: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenAirTeleportReceiver: () -> Unit = {},
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -93,13 +95,18 @@ fun HomeRoute(
             HomeEvent.OpenSettings -> onOpenSettings()
         }
     }
-    HomeScreen(state = state, onIntent = viewModel::onIntent)
+    HomeScreen(
+        state = state,
+        onIntent = viewModel::onIntent,
+        onAirTeleportReceiverClick = onOpenAirTeleportReceiver,
+    )
 }
 
 @Composable
 fun HomeScreen(
     state: HomeState,
     onIntent: (HomeIntent) -> Unit,
+    onAirTeleportReceiverClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var searchOpen by rememberSaveable { mutableStateOf(false) }
@@ -117,6 +124,7 @@ fun HomeScreen(
                     searchQuery = ""
                     searchOpen = false
                 },
+                onAirTeleportReceiverClick = onAirTeleportReceiverClick,
             )
             Box(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -231,6 +239,7 @@ private fun HomeHeader(
     onSearchClick: () -> Unit,
     onQueryChanged: (String) -> Unit,
     onCloseSearch: () -> Unit,
+    onAirTeleportReceiverClick: () -> Unit = {},
 ) {
     if (searchOpen) {
         val focusRequester = remember { FocusRequester() }
@@ -284,6 +293,9 @@ private fun HomeHeader(
             fontWeight = FontWeight.Bold,
             color = VisionaryColors.color0B1B14,
         )
+        IconButton(onClick = onAirTeleportReceiverClick) {
+            Icon(Icons.Default.Share, contentDescription = "Air Teleport Receiver", tint = VisionaryColors.color007847)
+        }
         IconButton(onClick = onSearchClick) {
             Icon(Icons.Default.Search, contentDescription = "Search", tint = VisionaryColors.color0B1B14)
         }

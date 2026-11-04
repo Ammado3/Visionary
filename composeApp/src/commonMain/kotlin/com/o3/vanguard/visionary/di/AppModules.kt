@@ -25,6 +25,7 @@ val featureModules = listOf(
     scannerModule,
     vaultModule,
     settingsModule,
+    com.o3.vanguard.visionary.feature.teleport.di.teleportModule,
 )
 
 fun appModules(config: AppConfig): List<Module> = buildList {
