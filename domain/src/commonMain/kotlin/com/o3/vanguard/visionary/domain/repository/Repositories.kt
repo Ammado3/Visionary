@@ -14,7 +14,7 @@ interface MediaRepository {
 }
 
 interface SearchRepository {
-    fun search(query: String, filter: SearchFilter): Flow<List<SearchHit>>
+    fun search(query: String, filter: SearchFilter, mode: SearchMode): Flow<List<SearchHit>>
     fun observeRecentSearches(): Flow<List<String>>
     suspend fun saveRecentSearch(query: String)
 }

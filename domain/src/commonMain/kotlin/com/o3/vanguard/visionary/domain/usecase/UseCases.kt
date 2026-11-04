@@ -3,6 +3,7 @@ package com.o3.vanguard.visionary.domain.usecase
 import com.o3.vanguard.visionary.core.common.AppResult
 import com.o3.vanguard.visionary.domain.model.*
 import com.o3.vanguard.visionary.domain.port.ScannerPort
+import com.o3.vanguard.visionary.domain.port.StorageAlbumSourceEngine
 import com.o3.vanguard.visionary.domain.repository.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -20,13 +21,25 @@ class ObserveIndexProgressUseCase(private val indexRepository: IndexRepository) 
     operator fun invoke(): Flow<IndexProgress> = indexRepository.observeProgress()
 }
 
+class RebuildIndexUseCase(private val indexRepository: IndexRepository) {
+    suspend operator fun invoke(): AppResult<Unit> = indexRepository.rebuild()
+}
+
 class ObserveMediaUseCase(private val mediaRepository: MediaRepository) {
     operator fun invoke(kind: CollectionKind): Flow<List<MediaItem>> = mediaRepository.observeMedia(kind)
 }
 
+class ObserveItemUseCase(private val mediaRepository: MediaRepository) {
+    operator fun invoke(id: MediaId): Flow<MediaItem?> = mediaRepository.observeItem(id)
+}
+
+class ObserveStorageAlbumsUseCase(private val source: StorageAlbumSourceEngine) {
+    suspend operator fun invoke(): AppResult<List<StorageAlbum>> = source.loadAlbums()
+}
+
 class SearchMediaUseCase(private val searchRepository: SearchRepository) {
-    operator fun invoke(query: String, filter: SearchFilter): Flow<List<SearchHit>> =
-        if (query.isBlank()) flowOf(emptyList()) else searchRepository.search(query.trim(), filter)
+    operator fun invoke(query: String, filter: SearchFilter, mode: SearchMode = SearchMode.FUZZY): Flow<List<SearchHit>> =
+        if (query.isBlank()) flowOf(emptyList()) else searchRepository.search(query.trim(), filter, mode)
 }
 
 enum class StartDestination { ONBOARDING, HOME }
@@ -40,6 +53,11 @@ class ResolveStartRouteUseCase(private val settingsRepository: SettingsRepositor
 
 class MoveToVaultUseCase(private val vaultRepository: VaultRepository) {
     suspend operator fun invoke(id: MediaId): AppResult<Unit> = vaultRepository.moveToVault(id)
+}
+
+class DeleteMediaUseCase(private val mediaDeleteGateway: com.o3.vanguard.visionary.domain.port.MediaDeleteGateway) {
+    suspend operator fun invoke(uri: String): DeleteConsentResult =
+        mediaDeleteGateway.requestDelete(listOf(uri))
 }
 
 class StartScanUseCase(private val scannerPort: ScannerPort) {

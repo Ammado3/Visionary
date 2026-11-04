@@ -22,7 +22,7 @@ class HomeViewModel(
         viewModelScope.launch {
             combine(
                 observeCollections(),
-                observeRecent(limit = 12),
+                observeRecent(limit = Int.MAX_VALUE),
                 observeIndex()
             ) { collections, recent, index ->
                 { state: HomeState ->
@@ -45,6 +45,7 @@ class HomeViewModel(
             is HomeIntent.OnCollectionClicked -> sendEvent(HomeEvent.OpenCollection(intent.kind))
             is HomeIntent.OnRecentClicked -> sendEvent(HomeEvent.OpenViewer(intent.id))
             HomeIntent.OnSearchClicked -> sendEvent(HomeEvent.OpenSearch)
+            HomeIntent.OnAlbumsClicked -> sendEvent(HomeEvent.OpenAlbums)
             HomeIntent.OnScanClicked -> sendEvent(HomeEvent.OpenScanner)
             HomeIntent.OnVaultClicked -> sendEvent(HomeEvent.OpenVault)
             HomeIntent.OnSettingsClicked -> sendEvent(HomeEvent.OpenSettings)

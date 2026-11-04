@@ -10,6 +10,7 @@ actual val platformModule: Module = module {
     single { AppDirectories(get()) }
     single<PermissionGateway> { AndroidPermissionGateway(get()) }
     single<MediaSourceEngine> { AndroidMediaStoreSource(get()) }
+    single<StorageAlbumSourceEngine> { AndroidStorageAlbumSource(get()) }
     single<MediaDeleteGateway> { AndroidMediaDeleteGateway(get()) }
     single<OcrEngine> { MlKitOcrEngine(get()) }
     single<ImageLabelEngine> { MlKitImageLabelEngine(get()) }

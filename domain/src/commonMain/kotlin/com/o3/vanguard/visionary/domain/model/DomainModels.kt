@@ -7,7 +7,7 @@ value class MediaId(val value: Long)
 
 enum class MediaOrigin { LIBRARY, APP_SCAN }
 
-enum class MediaCategory { PHOTO, SCREENSHOT, DOCUMENT, RECEIPT, SCAN }
+enum class MediaCategory { PHOTO, VIDEO, SCREENSHOT, DOCUMENT, RECEIPT, SCAN }
 
 data class NormalizedRect(
     val left: Float,
@@ -53,7 +53,51 @@ data class MediaItem(
     val height: Int,
     val textPreview: String?,
     val entityFlags: Int = 0,
-)
+    val fileName: String = "",
+    val labels: String = "",
+    val embedding: ByteArray? = null,
+    val confidence: Float = 0f,
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+        other as MediaItem
+        if (id != other.id) return false
+        if (uri != other.uri) return false
+        if (origin != other.origin) return false
+        if (category != other.category) return false
+        if (takenAtMs != other.takenAtMs) return false
+        if (width != other.width) return false
+        if (height != other.height) return false
+        if (textPreview != other.textPreview) return false
+        if (entityFlags != other.entityFlags) return false
+        if (fileName != other.fileName) return false
+        if (labels != other.labels) return false
+        if (embedding != null) {
+            if (other.embedding == null) return false
+            if (!embedding.contentEquals(other.embedding)) return false
+        } else if (other.embedding != null) return false
+        if (confidence != other.confidence) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = id.hashCode()
+        result = 31 * result + uri.hashCode()
+        result = 31 * result + origin.hashCode()
+        result = 31 * result + category.hashCode()
+        result = 31 * result + takenAtMs.hashCode()
+        result = 31 * result + width
+        result = 31 * result + height
+        result = 31 * result + (textPreview?.hashCode() ?: 0)
+        result = 31 * result + entityFlags
+        result = 31 * result + fileName.hashCode()
+        result = 31 * result + labels.hashCode()
+        result = 31 * result + (embedding?.contentHashCode() ?: 0)
+        result = 31 * result + confidence.hashCode()
+        return result
+    }
+}
 
 enum class CollectionKind(val id: String) {
     ALL("all"),
@@ -73,13 +117,24 @@ data class CollectionSummary(
     val coverUri: String?,
 )
 
+data class StorageAlbum(
+    val id: String,
+    val name: String,
+    val itemCount: Int,
+    val videoCount: Int,
+    val coverUri: String?,
+)
+
 enum class SearchFilter { ALL, SCREENSHOTS, RECEIPTS, DOCUMENTS, SCANS, HAS_PHONE_OR_URL }
+
+enum class SearchMode { EXACT, PREFIX, CONTAINS, FUZZY }
 
 data class SearchHit(
     val item: MediaItem,
     val snippet: String,
     val matchedTerms: List<String>,
     val entities: List<SmartEntity> = emptyList(),
+    val relevanceScore: Float = 0f,
 )
 
 enum class IndexState { IDLE, RUNNING, PAUSED_BATTERY, NEEDS_ACCESS }

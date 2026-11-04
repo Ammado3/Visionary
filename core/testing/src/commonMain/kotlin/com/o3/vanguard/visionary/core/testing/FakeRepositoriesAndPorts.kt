@@ -58,7 +58,7 @@ class FakeMediaRepository(private val controls: FakeControls) : MediaRepository 
 class FakeSearchRepository : SearchRepository {
     private val recentSearches = MutableStateFlow(listOf("wifi password", "receipt total", "invoice"))
 
-    override fun search(query: String, filter: SearchFilter): Flow<List<SearchHit>> =
+    override fun search(query: String, filter: SearchFilter, mode: SearchMode): Flow<List<SearchHit>> =
         flowOf(
             FakeData.media
                 .filter { it.textPreview?.contains(query, ignoreCase = true) == true || query.isBlank() }

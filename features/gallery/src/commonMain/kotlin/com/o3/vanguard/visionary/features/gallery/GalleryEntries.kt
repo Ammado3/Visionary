@@ -6,6 +6,14 @@ import com.o3.vanguard.visionary.core.navigation.AppRoute
 import com.o3.vanguard.visionary.core.navigation.Navigator
 
 fun EntryProviderScope<NavKey>.galleryEntries(navigator: Navigator) {
+    entry<AppRoute.Albums> {
+        AlbumsRoute(
+            onOpenAlbum = { navigator.navigate(AppRoute.Gallery(it.id)) },
+            onPhotos = { navigator.replaceTop(AppRoute.Home) },
+            onSearch = { navigator.replaceTop(AppRoute.Search()) },
+            onVault = { navigator.replaceTop(AppRoute.VaultLock) },
+        )
+    }
     entry<AppRoute.Gallery> { key ->
         GalleryRoute(
             kindId = key.collectionId,

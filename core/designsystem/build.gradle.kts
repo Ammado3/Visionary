@@ -21,7 +21,6 @@ kotlin {
             implementation(project(":core:common"))
             implementation(compose.material3)
             implementation(compose.materialIconsExtended)
-            implementation(libs.composeUiToolingPreview)
             implementation(libs.coil.compose)
 
             // Compose Multiplatform resources

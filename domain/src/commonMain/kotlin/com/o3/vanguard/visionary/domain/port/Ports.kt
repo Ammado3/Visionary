@@ -14,6 +14,10 @@ interface MediaSourceEngine {
     suspend fun queryAllLibraryIds(): AppResult<Set<Long>>
 }
 
+interface StorageAlbumSourceEngine {
+    suspend fun loadAlbums(): AppResult<List<StorageAlbum>>
+}
+
 interface MediaDeleteGateway {
     suspend fun requestDelete(uris: List<String>): DeleteConsentResult
 }
