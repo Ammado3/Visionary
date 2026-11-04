@@ -38,6 +38,7 @@ import com.o3.vanguard.visionary.features.onboarding.component.OnboardingHeader
 import com.o3.vanguard.visionary.features.onboarding.component.OnboardingProgress
 import com.o3.vanguard.visionary.features.onboarding.generated.resources.Background
 import com.o3.vanguard.visionary.features.onboarding.generated.resources.Res
+import com.o3.vanguard.visionary.features.onboarding.generated.resources.arrow
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import com.o3.vanguard.visionary.core.designsystem.generated.resources.Res as DsRes
@@ -137,7 +138,10 @@ fun OnboardingDescribePage(
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                 contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                ) {
                     Text(
                         stringResource(DsRes.string.get_started),
                         fontSize = 16.sp,
@@ -145,7 +149,10 @@ fun OnboardingDescribePage(
                         fontWeight = FontWeight.SemiBold,
                     )
                     Spacer(Modifier.width(8.dp))
-                    Text("\u2192", fontSize = 16.sp, lineHeight = 24.sp)
+                    Image(
+                        painter = painterResource(Res.drawable.arrow),
+                        contentDescription = null,
+                    )
                 }
             }
             Text(

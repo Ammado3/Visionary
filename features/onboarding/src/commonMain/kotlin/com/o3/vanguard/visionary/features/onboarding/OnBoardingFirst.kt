@@ -46,6 +46,7 @@ import com.o3.vanguard.visionary.core.designsystem.generated.resources.onboardin
 import com.o3.vanguard.visionary.core.designsystem.generated.resources.onboarding_content
 import com.o3.vanguard.visionary.core.designsystem.generated.resources.onboarding_title
 import com.o3.vanguard.visionary.core.designsystem.generated.resources.splash_title
+import com.o3.vanguard.visionary.features.onboarding.generated.resources.Collage
 
 @Preview(showBackground = true)
 @Composable
@@ -146,7 +147,6 @@ fun OnBoardingFirst(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("\uD83D\uDD12", color = colors.regularText, fontSize = 13.sp, lineHeight = 20.sp)
             Spacer(Modifier.width(6.dp))
             Text(
                 stringResource(DsRes.string.onboarding_bottom),
@@ -165,7 +165,7 @@ private fun OnboardingPhotoCollage(modifier: Modifier = Modifier) {
     ) {
         if (maxWidth > 0.dp && maxHeight > 0.dp) {
             Image(
-                painter = painterResource(Res.drawable.Search_illustration),
+                painter = painterResource(Res.drawable.Collage),
                 contentDescription = null,
                 contentScale = ContentScale.FillBounds,
                 modifier = Modifier.fillMaxSize(),
