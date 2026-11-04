@@ -29,6 +29,7 @@ kotlin {
             implementation(project(":features:settings"))
 
             implementation(compose.material3)
+            implementation(compose.components.resources)
 
             implementation(libs.koin.core)
             implementation(libs.koin.compose)

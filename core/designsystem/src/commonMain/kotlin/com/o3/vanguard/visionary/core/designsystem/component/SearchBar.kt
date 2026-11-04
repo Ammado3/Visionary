@@ -32,6 +32,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.painterResource
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.Res
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.ai
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.mic
 
 @Composable
 fun VisionarySearchBar(
@@ -64,7 +68,7 @@ fun VisionarySearchBar(
         ) {
             IconButton(onClick = onAiClick) {
                 Icon(
-                    imageVector = Icons.Default.AutoAwesome,
+                    painter = painterResource(Res.drawable.ai),
                     contentDescription = "AI",
                     modifier = Modifier.size(24.dp),
                     tint = Color(0xFF007847)
@@ -103,10 +107,9 @@ fun VisionarySearchBar(
 
             IconButton(onClick = onMicClick) {
                 Icon(
-                    imageVector = Icons.Default.Mic,
+                    painter = painterResource(Res.drawable.mic),
                     contentDescription = "Microphone",
                     modifier = Modifier.size(24.dp),
-                    tint = Color(0xFF007847)
                 )
             }
         }

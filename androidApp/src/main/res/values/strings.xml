@@ -9,9 +9,13 @@
     <string name="next">Next</string>
     <string name="wifi_password">Wi-Fi password</string>
     <string name="found">Text found inside your photos</string>
-    <string name="onboardingScreen_title">Search beyond file names</string>
+    <string name="onboardingScreen_title">Search beyond\nfile names</string>
     <string name="onboardingScreen_content">Find images and files by searching the text inside your images.</string>
     <string name="onboardingScren_bottom">Search happens on this device where supported</string>
+    <string name="ai_badge">AI</string>
+    <string name="match_password">Password</string>
+    <string name="match_network">Network\nname</string>
+    <string name="match_wifi">Wi-Fi</string>
     <string name="dog_playig">Dog playing in the park</string>
     <string name="onboarding_heading">Just describe what you remember.</string>
     <string name="search_your_file">Search your files based on categories what can best describe.</string>

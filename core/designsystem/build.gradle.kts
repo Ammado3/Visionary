@@ -1,11 +1,19 @@
-
 plugins {
     id("visionary.kmp.compose")
+}
+
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "com.o3.vanguard.visionary.core.designsystem.generated.resources"
+
 }
 
 kotlin {
     android {
         namespace = "com.o3.vanguard.visionary.core.designsystem"
+        androidResources {
+            enable = true
+        }
     }
 
     sourceSets {
