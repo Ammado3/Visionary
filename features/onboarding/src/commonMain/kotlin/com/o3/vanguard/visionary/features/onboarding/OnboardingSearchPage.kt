@@ -163,6 +163,7 @@ private fun SearchIllustration(modifier: Modifier = Modifier) {
     ) {
         if (maxWidth > 0.dp && maxHeight > 0.dp) {
             Image(
+                
                 painter = painterResource(Res.drawable.Search_illustration),
                 contentDescription = null,
                 contentScale = ContentScale.FillBounds,
