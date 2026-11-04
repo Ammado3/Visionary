@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,6 +40,8 @@ import androidx.compose.ui.unit.sp
 import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import visionary.composeapp.generated.resources.Res
+import visionary.composeapp.generated.resources.ic_ai_search
 
 internal const val SPLASH_DURATION_MS = 3_000L
 
@@ -179,17 +182,13 @@ fun SplashScreen(
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(VisionaryColors.colorF4FDF7)
+        modifier = Modifier.fillMaxSize().background(VisionaryColors.colorF4FDF7)
             .padding(bottom = 30.dp)
     ) {
 
         // Main Splash Content
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
+            modifier = Modifier.fillMaxWidth().weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -224,87 +223,60 @@ fun SplashScreen(
 
         // Loading Animation
         Box(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().systemBarsPadding().padding(bottom = 30.dp),
             contentAlignment = Alignment.BottomCenter
         ) {
             LoadingDots(
-                dotCount = 3,
-                dotSize = 8.dp,
-                activeColor = VisionaryColors.color007847
+                dotCount = 3, dotSize = 8.dp, activeColor = VisionaryColors.color007847
             )
         }
     }
 }
 
 @Composable
-private fun LoadingDots(
+fun LoadingDots(
     modifier: Modifier = Modifier,
     dotCount: Int = 3,
-    dotSize: Dp = 8.dp,
+    dotSize: Dp = 7.dp,
     activeColor: Color = VisionaryColors.color007847,
     bounceHeight: Dp = 6.dp,
     dotAnimationDuration: Int = 400,
     delayBetweenDots: Int = 120,
     pauseAfterCycle: Int = 600
 ) {
-
     val offsets = remember {
-        List(dotCount) {
-            Animatable(0.dp, Dp.VectorConverter)
-        }
+        List(dotCount) { Animatable(0.dp, Dp.VectorConverter) }
     }
-
     val alphas = remember {
-        List(dotCount) {
-            Animatable(0.4f)
-        }
+        List(dotCount) { Animatable(0.4f) }
     }
 
-    LaunchedEffect(dotCount) {
-
+    LaunchedEffect(Unit) {
         while (true) {
-
-            for (index in 0 until dotCount) {
-
+            for (i in 0 until dotCount) {
                 launch {
-                    offsets[index].animateTo(
+                    offsets[i].animateTo(
                         targetValue = -bounceHeight,
-                        animationSpec = tween(
-                            durationMillis = dotAnimationDuration / 2,
-                            easing = EaseInOutCubic
-                        )
+                        animationSpec = tween(dotAnimationDuration / 2, easing = EaseInOutCubic)
                     )
-
-                    offsets[index].animateTo(
+                    offsets[i].animateTo(
                         targetValue = 0.dp,
-                        animationSpec = tween(
-                            durationMillis = dotAnimationDuration / 2,
-                            easing = EaseInOutCubic
-                        )
+                        animationSpec = tween(dotAnimationDuration / 2, easing = EaseInOutCubic)
                     )
                 }
 
                 launch {
-                    alphas[index].animateTo(
+                    alphas[i].animateTo(
                         targetValue = 1f,
-                        animationSpec = tween(
-                            durationMillis = dotAnimationDuration / 2,
-                            easing = EaseInOutCubic
-                        )
+                        animationSpec = tween(dotAnimationDuration / 2, easing = EaseInOutCubic)
                     )
-
-                    alphas[index].animateTo(
+                    alphas[i].animateTo(
                         targetValue = 0.4f,
-                        animationSpec = tween(
-                            durationMillis = dotAnimationDuration / 2,
-                            easing = EaseInOutCubic
-                        )
+                        animationSpec = tween(dotAnimationDuration / 2, easing = EaseInOutCubic)
                     )
                 }
-
                 delay(delayBetweenDots.toLong())
             }
-
             delay(pauseAfterCycle.toLong())
         }
     }
@@ -314,18 +286,11 @@ private fun LoadingDots(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-
-        repeat(dotCount) { index ->
-
+        Res.drawable.ic_ai_search
+        for (i in 0 until dotCount) {
             Box(
-                modifier = Modifier
-                    .size(dotSize)
-                    .offset(y = offsets[index].value)
-                    .alpha(alphas[index].value)
-                    .background(
-                        color = activeColor,
-                        shape = CircleShape
-                    )
+                modifier = Modifier.size(dotSize).offset(y = offsets[i].value)
+                    .alpha(alphas[i].value).background(activeColor, shape = CircleShape)
             )
         }
     }
