@@ -83,6 +83,7 @@ actual fun CameraAirGestureOverlay(
 
     var isExpanded by remember { mutableStateOf(true) }
     var previewView by remember { mutableStateOf<PreviewView?>(null) }
+    var overlayView by remember { mutableStateOf<GestureOverlayView?>(null) }
     var output by remember { mutableStateOf(AirGestureEngine.Output(AirGestureEngine.Phase.NoHand, 0f)) }
 
     val onProgress by rememberUpdatedState(onGestureProgress)
@@ -91,9 +92,9 @@ actual fun CameraAirGestureOverlay(
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
     val executor = remember { Executors.newSingleThreadExecutor() }
     val engine = remember(targetGesture) { AirGestureEngine(targetGesture) }
+
     val analyzer = remember(engine) {
-        // Engine is only touched from MediaPipe's serial result thread; UI state is posted to main.
-        HandLandmarkerAnalyzer(
+        GestureRecognizerAnalyzer(
             context = context,
             onUnavailable = {
                 mainHandler.post {
@@ -104,12 +105,31 @@ actual fun CameraAirGestureOverlay(
                     ).show()
                 }
             },
-            onFrame = { frame ->
-                val out = engine.onFrame(frame, android.os.SystemClock.uptimeMillis())
+            onFrame = { gestureFrame ->
+                val handFrame = gestureFrame?.let { gf ->
+                    val points = gf.landmarks.map { HandPoint(it.x(), it.y(), it.z()) }
+                    val openness = HandOpenness.fromWorld(points) ?: 0.5f
+                    val size = HandOpenness.sizeOf(points)
+                    HandFrame(openness, size)
+                }
+                val out = engine.onFrame(handFrame, android.os.SystemClock.uptimeMillis())
                 mainHandler.post {
                     output = out
                     onProgress(out.progress)
                     if (out.committed) onCommitted()
+                    val ov = overlayView
+                    if (ov != null) {
+                        if (gestureFrame != null) {
+                            ov.setLandmarks(
+                                listOf(gestureFrame.landmarks),
+                                gestureFrame.imageWidth,
+                                gestureFrame.imageHeight,
+                                gestureFrame.rotation,
+                            )
+                        } else {
+                            ov.setLandmarks(emptyList(), 0, 0, 0)
+                        }
+                    }
                 }
             },
         )
@@ -123,7 +143,6 @@ actual fun CameraAirGestureOverlay(
     }
     DisposableEffect(Unit) { onDispose { executor.shutdown() } }
 
-    // Camera binding is independent from the preview: collapsing the panel keeps detection running.
     DisposableEffect(hasCameraPermission, previewView, analyzer) {
         if (!hasCameraPermission) return@DisposableEffect onDispose { }
         val future = ProcessCameraProvider.getInstance(context)
@@ -182,6 +201,13 @@ actual fun CameraAirGestureOverlay(
                                     .also { previewView = it }
                             },
                             onRelease = { previewView = null },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                        AndroidView(
+                            factory = { ctx ->
+                                GestureOverlayView(ctx).also { overlayView = it }
+                            },
+                            onRelease = { overlayView = null },
                             modifier = Modifier.fillMaxSize(),
                         )
                         LinearProgressIndicator(
