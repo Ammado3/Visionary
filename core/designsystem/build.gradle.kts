@@ -25,6 +25,7 @@ kotlin {
 
             // Compose Multiplatform resources
             implementation(compose.components.resources)
+            implementation(libs.composeUiToolingPreview)
         }
 
         androidMain.dependencies {
