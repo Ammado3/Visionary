@@ -10,9 +10,6 @@ kotlin {
         androidResources {
             enable = true
         }
-        androidResources {
-            enable = true
-        }
     }
 
     sourceSets {
@@ -23,14 +20,6 @@ kotlin {
 
         }
     }
-}
-
-compose.resources {
-    packageOfResClass = "com.o3.vanguard.visionary.features.vault.generated.resources"
-}
-
-dependencies {
-    commonMainImplementation(compose.components.resources)
 }
 
 compose.resources {
