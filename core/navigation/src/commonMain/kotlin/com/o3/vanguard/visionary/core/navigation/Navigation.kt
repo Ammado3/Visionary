@@ -20,6 +20,9 @@ sealed interface AppRoute : NavKey {
     @Serializable data class VaultViewer(val itemId: String) : AppRoute
     @Serializable data object Settings : AppRoute
     @Serializable data object IndexHealth : AppRoute
+
+@Serializable
+data object BiometricSetup : AppRoute
 }
 
 val AppNavSavedStateConfig = SavedStateConfiguration {
@@ -37,6 +40,7 @@ val AppNavSavedStateConfig = SavedStateConfiguration {
             subclass(AppRoute.VaultViewer::class, AppRoute.VaultViewer.serializer())
             subclass(AppRoute.Settings::class, AppRoute.Settings.serializer())
             subclass(AppRoute.IndexHealth::class, AppRoute.IndexHealth.serializer())
+            subclass(AppRoute.BiometricSetup::class, AppRoute.BiometricSetup.serializer())
         }
     }
 }

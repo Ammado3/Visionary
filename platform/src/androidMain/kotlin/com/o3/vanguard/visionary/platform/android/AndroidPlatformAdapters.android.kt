@@ -1,22 +1,33 @@
 package com.o3.vanguard.visionary.platform.android
 
-import android.content.Context
 import android.Manifest
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
-import com.o3.vanguard.visionary.core.common.AppResult
-import com.o3.vanguard.visionary.domain.model.*
-import com.o3.vanguard.visionary.domain.port.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
+import android.provider.Settings
+import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabeling
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.o3.vanguard.visionary.core.common.AppError
+import com.o3.vanguard.visionary.core.common.AppResult
+import com.o3.vanguard.visionary.domain.model.*
+import com.o3.vanguard.visionary.domain.port.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
+import kotlin.coroutines.resume
 
 class AndroidPermissionGateway(private val context: Context) : PermissionGateway {
     private val access = MutableStateFlow(currentAccess())
@@ -229,7 +240,84 @@ class MlKitDocumentScannerAdapter(private val context: Context, private val dirs
 }
 
 class AndroidBiometricAuthenticator(private val context: Context) : BiometricAuthenticator {
-    override suspend fun authenticate(): AppResult<Unit> = AppResult.Ok(Unit)
+    companion object {
+        var currentActivityProvider: (() -> AppCompatActivity?)? = null
+    }
+
+    override suspend fun authenticate(): AppResult<Unit> = suspendCancellableCoroutine { continuation ->
+        val activity = currentActivityProvider?.invoke() ?: (context as? FragmentActivity)
+        if (activity == null) {
+            continuation.resume(AppResult.Err(AppError.Io("No active FragmentActivity found")))
+            return@suspendCancellableCoroutine
+        }
+
+        val biometricManager = BiometricManager.from(activity)
+        val canAuthenticate = biometricManager.canAuthenticate(
+            BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
+        )
+
+        if (canAuthenticate == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
+            try {
+                val intent = Intent(Settings.ACTION_SECURITY_SETTINGS).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                context.startActivity(intent)
+                continuation.resume(AppResult.Err(AppError.Io("No security set up, opening settings")))
+            } catch (e: Exception) {
+                continuation.resume(AppResult.Err(AppError.Io(e.message ?: "Failed to open settings")))
+            }
+            return@suspendCancellableCoroutine
+        }
+
+        if (canAuthenticate != BiometricManager.BIOMETRIC_SUCCESS) {
+            continuation.resume(AppResult.Err(AppError.Io("Biometric not available")))
+            return@suspendCancellableCoroutine
+        }
+
+        val executor = ContextCompat.getMainExecutor(activity)
+        val biometricPrompt = BiometricPrompt(
+            activity,
+            executor,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    super.onAuthenticationSucceeded(result)
+                    if (continuation.isActive) {
+                        continuation.resume(AppResult.Ok(Unit))
+                    }
+                }
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    super.onAuthenticationError(errorCode, errString)
+                    if (continuation.isActive) {
+                        continuation.resume(AppResult.Err(AppError.Io(errString.toString())))
+                    }
+                }
+
+                override fun onAuthenticationFailed() {
+                    super.onAuthenticationFailed()
+                    if (continuation.isActive) {
+                        continuation.resume(AppResult.Err(AppError.Io("Authentication failed")))
+                    }
+                }
+            }
+        )
+
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle("Unlock Vault")
+            .setSubtitle("Confirm your biometric credential to unlock Private Vault")
+            .setNegativeButtonText("Cancel")
+            .build()
+
+        activity.runOnUiThread {
+            try {
+                biometricPrompt.authenticate(promptInfo)
+            } catch (e: Exception) {
+                if (continuation.isActive) {
+                    continuation.resume(AppResult.Err(AppError.Io(e.message ?: "Authentication error")))
+                }
+            }
+        }
+    }
 }
 
 class AndroidVaultCryptoEngine(private val context: Context) : VaultCryptoEngine {

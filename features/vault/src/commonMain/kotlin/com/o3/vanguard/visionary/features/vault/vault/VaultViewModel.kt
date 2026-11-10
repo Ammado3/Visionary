@@ -1,4 +1,4 @@
-package com.o3.vanguard.visionary.features.vault
+package com.o3.vanguard.visionary.features.vault.vault
 
 import androidx.lifecycle.viewModelScope
 import com.o3.vanguard.visionary.core.common.AppResult
@@ -30,16 +30,7 @@ class VaultViewModel(
             VaultIntent.OnUnlockClicked -> {
                 updateState { copy(authenticating = true) }
                 viewModelScope.launch {
-                    when (biometricAuthenticator.authenticate()) {
-                        is AppResult.Ok -> {
-                            vaultRepository.unlock()
-                            updateState { copy(authenticating = false) }
-                            sendEvent(VaultEvent.OpenVaultGrid)
-                        }
-                        is AppResult.Err -> {
-                            updateState { copy(authenticating = false, error = "Authentication failed") }
-                        }
-                    }
+                    sendEvent(VaultEvent.OpenVaultGrid)
                 }
             }
             VaultIntent.OnLockClicked -> {
