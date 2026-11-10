@@ -3,6 +3,7 @@ package com.o3.vanguard.visionary.features.gallery
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -142,8 +143,32 @@ fun ViewerScreen(
 
     var showOcrTextSheet by remember(item.id) { mutableStateOf(false) }
     var showDeleteConfirmDialog by remember(item.id) { mutableStateOf(false) }
+    var showMoveToValutDialog by remember(item.id) { mutableStateOf(false) }
     var showOptionsSheet by remember(item.id) { mutableStateOf(false) }
     val detailTextPreview = item.textPreview
+
+    if (state.isProcessing) {
+        Box(
+            modifier = Modifier.fillMaxSize().background(VisionaryColors.colorFF000000.copy(alpha = 0.6f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                CircularProgressIndicator(color = VisionaryColors.color007847)
+                Text("Moving to Vault...", color = VisionaryColors.colorFFFFFFFF, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+
+    if (state.errorMessage != null) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Action Failed") },
+            text = { Text(state.errorMessage) },
+            confirmButton = {
+                TextButton(onClick = { onIntent(ViewerIntent.OnBackClicked) }) { Text("OK") }
+            }
+        )
+    }
 
     Dialog(
         onDismissRequest = { onIntent(ViewerIntent.OnBackClicked) },
@@ -267,7 +292,7 @@ fun ViewerScreen(
                     ) {
                         FullscreenViewerAction(Icons.Default.Share, "Share") { }
                         FullscreenViewerAction(Icons.Default.Edit, "Edit") { }
-                        FullscreenViewerAction(Icons.Default.Add, "Add to") { }
+                        FullscreenViewerAction(Icons.Default.Add, "Add to") { showMoveToValutDialog = true }
                         FullscreenViewerAction(Icons.Default.Delete, "Bin") { showDeleteConfirmDialog = true }
                     }
                 }
@@ -291,9 +316,12 @@ fun ViewerScreen(
                                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                             ) { Text("Edit", modifier = Modifier.fillMaxWidth()) }
                             TextButton(
-                                onClick = { showOptionsSheet = false },
+                                onClick = { showOptionsSheet = false
+                                          showMoveToValutDialog = true
+                                          },
                                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                            ) { Text("Add to", modifier = Modifier.fillMaxWidth()) }
+                            )
+                            { Text("Add to", modifier = Modifier.fillMaxWidth()) }
                             TextButton(
                                 onClick = {
                                     showOptionsSheet = false
@@ -321,6 +349,24 @@ fun ViewerScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmDialog = false }) { Text("Cancel") }
+            },
+        )
+    }
+
+
+    if(showMoveToValutDialog){
+        AlertDialog(
+            onDismissRequest = { showMoveToValutDialog = false },
+            title = { Text("Valut") },
+            text = { Text("Are you sure you want to move this image to favorites?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showMoveToValutDialog = false
+                    onIntent(ViewerIntent.OnMoveToVaultClicked)
+                }) { Text("Favorites", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMoveToValutDialog = false }) { Text("Cancel") }
             },
         )
     }
