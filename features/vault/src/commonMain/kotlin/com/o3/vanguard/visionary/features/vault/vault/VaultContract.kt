@@ -1,4 +1,4 @@
-package com.o3.vanguard.visionary.features.vault
+package com.o3.vanguard.visionary.features.vault.vault
 
 import androidx.compose.runtime.Immutable
 import com.o3.vanguard.visionary.core.mvi.UiEvent

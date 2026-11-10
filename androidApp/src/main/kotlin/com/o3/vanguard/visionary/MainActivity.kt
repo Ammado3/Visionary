@@ -4,22 +4,25 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.ui.graphics.toArgb
 import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
 import androidx.lifecycle.lifecycleScope
 import com.o3.vanguard.visionary.domain.repository.IndexRepository
 import kotlinx.coroutines.launch
+import com.o3.vanguard.visionary.platform.android.AndroidBiometricAuthenticator
+import androidx.fragment.app.FragmentActivity
 import org.koin.android.ext.android.inject
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity(){
     private val indexRepository: IndexRepository by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AndroidBiometricAuthenticator.currentActivityProvider = { this }
         val systemBarColor = VisionaryColors.colorF4FDF7.toArgb()
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.light(systemBarColor, systemBarColor),

@@ -1,4 +1,4 @@
-package com.o3.vanguard.visionary.features.vault
+package com.o3.vanguard.visionary.features.vault.vault
 
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
