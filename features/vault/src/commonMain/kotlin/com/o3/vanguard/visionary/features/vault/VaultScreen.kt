@@ -19,6 +19,10 @@ import com.o3.vanguard.visionary.core.mvi.CollectEvents
 import com.o3.vanguard.visionary.core.designsystem.AppBottomNavigation
 import com.o3.vanguard.visionary.core.designsystem.AppTab
 import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
+import com.o3.vanguard.visionary.features.vault.vault.VaultEvent
+import com.o3.vanguard.visionary.features.vault.vault.VaultIntent
+import com.o3.vanguard.visionary.features.vault.vault.VaultState
+import com.o3.vanguard.visionary.features.vault.vault.VaultViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable

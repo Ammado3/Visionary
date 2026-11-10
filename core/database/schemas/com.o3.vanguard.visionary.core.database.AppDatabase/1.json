@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "db57337ebba22827175902738aa81c4f",
+    "identityHash": "42bdff5f0db6685f2046e09d904b1ba5",
     "entities": [
       {
         "tableName": "media_item",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `ref` TEXT NOT NULL, `origin` TEXT NOT NULL, `category` TEXT NOT NULL, `sortKey` INTEGER NOT NULL, `width` INTEGER NOT NULL, `height` INTEGER NOT NULL, `sizeBytes` INTEGER NOT NULL, `isScreenshot` INTEGER NOT NULL, `entityFlags` INTEGER NOT NULL, `fingerprint` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `ref` TEXT NOT NULL, `origin` TEXT NOT NULL, `category` TEXT NOT NULL, `sortKey` INTEGER NOT NULL, `mime` TEXT, `width` INTEGER NOT NULL, `height` INTEGER NOT NULL, `sizeBytes` INTEGER NOT NULL, `isScreenshot` INTEGER NOT NULL, `entityFlags` INTEGER NOT NULL, `fingerprint` TEXT NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -37,6 +37,11 @@
             "columnName": "sortKey",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "mime",
+            "columnName": "mime",
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "width",
@@ -369,7 +374,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'db57337ebba22827175902738aa81c4f')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '42bdff5f0db6685f2046e09d904b1ba5')"
     ]
   }
 }

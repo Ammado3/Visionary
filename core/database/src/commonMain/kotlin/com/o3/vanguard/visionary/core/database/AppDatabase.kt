@@ -16,7 +16,7 @@ import com.o3.vanguard.visionary.core.database.entity.*
         RecentSearchEntity::class,
         SyncCheckpointEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 @ConstructedBy(AppDatabaseConstructor::class)

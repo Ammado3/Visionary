@@ -12,7 +12,8 @@ import com.o3.vanguard.visionary.features.onboarding.onboardingModule
 import com.o3.vanguard.visionary.features.scanner.scannerModule
 import com.o3.vanguard.visionary.features.search.searchModule
 import com.o3.vanguard.visionary.features.settings.settingsModule
-import com.o3.vanguard.visionary.features.vault.vaultModule
+import com.o3.vanguard.visionary.features.vault.biometricsetup.di.biometric
+import com.o3.vanguard.visionary.features.vault.vault.vaultModule
 import com.o3.vanguard.visionary.platform.di.platformModule
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -24,6 +25,7 @@ val featureModules = listOf(
     searchModule,
     scannerModule,
     vaultModule,
+    biometric,
     settingsModule,
     com.o3.vanguard.visionary.feature.teleport.di.teleportModule,
 )

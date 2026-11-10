@@ -1,6 +1,11 @@
 package com.o3.vanguard.visionary.data
 
 import com.o3.vanguard.visionary.core.common.AppResult
+import com.o3.vanguard.visionary.core.common.AppError
+import com.o3.vanguard.visionary.core.common.currentTimeMillis
+import com.o3.vanguard.visionary.core.database.entity.VaultItemEntity
+import com.o3.vanguard.visionary.domain.port.MediaDeleteGateway
+import com.o3.vanguard.visionary.domain.port.VaultCryptoEngine
 import com.o3.vanguard.visionary.core.common.VectorSearchEngine
 import com.o3.vanguard.visionary.core.common.toByteArray
 import com.o3.vanguard.visionary.core.common.toFloatArray
@@ -349,7 +354,11 @@ class RoomSettingsRepository : SettingsRepository {
     }
 }
 
-class RoomVaultRepository(private val db: AppDatabase) : VaultRepository {
+class RoomVaultRepository(
+    private val db: AppDatabase,
+    private val mediaDeleteGateway: MediaDeleteGateway,
+    private val vaultCryptoEngine: VaultCryptoEngine
+) : VaultRepository {
     override val isUnlocked = MutableStateFlow(false)
 
     override fun observeItems(): Flow<List<VaultItem>> =
@@ -366,11 +375,44 @@ class RoomVaultRepository(private val db: AppDatabase) : VaultRepository {
         isUnlocked.value = false
     }
 
-    override suspend fun moveToVault(id: MediaId): AppResult<Unit> = AppResult.Ok(Unit)
+    override suspend fun moveToVault(id: MediaId): AppResult<Unit> {
+        val media = db.mediaDao().getById(id.value)
+            ?: return AppResult.Err(AppError.Io("Media item not found"))
+
+        val enc = vaultCryptoEngine.encryptToVault(media.ref, media.id.toString())
+        if (enc is AppResult.Err) return enc
+
+        val vaultEntity = VaultItemEntity(
+            id = media.id.toString(),
+            createdAtMs = currentTimeMillis(),
+            mime = media.mime ?: "image/*",
+            sizeBytes = media.sizeBytes,
+            width = media.width,
+            height = media.height,
+            originalTakenAtMs = media.sortKey
+        )
+        db.vaultDao().upsertVaultItem(vaultEntity)
+
+        val del = mediaDeleteGateway.requestDelete(listOf(media.ref))
+        if (del !is DeleteConsentResult.Deleted) {
+            // rollback
+            db.vaultDao().deleteVaultItem(vaultEntity.id)
+            vaultCryptoEngine.deleteVaultBlobs(media.id.toString())
+            val reason = (del as? DeleteConsentResult.NotPossible)?.reason ?: "Deletion declined"
+            return AppResult.Err(AppError.Io(reason))
+        }
+
+        db.mediaDao().delete(listOf(media.id))
+        db.mediaDao().deleteText(media.id)
+        return AppResult.Ok(Unit)
+    }
 
     override suspend fun restore(itemId: String): AppResult<Unit> = AppResult.Ok(Unit)
 
-    override suspend fun delete(itemId: String): AppResult<Unit> = AppResult.Ok(Unit)
+    override suspend fun delete(itemId: String): AppResult<Unit> {
+        db.vaultDao().deleteVaultItem(itemId)
+        return AppResult.Ok(Unit)
+    }
 }
 
 internal fun MediaEntity.toDomain(textEntity: MediaTextEntity? = null): MediaItem {
