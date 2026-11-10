@@ -1,13 +1,22 @@
 package com.o3.vanguard.visionary.platform.android
 
 import android.Manifest
+import android.app.Activity
+import android.app.RecoverableSecurityException
+import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
+import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.provider.Settings
+import com.o3.vanguard.visionary.platform.AppDirectories
+import java.io.File
+import java.io.FileOutputStream
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.launch
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricManager
@@ -23,6 +32,8 @@ import com.o3.vanguard.visionary.core.common.AppError
 import com.o3.vanguard.visionary.core.common.AppResult
 import com.o3.vanguard.visionary.domain.model.*
 import com.o3.vanguard.visionary.domain.port.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -193,20 +204,202 @@ class AndroidStorageAlbumSource(private val context: Context) : StorageAlbumSour
 }
 
 class AndroidMediaDeleteGateway(private val context: Context) : MediaDeleteGateway {
-    override suspend fun requestDelete(uris: List<String>): DeleteConsentResult = try {
-        val deletedCount = uris.count { uri ->
-            context.contentResolver.delete(Uri.parse(uri), null, null) > 0
+    companion object {
+        var currentLauncher: ((IntentSender) -> Unit)? = null
+        var pendingDeleteContinuation: ((DeleteConsentResult) -> Unit)? = null
+
+        fun handleActivityResult(resultCode: Int) {
+            if (resultCode == Activity.RESULT_OK) {
+                pendingDeleteContinuation?.invoke(DeleteConsentResult.Deleted)
+            } else {
+                pendingDeleteContinuation?.invoke(DeleteConsentResult.DeclinedByUser)
+            }
+            pendingDeleteContinuation = null
         }
-        if (deletedCount == uris.size) {
-            DeleteConsentResult.Deleted
-        } else {
-            DeleteConsentResult.NotPossible("Some media could not be deleted")
-        }
-    } catch (error: SecurityException) {
-        DeleteConsentResult.NotPossible("Delete permission is required")
-    } catch (error: Throwable) {
-        DeleteConsentResult.NotPossible(error.message ?: "Media could not be deleted")
     }
+
+    override suspend fun requestDelete(uris: List<String>): DeleteConsentResult =
+        suspendCancellableCoroutine { continuation ->
+            continuation.invokeOnCancellation { pendingDeleteContinuation = null }
+
+            val mediaUris = mutableListOf<Uri>()
+            var ok = true
+
+            for (s in uris) {
+                android.util.Log.d("DeleteGateway", "ref=$s")
+
+                val resolved = resolveMediaStoreUri(s)
+                if (resolved != null) {
+                    android.util.Log.d("DeleteGateway", "resolved=$resolved")
+                    mediaUris.add(resolved)
+                    continue
+                }
+
+                // MediaStore URI resolve nahi hui: purana fallback
+                val uri = Uri.parse(s)
+                when {
+                    uri.scheme == "file" || uri.scheme == null -> {
+                        val f = File(uri.path ?: s)
+                        if (f.exists() && !f.delete()) ok = false
+                    }
+                    else -> try {
+                        if (context.contentResolver.delete(uri, null, null) <= 0) ok = false
+                    } catch (e: Exception) {
+                        ok = false
+                    }
+                }
+            }
+
+            if (mediaUris.isEmpty()) {
+                if (continuation.isActive) continuation.resume(
+                    if (ok) DeleteConsentResult.Deleted
+                    else DeleteConsentResult.NotPossible("Could not delete file")
+                )
+                return@suspendCancellableCoroutine
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                requestSystemDelete(mediaUris, continuation)
+            } else {
+                try {
+                    var all = true
+                    for (u in mediaUris) {
+                        if (context.contentResolver.delete(u, null, null) <= 0) all = false
+                    }
+                    if (continuation.isActive) continuation.resume(
+                        if (all && ok) DeleteConsentResult.Deleted
+                        else DeleteConsentResult.NotPossible("Delete failed")
+                    )
+                } catch (e: SecurityException) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+                        e is RecoverableSecurityException
+                    ) {
+                        launchIntentSender(e.userAction.actionIntent.intentSender, continuation)
+                    } else if (continuation.isActive) {
+                        continuation.resume(
+                            DeleteConsentResult.NotPossible(e.message ?: "Permission denied")
+                        )
+                    }
+                }
+            }
+        }
+
+    private fun requestSystemDelete(uris: List<Uri>, continuation: CancellableContinuation<DeleteConsentResult>) {
+        val launcher = currentLauncher
+        if (launcher == null) {
+            continuation.resume(DeleteConsentResult.NotPossible("No delete launcher registered"))
+            return
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            try {
+                val pi = MediaStore.createDeleteRequest(context.contentResolver, uris)
+                pendingDeleteContinuation = { result -> continuation.resume(result) }
+                CoroutineScope(Dispatchers.Main).launch {
+                    launcher(pi.intentSender)
+                }
+            } catch (e: Exception) {
+                continuation.resume(DeleteConsentResult.NotPossible(e.message ?: "Delete request failed"))
+            }
+        } else {
+            continuation.resume(DeleteConsentResult.NotPossible("Delete permission required"))
+        }
+    }
+
+    private fun launchIntentSender(intentSender: IntentSender, continuation: CancellableContinuation<DeleteConsentResult>) {
+        val launcher = currentLauncher
+        if (launcher == null) {
+            continuation.resume(DeleteConsentResult.NotPossible("No delete launcher registered"))
+            return
+        }
+        try {
+            pendingDeleteContinuation = { result -> continuation.resume(result) }
+            CoroutineScope(Dispatchers.Main).launch {
+                launcher(intentSender)
+            }
+        } catch (e: Exception) {
+            continuation.resume(DeleteConsentResult.NotPossible(e.message ?: "Delete intent failed"))
+        }
+    }
+
+
+
+    private fun resolveMediaStoreUri(raw: String): Uri? {
+        val uri = Uri.parse(raw)
+
+        if (uri.scheme == "content" && uri.authority == MediaStore.AUTHORITY) {
+            val segs = uri.pathSegments // e.g. [external, file, 1000600112]
+            val id = uri.lastPathSegment?.toLongOrNull()
+
+            if (id != null && !segs.contains("picker")) {
+                // Already specific collection
+                if (segs.contains("images") || segs.contains("video") || segs.contains("audio")) {
+                    return uri
+                }
+                // Generic Files URI -> media_type dekh kar convert karo
+                if (segs.contains("file")) {
+                    context.contentResolver.query(
+                        uri,
+                        arrayOf(MediaStore.Files.FileColumns.MEDIA_TYPE),
+                        null, null, null
+                    )?.use { c ->
+                        if (c.moveToFirst()) {
+                            val base = when (c.getInt(0)) {
+                                MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE ->
+                                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                                MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO ->
+                                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+                                MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO ->
+                                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+                                else -> null
+                            }
+                            if (base != null) return ContentUris.withAppendedId(base, id)
+                        }
+                    }
+                    return null
+                }
+            }
+        }
+
+        // Documents URI aur file path wale cases pehle jaise rakho
+        if (uri.authority == "com.android.providers.media.documents") {
+            val docId = android.provider.DocumentsContract.getDocumentId(uri)
+            val parts = docId.split(":")
+            val id = parts.getOrNull(1)?.toLongOrNull()
+            if (id != null) {
+                val base = when (parts[0]) {
+                    "image" -> MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                    "video" -> MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+                    else -> return null
+                }
+                return ContentUris.withAppendedId(base, id)
+            }
+        }
+
+        val path = when (uri.scheme) {
+            "file" -> uri.path
+            null -> raw
+            else -> null
+        } ?: return null
+
+        for (collection in listOf(
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+        )) {
+            context.contentResolver.query(
+                collection,
+                arrayOf(MediaStore.MediaColumns._ID),
+                "${MediaStore.MediaColumns.DATA}=?",
+                arrayOf(path),
+                null
+            )?.use { c ->
+                if (c.moveToFirst()) return ContentUris.withAppendedId(collection, c.getLong(0))
+            }
+        }
+        return null
+    }
+
+
 }
 
 class MlKitOcrEngine(private val context: Context) : OcrEngine {
@@ -320,12 +513,37 @@ class AndroidBiometricAuthenticator(private val context: Context) : BiometricAut
     }
 }
 
-class AndroidVaultCryptoEngine(private val context: Context) : VaultCryptoEngine {
+class AndroidVaultCryptoEngine(private val context: Context, private val dirs: AppDirectories) : VaultCryptoEngine {
     override suspend fun unlockSession(): AppResult<Unit> = AppResult.Ok(Unit)
     override fun lockSession() {}
-    override suspend fun encryptToVault(sourceUri: String, itemId: String): AppResult<Unit> = AppResult.Ok(Unit)
-    override suspend fun decryptFromVault(itemId: String, thumbnail: Boolean): AppResult<ByteArray> = AppResult.Ok(ByteArray(0))
-    override suspend fun deleteVaultBlobs(itemId: String): AppResult<Unit> = AppResult.Ok(Unit)
+
+    override suspend fun encryptToVault(sourceUri: String, itemId: String): AppResult<Unit> = try {
+        val destFile = File(dirs.vaultBlobsDirPath(), itemId)
+        context.contentResolver.openInputStream(Uri.parse(sourceUri))?.use { input ->
+            FileOutputStream(destFile).use { output ->
+                input.copyTo(output)
+            }
+        } ?: return AppResult.Err(AppError.Io("Could not open input stream for $sourceUri"))
+        AppResult.Ok(Unit)
+    } catch (e: Exception) {
+        AppResult.Err(AppError.Io(e.message ?: "Failed to save to vault"))
+    }
+
+    override suspend fun decryptFromVault(itemId: String, thumbnail: Boolean): AppResult<ByteArray> = try {
+        val file = File(dirs.vaultBlobsDirPath(), itemId)
+        if (!file.exists()) return AppResult.Err(AppError.Io("Vault item not found"))
+        AppResult.Ok(file.readBytes())
+    } catch (e: Exception) {
+        AppResult.Err(AppError.Io(e.message ?: "Failed to read vault item"))
+    }
+
+    override suspend fun deleteVaultBlobs(itemId: String): AppResult<Unit> = try {
+        val file = File(dirs.vaultBlobsDirPath(), itemId)
+        if (file.exists()) file.delete()
+        AppResult.Ok(Unit)
+    } catch (e: Exception) {
+        AppResult.Err(AppError.Io(e.message ?: "Failed to delete vault blob"))
+    }
 }
 
 class AndroidSecureScreenPort(private val context: Context) : SecureScreenPort {

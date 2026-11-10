@@ -1,6 +1,8 @@
 package com.o3.vanguard.visionary.features.gallery
 
 import androidx.lifecycle.viewModelScope
+import com.o3.vanguard.visionary.core.common.AppError
+import com.o3.vanguard.visionary.core.common.AppResult
 import com.o3.vanguard.visionary.core.mvi.BaseMviViewModel
 import com.o3.vanguard.visionary.domain.model.CollectionKind
 import com.o3.vanguard.visionary.domain.model.DeleteConsentResult
@@ -55,16 +57,37 @@ class ViewerViewModel(
             ViewerIntent.OnBackClicked -> sendEvent(ViewerEvent.NavigateBack)
             ViewerIntent.OnMoveToVaultClicked -> {
                 val currentId = state.value.mediaId ?: return
+                updateState { copy(isProcessing = true, errorMessage = null) }
                 viewModelScope.launch {
-                    moveToVaultUseCase(currentId)
-                    sendEvent(ViewerEvent.NavigateBack)
+                    val result = moveToVaultUseCase(currentId)
+                    updateState { copy(isProcessing = false) }
+                    when (result) {
+                        is AppResult.Ok -> sendEvent(ViewerEvent.NavigateBack)
+                        is AppResult.Err -> {
+                            val msg = when (val err = result.error) {
+                                is AppError.Io -> err.kind
+                                is AppError.Crypto -> err.kind
+                                is AppError.Unsupported -> err.reason
+                                is AppError.Unknown -> err.kind
+                                AppError.PermissionDenied -> "Permission denied"
+                                AppError.NotFound -> "Not found"
+                                AppError.Cancelled -> "Cancelled"
+                            }
+                            updateState { copy(errorMessage = msg) }
+                        }
+                    }
                 }
             }
             ViewerIntent.OnDeleteClicked -> {
                 val currentItem = state.value.item ?: return
+                updateState { copy(isProcessing = true, errorMessage = null) }
                 viewModelScope.launch {
-                    if (deleteMediaUseCase(currentItem.uri) is DeleteConsentResult.Deleted) {
-                        sendEvent(ViewerEvent.NavigateBack)
+                    val deleteResult = deleteMediaUseCase(currentItem.uri)
+                    updateState { copy(isProcessing = false) }
+                    when (deleteResult) {
+                        is DeleteConsentResult.Deleted -> sendEvent(ViewerEvent.NavigateBack)
+                        is DeleteConsentResult.DeclinedByUser -> {}
+                        is DeleteConsentResult.NotPossible -> updateState { copy(errorMessage = deleteResult.reason) }
                     }
                 }
             }
