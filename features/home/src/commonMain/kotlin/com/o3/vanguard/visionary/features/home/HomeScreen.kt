@@ -57,11 +57,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.isUnspecified
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.o3.vanguard.visionary.core.mvi.CollectEvents
 import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
+import com.o3.vanguard.visionary.core.designsystem.AppBottomNavigation
+import com.o3.vanguard.visionary.core.designsystem.AppTab
 import com.o3.vanguard.visionary.domain.model.CollectionKind
 import com.o3.vanguard.visionary.domain.model.IndexProgress
 import com.o3.vanguard.visionary.domain.model.MediaId
@@ -153,13 +157,15 @@ fun HomeScreen(
                                     key = "header_${section.title}",
                                     span = { GridItemSpan(maxLineSpan) },
                                 ) {
+                                    val labelMedium = MaterialTheme.typography.labelMedium
+                                    val ls = labelMedium.letterSpacing
                                     Text(
                                         text = section.title.uppercase(),
                                         modifier = Modifier.padding(top = 12.dp, bottom = 8.dp),
-                                        style = MaterialTheme.typography.labelMedium,
+                                        style = labelMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = VisionaryColors.color496156,
-                                        letterSpacing = MaterialTheme.typography.labelMedium.letterSpacing * 1.4f,
+                                        letterSpacing = if (ls.isUnspecified) 0.sp else ls * 1.4f,
                                     )
                                 }
                                 items(section.items, key = { it.id.value }) { item ->
@@ -170,11 +176,16 @@ fun HomeScreen(
                     }
                 }
             }
-            HomeBottomNavigation(
-                onPhotos = { },
-                onAlbums = { onIntent(HomeIntent.OnAlbumsClicked) },
-                onSearch = { onIntent(HomeIntent.OnSearchClicked) },
-                onVault = { onIntent(HomeIntent.OnVaultClicked) },
+            AppBottomNavigation(
+                selected = AppTab.PHOTOS,
+                onSelected = { tab ->
+                    when (tab) {
+                        AppTab.PHOTOS -> {}
+                        AppTab.ALBUMS -> onIntent(HomeIntent.OnAlbumsClicked)
+                        AppTab.SEARCH -> onIntent(HomeIntent.OnSearchClicked)
+                        AppTab.VAULT -> onIntent(HomeIntent.OnVaultClicked)
+                    }
+                },
             )
         }
     }
@@ -388,74 +399,7 @@ private fun MediaTile(item: MediaItem, onIntent: (HomeIntent) -> Unit) {
     }
 }
 
-@Composable
-private fun HomeBottomNavigation(
-    onPhotos: () -> Unit,
-    onAlbums: () -> Unit,
-    onSearch: () -> Unit,
-    onVault: () -> Unit,
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = VisionaryColors.colorF4FDF7,
-        border = BorderStroke(1.dp, VisionaryColors.colorCEDED3),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-        ) {
-            NavigationItem("Photos", Icons.Default.PhotoLibrary, true, onPhotos)
-            NavigationItem("Albums", Icons.Default.Album, false, onAlbums)
-            NavigationItem("AI Search", Icons.Default.Search, false, onSearch)
-            NavigationItem("Vault", Icons.Default.Lock, false, onVault)
-        }
-    }
-}
 
-@Composable
-private fun RowScope.NavigationItem(
-    label: String,
-    icon: ImageVector,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .weight(1f)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick,
-            )
-            .padding(vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .height(28.dp)
-                .background(
-                    color = if (selected) VisionaryColors.color007847 else VisionaryColors.color00000000,
-                    shape = RoundedCornerShape(50),
-                )
-                .padding(horizontal = 18.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                modifier = Modifier.size(20.dp),
-                tint = if (selected) VisionaryColors.colorFFFFFFFF else VisionaryColors.color496156,
-            )
-        }
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-            color = if (selected) VisionaryColors.color007847 else VisionaryColors.color496156,
-        )
-    }
-}
 
 @Composable
 private fun EmptyHomeState() {

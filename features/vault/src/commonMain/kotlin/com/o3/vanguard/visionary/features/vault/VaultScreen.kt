@@ -13,12 +13,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.o3.vanguard.visionary.core.mvi.CollectEvents
 import com.o3.vanguard.visionary.core.designsystem.AppBottomNavigation
 import com.o3.vanguard.visionary.core.designsystem.AppTab
 import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
+import com.o3.vanguard.visionary.core.designsystem.component.PrimaryButton
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.Res
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.cancel
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.setup_vault
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.vault_content
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.vault_desc
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.vault_tetx
+import com.o3.vanguard.visionary.core.mvi.CollectEvents
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -62,13 +71,16 @@ fun VaultLockScreen(
                         Icon(Icons.Default.PhotoLibrary, null, Modifier.size(36.dp), tint = VisionaryColors.color007847)
                     }
                 }
-                Text("Keep special moments\nprivate.", style = MaterialTheme.typography.headlineMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                Text("Move selected photos and videos into\na protected area, separate from your\neveryday gallery.", color = VisionaryColors.color496156, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                Button(onClick = { onIntent(VaultIntent.OnUnlockClicked) }, modifier = Modifier.fillMaxWidth()) {
-                    if (state.authenticating) CircularProgressIndicator(Modifier.size(20.dp), color = VisionaryColors.colorFFFFFFFF)
-                    else Text("Set Up Vault")
-                }
-                Text("You can change Vault settings anytime.", style = MaterialTheme.typography.bodySmall, color = VisionaryColors.color496156)
+                Text(stringResource(Res.string.vault_tetx), style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+                Text(stringResource(Res.string.vault_desc), color = VisionaryColors.color496156, textAlign = TextAlign.Center)
+                
+                PrimaryButton(
+                    text = stringResource(Res.string.setup_vault),
+                    onClick = { onIntent(VaultIntent.OnUnlockClicked) },
+                    enabled = !state.authenticating
+                )
+                
+                Text(stringResource(Res.string.vault_content), style = MaterialTheme.typography.bodySmall, color = VisionaryColors.color496156)
             }
             AppBottomNavigation(AppTab.VAULT, onNavigate)
         }
@@ -106,7 +118,7 @@ fun VaultGridScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("Vault Contents", style = MaterialTheme.typography.headlineMedium)
-                Button(onClick = { onIntent(VaultIntent.OnLockClicked) }) { Text("Lock") }
+                Button(onClick = { onIntent(VaultIntent.OnLockClicked) }) { Text(stringResource(Res.string.cancel)) }
             }
             Spacer(modifier = Modifier.height(16.dp))
             LazyVerticalGrid(
@@ -144,7 +156,7 @@ fun VaultViewerRoute(
         ) {
             Text("Vault Item: $itemId", style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(24.dp))
-            Button(onClick = onBack) { Text("Back") }
+            Button(onClick = onBack) { Text(stringResource(Res.string.cancel)) }
         }
     }
 }
