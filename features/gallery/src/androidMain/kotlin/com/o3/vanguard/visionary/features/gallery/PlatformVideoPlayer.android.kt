@@ -1,4 +1,4 @@
-package com.o3.vanguard.visionary.features.gallery
+package com.o3.vanguard.visionary.features.gallery.presentation.gallery
 
 import android.net.Uri
 import android.widget.MediaController

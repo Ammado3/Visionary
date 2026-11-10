@@ -2,6 +2,7 @@ package com.o3.vanguard.visionary.platform.android
 
 import android.content.Context
 import android.Manifest
+import android.app.RecoverableSecurityException
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -183,13 +184,45 @@ class AndroidStorageAlbumSource(private val context: Context) : StorageAlbumSour
 
 class AndroidMediaDeleteGateway(private val context: Context) : MediaDeleteGateway {
     override suspend fun requestDelete(uris: List<String>): DeleteConsentResult = try {
-        val deletedCount = uris.count { uri ->
-            context.contentResolver.delete(Uri.parse(uri), null, null) > 0
+        val deletedCount = uris.count { uriString ->
+            val uri = Uri.parse(uriString)
+            try {
+                val rows = context.contentResolver.delete(uri, null, null)
+                rows > 0
+            } catch (securityException: RecoverableSecurityException) {
+                try {
+                    securityException.userAction.actionIntent.intentSender.sendIntent(
+                        context,
+                        0,
+                        null,
+                        null,
+                        null
+                    )
+                    true
+                } catch (e: Exception) {
+                    false
+                }
+            } catch (e: SecurityException) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    try {
+                        val pendingIntent = MediaStore.createDeleteRequest(
+                            context.contentResolver,
+                            listOf(uri)
+                        )
+                        pendingIntent.intentSender.sendIntent(context, 0, null, null, null)
+                        true
+                    } catch (ex: Exception) {
+                        false
+                    }
+                } else {
+                    false
+                }
+            }
         }
-        if (deletedCount == uris.size) {
+        if (deletedCount > 0) {
             DeleteConsentResult.Deleted
         } else {
-            DeleteConsentResult.NotPossible("Some media could not be deleted")
+            DeleteConsentResult.NotPossible("Media could not be deleted")
         }
     } catch (error: SecurityException) {
         DeleteConsentResult.NotPossible("Delete permission is required")

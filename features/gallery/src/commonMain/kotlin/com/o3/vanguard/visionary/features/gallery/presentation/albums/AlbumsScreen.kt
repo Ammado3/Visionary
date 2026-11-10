@@ -1,4 +1,4 @@
-package com.o3.vanguard.visionary.features.gallery
+package com.o3.vanguard.visionary.features.gallery.presentation.albums
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
@@ -38,6 +39,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -45,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -65,6 +68,7 @@ fun AlbumsRoute(
     onPhotos: () -> Unit,
     onSearch: () -> Unit,
     onVault: () -> Unit,
+    onTrashBin: () -> Unit,
 ) {
     var searchOpen by rememberSaveable { mutableStateOf(false) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
@@ -93,7 +97,7 @@ fun AlbumsRoute(
             } else {
                 Column(Modifier.weight(1f).padding(horizontal = 20.dp, vertical = 24.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        ShortcutCard("Trash Bin", "Empty", Icons.Default.DeleteOutline)
+                        ShortcutCard("Trash Bin", "View items", Icons.Default.DeleteOutline, onClick = onTrashBin)
                         ShortcutCard("Favorites", "0 files", Icons.Default.FavoriteBorder)
                     }
                     Spacer(Modifier.height(24.dp))
@@ -176,7 +180,7 @@ private fun AlbumsHeader(
     onCloseSearch: () -> Unit,
 ) {
     if (searchOpen) {
-        val focusRequester = androidx.compose.runtime.remember { FocusRequester() }
+        val focusRequester = remember { FocusRequester() }
         val keyboardController = LocalSoftwareKeyboardController.current
         LaunchedEffect(Unit) {
             focusRequester.requestFocus()
@@ -199,7 +203,7 @@ private fun AlbumsHeader(
                 trailingIcon = if (query.isNotEmpty()) {
                     { IconButton(onClick = { onQueryChanged("") }) { Icon(Icons.Default.Clear, "Clear search") } }
                 } else null,
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(32.dp),
+                shape = RoundedCornerShape(32.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = VisionaryColors.colorF4FDF7,
                     unfocusedContainerColor = VisionaryColors.colorF4FDF7,
@@ -226,9 +230,9 @@ private fun AlbumsHeader(
 }
 
 @Composable
-private fun RowScope.ShortcutCard(title: String, subtitle: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
+private fun RowScope.ShortcutCard(title: String, subtitle: String, icon: ImageVector, onClick: () -> Unit = {}) {
     Surface(
-        modifier = Modifier.weight(1f),
+        modifier = Modifier.weight(1f).clickable(onClick = onClick),
         color = VisionaryColors.color72DFE7F3,
         shape = MaterialTheme.shapes.medium,
         border = BorderStroke(1.dp, VisionaryColors.color00000000),
