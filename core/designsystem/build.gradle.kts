@@ -22,6 +22,7 @@ kotlin {
             implementation(compose.material3)
             implementation(compose.materialIconsExtended)
             implementation(libs.coil.compose)
+            implementation("org.jetbrains.compose.components:components-ui-tooling-preview:1.7.3")
 
             // Compose Multiplatform resources
             implementation(compose.components.resources)
