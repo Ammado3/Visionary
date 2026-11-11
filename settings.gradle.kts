@@ -34,4 +34,5 @@ include(":domain", ":data", ":platform")
 include(
     ":features:onboarding", ":features:home", ":features:gallery",
     ":features:search", ":features:scanner", ":features:vault", ":features:settings",
+    ":features:teleport",
 )

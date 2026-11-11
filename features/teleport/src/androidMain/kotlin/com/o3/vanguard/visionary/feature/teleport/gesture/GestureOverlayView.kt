@@ -79,7 +79,7 @@ class GestureOverlayView @JvmOverloads constructor(
         if (width == 0 || height == 0 || imgWidth == 0 || imgHeight == 0) return 0f
         val viewHeight = height.toFloat()
         val sourceWidth: Float = if (rotationDegrees == 90 || rotationDegrees == 270) imgHeight.toFloat() else imgWidth.toFloat()
-        val sourceHeight: Float = if (rotationDegrees == 90 || rotationDegrees == 270) imgWidth.toFloat() else imgHeight.toFloat()
+        val sourceHeight: Float = if (rotationDegrees == 90 || rotationDegrees == 270) imgHeight.toFloat() else imgHeight.toFloat()
 
         val scale = max(width.toFloat() / sourceWidth, viewHeight / sourceHeight)
         val renderedHeight = sourceHeight * scale

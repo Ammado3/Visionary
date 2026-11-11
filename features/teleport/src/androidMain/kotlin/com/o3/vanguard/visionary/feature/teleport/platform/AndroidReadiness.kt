@@ -22,6 +22,7 @@ internal object AndroidReadiness {
                 add(Manifest.permission.BLUETOOTH_CONNECT)
                 add(Manifest.permission.BLUETOOTH_SCAN)
                 add(Manifest.permission.NEARBY_WIFI_DEVICES)
+                add(Manifest.permission.ACCESS_FINE_LOCATION)
             }
             sdk >= Build.VERSION_CODES.S -> {
                 add(Manifest.permission.BLUETOOTH_ADVERTISE)

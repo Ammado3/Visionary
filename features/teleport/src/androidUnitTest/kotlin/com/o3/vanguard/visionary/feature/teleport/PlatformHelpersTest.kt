@@ -38,6 +38,7 @@ class PlatformHelpersTest {
     fun requiredPermissions_returnsCorrectPermissionsForSdk() {
         val tiramisuPerms = com.o3.vanguard.visionary.feature.teleport.platform.AndroidReadiness.requiredPermissions(33)
         assertTrue(tiramisuPerms.contains(android.Manifest.permission.NEARBY_WIFI_DEVICES))
+        assertTrue(tiramisuPerms.contains(android.Manifest.permission.ACCESS_FINE_LOCATION))
 
         val legacyPerms = com.o3.vanguard.visionary.feature.teleport.platform.AndroidReadiness.requiredPermissions(28)
         assertTrue(legacyPerms.contains(android.Manifest.permission.ACCESS_COARSE_LOCATION))

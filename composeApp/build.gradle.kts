@@ -27,6 +27,7 @@ kotlin {
             implementation(project(":features:scanner"))
             implementation(project(":features:vault"))
             implementation(project(":features:settings"))
+            implementation(project(":features:teleport"))
 
             implementation(compose.material3)
             implementation(compose.components.resources)
@@ -40,14 +41,7 @@ kotlin {
             implementation(libs.coil.compose)
         }
         androidMain.dependencies {
-            implementation(libs.play.services.nearby)
-            implementation(libs.kotlinx.coroutines.play.services)
             implementation(libs.androidx.material.icons.extended)
-            implementation(libs.androidx.camera.core)
-            implementation(libs.androidx.camera.camera2)
-            implementation(libs.androidx.camera.lifecycle)
-            implementation(libs.androidx.camera.view)
-            implementation(libs.mediapipe.tasks.vision)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
