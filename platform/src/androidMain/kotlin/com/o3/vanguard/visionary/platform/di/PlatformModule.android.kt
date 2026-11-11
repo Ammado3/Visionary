@@ -16,7 +16,7 @@ actual val platformModule: Module = module {
     single<ImageLabelEngine> { MlKitImageLabelEngine(get()) }
     single<ScannerPort> { MlKitDocumentScannerAdapter(get(), get()) }
     single<BiometricAuthenticator> { AndroidBiometricAuthenticator(get()) }
-    single<VaultCryptoEngine> { AndroidVaultCryptoEngine(get()) }
+    single<VaultCryptoEngine> { AndroidVaultCryptoEngine(get(), get()) }
     single<SecureScreenPort> { AndroidSecureScreenPort(get()) }
     single<BackgroundSyncScheduler> { WorkManagerSyncScheduler(get()) }
 }

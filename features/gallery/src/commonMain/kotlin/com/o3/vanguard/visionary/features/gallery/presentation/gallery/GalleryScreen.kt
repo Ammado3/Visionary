@@ -1,11 +1,9 @@
-package com.o3.vanguard.visionary.features.gallery.presentation.gallery
+package com.o3.vanguard.visionary.features.gallery
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,8 +24,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
@@ -54,7 +50,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -87,125 +82,28 @@ fun GalleryRoute(
             GalleryEvent.NavigateBack -> onBack()
         }
     }
-    val isSelecting = state.selectedIds.isNotEmpty()
-
     Surface(Modifier.fillMaxSize(), color = VisionaryColors.colorF4FDF7) {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (isSelecting) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        IconButton(onClick = { viewModel.onIntent(GalleryIntent.OnClearSelection) }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Clear selection", tint = VisionaryColors.color0B1B14)
-                        }
-                        Text("${state.selectedIds.size} selected", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = VisionaryColors.color0B1B14)
-                    }
-                } else {
-                    Text(state.collectionKind.name, style = MaterialTheme.typography.headlineMedium, color = VisionaryColors.color0B1B14)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        TextButton(onClick = {
-                            if (state.items.isNotEmpty()) {
-                                viewModel.onIntent(GalleryIntent.OnItemLongClicked(state.items.first().id))
-                            }
-                        }) {
-                            Text("Select", color = VisionaryColors.color007847, fontWeight = FontWeight.Bold)
-                        }
-                        Button(onClick = { viewModel.onIntent(GalleryIntent.OnBackClicked) }) { Text("Back") }
-                    }
-                }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text(state.collectionKind.name, style = MaterialTheme.typography.headlineMedium, color = VisionaryColors.color0B1B14)
+                Button(onClick = { viewModel.onIntent(GalleryIntent.OnBackClicked) }) { Text("Back") }
             }
             Spacer(Modifier.height(16.dp))
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 120.dp),
-                modifier = Modifier.fillMaxSize().weight(1f),
+                modifier = Modifier.fillMaxSize(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(state.items, key = { it.id.value }) { item ->
-                    val isSelected = item.id in state.selectedIds
-                    Box(
-                        modifier = Modifier
-                            .height(120.dp)
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .border(
-                                width = if (isSelected) 3.dp else 0.dp,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else VisionaryColors.color00000000,
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            .clickable {
-                                viewModel.onIntent(GalleryIntent.OnItemClicked(item.id))
-                            }
-                    ) {
-                        AsyncImage(
-                            model = item.uri,
-                            contentDescription = item.fileName,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(8.dp),
-                            contentAlignment = Alignment.TopStart
-                        ) {
-                            Surface(
-                                modifier = Modifier
-                                    .size(28.dp)
-                                    .clickable {
-                                        viewModel.onIntent(GalleryIntent.OnItemSelectedToggled(item.id))
-                                    },
-                                shape = RoundedCornerShape(14.dp),
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else VisionaryColors.colorFF000000.copy(alpha = 0.4f),
-                                border = BorderStroke(2.dp, VisionaryColors.colorFFFFFFFF)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    if (isSelected) {
-                                        Icon(
-                                            Icons.Default.Check,
-                                            contentDescription = "Selected",
-                                            modifier = Modifier.size(16.dp),
-                                            tint = VisionaryColors.colorFFFFFFFF
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                        if (isSelected) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(VisionaryColors.colorFF000000.copy(alpha = 0.3f))
-                            )
-                        }
-                    }
-                }
-            }
-
-            if (isSelecting) {
-                Spacer(Modifier.height(8.dp))
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = VisionaryColors.color72DFE7F3,
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceAround,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        FullscreenViewerAction(Icons.Default.Share, "Share") {
-                            viewModel.onIntent(GalleryIntent.OnShareSelectedClicked)
-                        }
-                        FullscreenViewerAction(Icons.Default.Edit, "Edit") { }
-                        FullscreenViewerAction(Icons.Default.Add, "Add to") { }
-                        FullscreenViewerAction(Icons.Default.Delete, "Bin") {
-                            viewModel.onIntent(GalleryIntent.OnDeleteSelectedClicked)
-                        }
-                    }
+                items(state.items) { item ->
+                    AsyncImage(
+                        model = item.uri,
+                        contentDescription = item.fileName,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.height(120.dp).fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable {
+                            viewModel.onIntent(GalleryIntent.OnItemClicked(item.id))
+                        },
+                    )
                 }
             }
         }
@@ -245,8 +143,32 @@ fun ViewerScreen(
 
     var showOcrTextSheet by remember(item.id) { mutableStateOf(false) }
     var showDeleteConfirmDialog by remember(item.id) { mutableStateOf(false) }
+    var showMoveToValutDialog by remember(item.id) { mutableStateOf(false) }
     var showOptionsSheet by remember(item.id) { mutableStateOf(false) }
     val detailTextPreview = item.textPreview
+
+    if (state.isProcessing) {
+        Box(
+            modifier = Modifier.fillMaxSize().background(VisionaryColors.colorFF000000.copy(alpha = 0.6f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                CircularProgressIndicator(color = VisionaryColors.color007847)
+                Text("Moving to Vault...", color = VisionaryColors.colorFFFFFFFF, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+
+    if (state.errorMessage != null) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Action Failed") },
+            text = { Text(state.errorMessage) },
+            confirmButton = {
+                TextButton(onClick = { onIntent(ViewerIntent.OnBackClicked) }) { Text("OK") }
+            }
+        )
+    }
 
     Dialog(
         onDismissRequest = { onIntent(ViewerIntent.OnBackClicked) },
@@ -370,12 +292,13 @@ fun ViewerScreen(
                     ) {
                         FullscreenViewerAction(Icons.Default.Share, "Share") { }
                         FullscreenViewerAction(Icons.Default.Edit, "Edit") { }
-                        FullscreenViewerAction(Icons.Default.Add, "Add to") { }
+                        FullscreenViewerAction(Icons.Default.Add, "Add to") { showMoveToValutDialog = true }
                         FullscreenViewerAction(Icons.Default.Delete, "Bin") { showDeleteConfirmDialog = true }
                     }
                 }
 
                 if (showOptionsSheet) {
+
                     ModalBottomSheet(onDismissRequest = { showOptionsSheet = false }) {
                         Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
                             Text(
@@ -393,9 +316,12 @@ fun ViewerScreen(
                                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                             ) { Text("Edit", modifier = Modifier.fillMaxWidth()) }
                             TextButton(
-                                onClick = { showOptionsSheet = false },
+                                onClick = { showOptionsSheet = false
+                                          showMoveToValutDialog = true
+                                          },
                                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                            ) { Text("Add to", modifier = Modifier.fillMaxWidth()) }
+                            )
+                            { Text("Add to", modifier = Modifier.fillMaxWidth()) }
                             TextButton(
                                 onClick = {
                                     showOptionsSheet = false
@@ -426,11 +352,29 @@ fun ViewerScreen(
             },
         )
     }
+
+
+    if(showMoveToValutDialog){
+        AlertDialog(
+            onDismissRequest = { showMoveToValutDialog = false },
+            title = { Text("Valut") },
+            text = { Text("Are you sure you want to move this image to favorites?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showMoveToValutDialog = false
+                    onIntent(ViewerIntent.OnMoveToVaultClicked)
+                }) { Text("Favorites", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMoveToValutDialog = false }) { Text("Cancel") }
+            },
+        )
+    }
 }
 
 @Composable
 private fun FullscreenViewerAction(
-    icon: ImageVector,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     onClick: () -> Unit,
 ) {
@@ -441,6 +385,53 @@ private fun FullscreenViewerAction(
         Icon(icon, contentDescription = label, modifier = Modifier.size(24.dp), tint = VisionaryColors.colorFFFFFFFF)
         Spacer(Modifier.height(4.dp))
         Text(label, style = MaterialTheme.typography.labelSmall, color = VisionaryColors.colorFFFFFFFF)
+    }
+}
+
+@Composable
+private fun ViewerHeader(item: MediaItem, onBack: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().height(72.dp).padding(horizontal = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = VisionaryColors.color0B1B14) }
+        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = item.fileName.ifBlank { if (item.category == MediaCategory.VIDEO) "Video" else "Photo" },
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = VisionaryColors.color0B1B14,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text("${item.takenAtMs}", style = MaterialTheme.typography.bodySmall, color = VisionaryColors.color496156)
+        }
+        IconButton(onClick = {}) { Icon(Icons.Default.StarBorder, "Add to favorites", tint = VisionaryColors.color0B1B14) }
+        IconButton(onClick = {}) { Icon(Icons.Default.MoreVert, "More options", tint = VisionaryColors.color0B1B14) }
+    }
+}
+
+@Composable
+private fun ViewerActions(onMoveToVault: () -> Unit) {
+    Surface(
+        Modifier.fillMaxWidth(),
+        color = VisionaryColors.colorF4FDF7,
+        border = androidx.compose.foundation.BorderStroke(1.dp, VisionaryColors.colorCEDED3),
+    ) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+            ViewerAction(Icons.Default.Share, "Share")
+            ViewerAction(Icons.Default.Tune, "Edit")
+            ViewerAction(Icons.Default.Add, "Add to", onMoveToVault)
+            ViewerAction(Icons.Default.Delete, "Bin")
+        }
+    }
+}
+
+@Composable
+private fun ViewerAction(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit = {}) {
+    Column(Modifier.clickable(onClick = onClick).padding(horizontal = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(icon, label, Modifier.size(24.dp), tint = VisionaryColors.color496156)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = VisionaryColors.color496156, textAlign = TextAlign.Center)
     }
 }
 

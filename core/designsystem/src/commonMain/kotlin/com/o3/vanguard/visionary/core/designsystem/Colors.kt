@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.Color
 
 object VisionaryColors {
     val colorF4FDF7 = Color(0xFFF4FDF7)
+    val colorFBFFFD = Color(0xFFFBFFFD)
     val color007847 = Color(0xFF007847)
     val color0B1B14 = Color(0xFF0B1B14)
     val color496156 = Color(0xFF496156)

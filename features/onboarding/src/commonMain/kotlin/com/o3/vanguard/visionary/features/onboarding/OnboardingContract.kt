@@ -13,6 +13,7 @@ data class OnboardingState(
 
 sealed interface OnboardingIntent : UiIntent {
     data object OnNextPageClicked : OnboardingIntent
+    data object OnPreviousPageClicked : OnboardingIntent
     data object OnGrantPermissionClicked : OnboardingIntent
     data object OnCompleteClicked : OnboardingIntent
 }

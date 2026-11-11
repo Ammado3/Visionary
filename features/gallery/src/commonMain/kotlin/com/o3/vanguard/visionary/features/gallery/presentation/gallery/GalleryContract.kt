@@ -36,6 +36,8 @@ data class ViewerState(
     val mediaId: MediaId? = null,
     val item: MediaItem? = null,
     val highlightText: String? = null,
+    val isProcessing: Boolean = false,
+    val errorMessage: String? = null,
 ) : UiState
 
 sealed interface ViewerIntent : UiIntent {

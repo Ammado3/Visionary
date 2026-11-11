@@ -14,6 +14,7 @@ data class MediaEntity(
     val origin: String,
     val category: String,
     val sortKey: Long,
+    val mime: String? = null,
     val width: Int,
     val height: Int,
     val sizeBytes: Long,

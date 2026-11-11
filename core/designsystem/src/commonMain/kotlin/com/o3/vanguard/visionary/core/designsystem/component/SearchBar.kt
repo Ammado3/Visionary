@@ -13,9 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import com.o3.vanguard.visionary.core.designsystem.VisionaryTheme
@@ -29,13 +26,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.painterResource
 import com.o3.vanguard.visionary.core.designsystem.generated.resources.Res
 import com.o3.vanguard.visionary.core.designsystem.generated.resources.ai
 import com.o3.vanguard.visionary.core.designsystem.generated.resources.mic
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun VisionarySearchBar(
@@ -116,7 +113,7 @@ fun VisionarySearchBar(
     }
 }
 
-@Preview(showBackground = true)
+@Preview
 @Composable
 fun VisionarySearchBarPreview() {
     VisionaryTheme {

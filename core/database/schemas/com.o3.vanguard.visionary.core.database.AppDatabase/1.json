@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "6306d19d6e094542b8658bb318c461b3",
+    "identityHash": "42bdff5f0db6685f2046e09d904b1ba5",
     "entities": [
       {
         "tableName": "media_item",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `ref` TEXT NOT NULL, `origin` TEXT NOT NULL, `category` TEXT NOT NULL, `sortKey` INTEGER NOT NULL, `width` INTEGER NOT NULL, `height` INTEGER NOT NULL, `sizeBytes` INTEGER NOT NULL, `isScreenshot` INTEGER NOT NULL, `entityFlags` INTEGER NOT NULL, `fingerprint` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `ref` TEXT NOT NULL, `origin` TEXT NOT NULL, `category` TEXT NOT NULL, `sortKey` INTEGER NOT NULL, `mime` TEXT, `width` INTEGER NOT NULL, `height` INTEGER NOT NULL, `sizeBytes` INTEGER NOT NULL, `isScreenshot` INTEGER NOT NULL, `entityFlags` INTEGER NOT NULL, `fingerprint` TEXT NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -37,6 +37,11 @@
             "columnName": "sortKey",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "mime",
+            "columnName": "mime",
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "width",
@@ -365,53 +370,11 @@
             "key"
           ]
         }
-      },
-      {
-        "tableName": "trash_item",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `uri` TEXT NOT NULL, `category` TEXT NOT NULL, `fileName` TEXT NOT NULL, `deletedAtMs` INTEGER NOT NULL, PRIMARY KEY(`id`))",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "uri",
-            "columnName": "uri",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "category",
-            "columnName": "category",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "fileName",
-            "columnName": "fileName",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "deletedAtMs",
-            "columnName": "deletedAtMs",
-            "affinity": "INTEGER",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "id"
-          ]
-        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6306d19d6e094542b8658bb318c461b3')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '42bdff5f0db6685f2046e09d904b1ba5')"
     ]
   }
 }
