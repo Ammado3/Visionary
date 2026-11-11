@@ -45,4 +45,5 @@ interface TrashRepository {
     fun observeTrashItems(): Flow<List<TrashItem>>
     suspend fun moveToTrash(item: MediaItem)
     suspend fun deleteFromTrash(id: MediaId)
+    suspend fun restoreFromTrash(id: MediaId)
 }

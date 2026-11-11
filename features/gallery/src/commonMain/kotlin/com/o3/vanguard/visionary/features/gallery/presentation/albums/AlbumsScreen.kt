@@ -1,4 +1,4 @@
-package com.o3.vanguard.visionary.features.gallery.presentation.albums
+package com.o3.vanguard.visionary.features.gallery
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable

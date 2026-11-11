@@ -61,13 +61,36 @@ class DeleteMediaUseCase(
     private val mediaRepository: MediaRepository,
     private val trashRepository: TrashRepository,
 ) {
-    suspend operator fun invoke(item: MediaItem): DeleteConsentResult {
-        val result = mediaDeleteGateway.requestDelete(listOf(item.uri))
-        try {
-            trashRepository.moveToTrash(item)
-            mediaRepository.deleteMedia(item.id)
-        } catch (e: Exception) {
-            // ignore
+    suspend operator fun invoke(item: MediaItem): DeleteConsentResult = invoke(listOf(item))
+
+    suspend operator fun invoke(items: List<MediaItem>): DeleteConsentResult {
+        if (items.isEmpty()) return DeleteConsentResult.Deleted
+
+        for (item in items) {
+            try {
+                trashRepository.moveToTrash(item)
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
+
+        val result = mediaDeleteGateway.requestDelete(items.map { it.uri })
+        if (result is DeleteConsentResult.Deleted) {
+            for (item in items) {
+                try {
+                    mediaRepository.deleteMedia(item.id)
+                } catch (e: Exception) {
+                    // ignore
+                }
+            }
+        } else {
+            for (item in items) {
+                try {
+                    trashRepository.deleteFromTrash(item.id)
+                } catch (e: Exception) {
+                    // ignore
+                }
+            }
         }
         return result
     }

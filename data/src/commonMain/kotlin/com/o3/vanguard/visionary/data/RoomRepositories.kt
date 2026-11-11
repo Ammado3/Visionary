@@ -454,7 +454,10 @@ private fun buildSnippet(text: String, query: String): String {
     return text.substring(index.coerceAtMost(text.length), min(text.length, index + 180))
 }
 
-class RoomTrashRepository(private val db: AppDatabase) : TrashRepository {
+class RoomTrashRepository(
+    private val db: AppDatabase,
+    private val vaultCryptoEngine: VaultCryptoEngine,
+) : TrashRepository {
     override fun observeTrashItems(): Flow<List<TrashItem>> =
         db.trashDao().observeTrashItems().map { list ->
             list.map { entity ->
@@ -469,10 +472,14 @@ class RoomTrashRepository(private val db: AppDatabase) : TrashRepository {
         }
 
     override suspend fun moveToTrash(item: MediaItem) {
+        val trashUri = when (val res = vaultCryptoEngine.copyToTrash(item.uri, item.id.value.toString())) {
+            is AppResult.Ok -> res.value
+            else -> item.uri
+        }
         db.trashDao().insertTrashItem(
             TrashItemEntity(
                 id = item.id.value,
-                uri = item.uri,
+                uri = trashUri,
                 category = item.category.name,
                 fileName = item.fileName,
                 deletedAtMs = Clock.System.now().toEpochMilliseconds(),
@@ -488,5 +495,29 @@ class RoomTrashRepository(private val db: AppDatabase) : TrashRepository {
 
     override suspend fun deleteFromTrash(id: MediaId) {
         db.trashDao().deleteTrashItem(id.value)
+    }
+
+    override suspend fun restoreFromTrash(id: MediaId) {
+        val entity = db.trashDao().getTrashItem(id.value) ?: return
+        db.mediaDao().upsert(
+            listOf(
+                MediaEntity(
+                    id = entity.id,
+                    ref = entity.uri,
+                    origin = "GALLERY",
+                    category = entity.category,
+                    sortKey = entity.deletedAtMs,
+                    mime = "image/*",
+                    width = 0,
+                    height = 0,
+                    sizeBytes = 0L,
+                    isScreenshot = false,
+                    entityFlags = 0,
+                    fingerprint = ""
+                )
+            )
+        )
+        db.exclusionDao().deleteExclusion(entity.uri)
+        db.trashDao().deleteTrashItem(entity.id)
     }
 }

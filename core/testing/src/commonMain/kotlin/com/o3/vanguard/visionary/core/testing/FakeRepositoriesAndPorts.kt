@@ -161,6 +161,9 @@ class FakeTrashRepository : TrashRepository {
     override suspend fun deleteFromTrash(id: MediaId) {
         trashItems.value = trashItems.value.filterNot { it.id == id }
     }
+    override suspend fun restoreFromTrash(id: MediaId) {
+        trashItems.value = trashItems.value.filterNot { it.id == id }
+    }
 }
 
 val fakeDataModule = module {

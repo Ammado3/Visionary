@@ -17,7 +17,7 @@ import com.o3.vanguard.visionary.core.database.entity.*
         SyncCheckpointEntity::class,
         TrashItemEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 @ConstructedBy(AppDatabaseConstructor::class)

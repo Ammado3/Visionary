@@ -3,6 +3,7 @@ package com.o3.vanguard.visionary.features.home
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,15 +24,20 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,6 +46,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,6 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -108,6 +116,34 @@ fun HomeScreen(
 ) {
     var searchOpen by rememberSaveable { mutableStateOf(false) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
+    var selectedMediaIds by remember { mutableStateOf(emptySet<MediaId>()) }
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    val isSelectionMode = selectedMediaIds.isNotEmpty()
+
+    if (showDeleteConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmDialog = false },
+            title = { Text("Move to Bin?") },
+            text = { Text("Are you sure you want to delete the selected images?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val itemsToDelete = state.recentFinds.filter { it.id in selectedMediaIds }
+                        onIntent(HomeIntent.OnDeleteSelected(itemsToDelete))
+                        selectedMediaIds = emptySet()
+                        showDeleteConfirmDialog = false
+                    }
+                ) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Surface(modifier = modifier.fillMaxSize(), color = VisionaryColors.colorF4FDF7) {
         Column(Modifier.fillMaxSize()) {
@@ -121,6 +157,9 @@ fun HomeScreen(
                     searchQuery = ""
                     searchOpen = false
                 },
+                isSelectionMode = isSelectionMode,
+                selectedCount = selectedMediaIds.size,
+                onClearSelection = { selectedMediaIds = emptySet() },
             )
             Box(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -169,24 +208,63 @@ fun HomeScreen(
                                     )
                                 }
                                 items(section.items, key = { it.id.value }) { item ->
-                                    MediaTile(item, onIntent)
+                                    val isSelected = item.id in selectedMediaIds
+                                    MediaTile(
+                                        item = item,
+                                        isSelectionMode = isSelectionMode,
+                                        isSelected = isSelected,
+                                        onItemClick = {
+                                            if (isSelectionMode) {
+                                                selectedMediaIds = if (isSelected) {
+                                                    selectedMediaIds - item.id
+                                                } else {
+                                                    selectedMediaIds + item.id
+                                                }
+                                            } else {
+                                                onIntent(HomeIntent.OnRecentClicked(item.id))
+                                            }
+                                        },
+                                        onItemLongClick = {
+                                            if (!isSelectionMode) {
+                                                selectedMediaIds = setOf(item.id)
+                                            }
+                                        },
+                                    )
                                 }
                             }
                         }
                     }
                 }
             }
-            AppBottomNavigation(
-                selected = AppTab.PHOTOS,
-                onSelected = { tab ->
-                    when (tab) {
-                        AppTab.PHOTOS -> {}
-                        AppTab.ALBUMS -> onIntent(HomeIntent.OnAlbumsClicked)
-                        AppTab.SEARCH -> onIntent(HomeIntent.OnSearchClicked)
-                        AppTab.VAULT -> onIntent(HomeIntent.OnVaultClicked)
-                    }
-                },
-            )
+            if (isSelectionMode) {
+                SelectionBottomBar(
+                    selectedCount = selectedMediaIds.size,
+                    onDelete = { showDeleteConfirmDialog = true },
+                    onEdit = {
+                        selectedMediaIds = emptySet()
+                    },
+                    onShare = {
+                        val itemsToShare = state.recentFinds.filter { it.id in selectedMediaIds }
+                        onIntent(HomeIntent.OnShareSelected(itemsToShare))
+                        selectedMediaIds = emptySet()
+                    },
+                    onAddTo = {
+                        selectedMediaIds = emptySet()
+                    },
+                )
+            } else {
+                AppBottomNavigation(
+                    selected = AppTab.PHOTOS,
+                    onSelected = { tab ->
+                        when (tab) {
+                            AppTab.PHOTOS -> {}
+                            AppTab.ALBUMS -> onIntent(HomeIntent.OnAlbumsClicked)
+                            AppTab.SEARCH -> onIntent(HomeIntent.OnSearchClicked)
+                            AppTab.VAULT -> onIntent(HomeIntent.OnVaultClicked)
+                        }
+                    },
+                )
+            }
         }
     }
 }
@@ -242,7 +320,33 @@ private fun HomeHeader(
     onSearchClick: () -> Unit,
     onQueryChanged: (String) -> Unit,
     onCloseSearch: () -> Unit,
+    isSelectionMode: Boolean,
+    selectedCount: Int,
+    onClearSelection: () -> Unit,
 ) {
+    if (isSelectionMode) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+                .background(VisionaryColors.colorF4FDF7)
+                .padding(horizontal = 6.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onClearSelection) {
+                Icon(Icons.Default.Clear, contentDescription = "Clear selection", tint = VisionaryColors.color0B1B14)
+            }
+            Text(
+                text = "$selectedCount selected",
+                modifier = Modifier.weight(1f).padding(start = 8.dp),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = VisionaryColors.color0B1B14,
+            )
+        }
+        return
+    }
+
     if (searchOpen) {
         val focusRequester = remember { FocusRequester() }
         val keyboardController = LocalSoftwareKeyboardController.current
@@ -367,14 +471,23 @@ private fun ProcessingCard(progress: IndexProgress) {
 }
 
 @Composable
-private fun MediaTile(item: MediaItem, onIntent: (HomeIntent) -> Unit) {
+private fun MediaTile(
+    item: MediaItem,
+    isSelectionMode: Boolean,
+    isSelected: Boolean,
+    onItemClick: () -> Unit,
+    onItemLongClick: () -> Unit,
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(112.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(if (item.category == MediaCategory.VIDEO) VisionaryColors.color24352D else VisionaryColors.colorE4EEE8)
-            .clickable { onIntent(HomeIntent.OnRecentClicked(item.id)) },
+            .combinedClickable(
+                onClick = onItemClick,
+                onLongClick = onItemLongClick,
+            ),
         contentAlignment = Alignment.Center,
     ) {
         AsyncImage(
@@ -383,7 +496,7 @@ private fun MediaTile(item: MediaItem, onIntent: (HomeIntent) -> Unit) {
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
         )
-        if (item.category == MediaCategory.VIDEO) {
+        if (item.category == MediaCategory.VIDEO && !isSelectionMode) {
             Surface(
                 shape = RoundedCornerShape(50),
                 color = VisionaryColors.colorFF000000.copy(alpha = 0.55f),
@@ -396,10 +509,96 @@ private fun MediaTile(item: MediaItem, onIntent: (HomeIntent) -> Unit) {
                 )
             }
         }
+        if (isSelectionMode) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(if (isSelected) VisionaryColors.color007847.copy(alpha = 0.3f) else Color.Transparent)
+                    .padding(8.dp),
+                contentAlignment = Alignment.TopEnd,
+            ) {
+                Icon(
+                    imageVector = if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+                    contentDescription = if (isSelected) "Selected" else "Not selected",
+                    tint = if (isSelected) VisionaryColors.color007847 else VisionaryColors.colorFFFFFFFF,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
     }
 }
 
+@Composable
+private fun SelectionBottomBar(
+    selectedCount: Int,
+    onDelete: () -> Unit,
+    onEdit: () -> Unit,
+    onShare: () -> Unit,
+    onAddTo: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = VisionaryColors.colorFFFFFFFF,
+        shadowElevation = 8.dp,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SelectionActionButton(
+                icon = Icons.Default.Delete,
+                label = "Delete",
+                onClick = onDelete,
+            )
+            SelectionActionButton(
+                icon = Icons.Default.Edit,
+                label = "Edit",
+                onClick = onEdit,
+            )
+            SelectionActionButton(
+                icon = Icons.Default.Share,
+                label = "Share",
+                onClick = onShare,
+            )
+            SelectionActionButton(
+                icon = Icons.Default.Add,
+                label = "Add to",
+                onClick = onAddTo,
+            )
+        }
+    }
+}
 
+@Composable
+private fun SelectionActionButton(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = VisionaryColors.color0B1B14,
+            modifier = Modifier.size(24.dp),
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = VisionaryColors.color0B1B14,
+        )
+    }
+}
 
 @Composable
 private fun EmptyHomeState() {
@@ -439,6 +638,6 @@ private fun HomeError(onRetry: () -> Unit) {
         Icon(Icons.Default.Settings, contentDescription = null, tint = VisionaryColors.color496156, modifier = Modifier.size(40.dp))
         Spacer(Modifier.height(12.dp))
         Text("Failed to load your gallery", color = VisionaryColors.color0B1B14)
-        androidx.compose.material3.TextButton(onClick = onRetry) { Text("Retry", color = VisionaryColors.color007847) }
+        TextButton(onClick = onRetry) { Text("Retry", color = VisionaryColors.color007847) }
     }
 }

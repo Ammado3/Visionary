@@ -111,6 +111,9 @@ interface TrashDao {
     @Query("SELECT * FROM trash_item ORDER BY deletedAtMs DESC")
     fun observeTrashItems(): Flow<List<TrashItemEntity>>
 
+    @Query("SELECT * FROM trash_item WHERE id = :id")
+    suspend fun getTrashItem(id: Long): TrashItemEntity?
+
     @Upsert suspend fun insertTrashItem(item: TrashItemEntity)
 
     @Query("DELETE FROM trash_item WHERE id = :id") suspend fun deleteTrashItem(id: Long)
@@ -122,4 +125,7 @@ interface ExclusionDao {
     suspend fun getAllExclusions(): List<String>
 
     @Upsert suspend fun upsertExclusion(exclusion: IndexExclusionEntity)
+
+    @Query("DELETE FROM index_exclusion WHERE ref = :ref")
+    suspend fun deleteExclusion(ref: String)
 }

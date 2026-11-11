@@ -4,10 +4,10 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.o3.vanguard.visionary.core.navigation.AppRoute
 import com.o3.vanguard.visionary.core.navigation.Navigator
-import com.o3.vanguard.visionary.features.gallery.presentation.albums.AlbumsRoute
-import com.o3.vanguard.visionary.features.gallery.presentation.gallery.GalleryRoute
-import com.o3.vanguard.visionary.features.gallery.presentation.gallery.ViewerRoute
-import com.o3.vanguard.visionary.features.gallery.presentation.trash.TrashBinRoute
+import com.o3.vanguard.visionary.features.gallery.AlbumsRoute
+import com.o3.vanguard.visionary.features.gallery.GalleryRoute
+import com.o3.vanguard.visionary.features.gallery.ViewerRoute
+import com.o3.vanguard.visionary.features.gallery.TrashBinRoute
 
 fun EntryProviderScope<NavKey>.galleryEntries(navigator: Navigator) {
     entry<AppRoute.Albums> {

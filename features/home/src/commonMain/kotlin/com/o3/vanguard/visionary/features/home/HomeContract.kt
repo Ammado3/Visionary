@@ -26,6 +26,8 @@ sealed interface HomeIntent : UiIntent {
     data object OnVaultClicked : HomeIntent
     data object OnSettingsClicked : HomeIntent
     data object OnRetryClicked : HomeIntent
+    data class OnDeleteSelected(val items: List<MediaItem>) : HomeIntent
+    data class OnShareSelected(val items: List<MediaItem>) : HomeIntent
 }
 
 sealed interface HomeEvent : UiEvent {

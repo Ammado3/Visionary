@@ -1,4 +1,4 @@
-package com.o3.vanguard.visionary.features.gallery.presentation.gallery
+package com.o3.vanguard.visionary.features.gallery
 
 import androidx.compose.runtime.Immutable
 import com.o3.vanguard.visionary.core.mvi.UiEvent
