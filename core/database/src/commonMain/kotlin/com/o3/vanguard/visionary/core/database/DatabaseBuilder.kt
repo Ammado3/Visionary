@@ -21,6 +21,7 @@ fun buildAppDatabase(
     .setDriver(BundledSQLiteDriver())
     .setQueryCoroutineContext(dispatchers.io)
     .addCallback(FtsCallback)
+    .fallbackToDestructiveMigration()
     .build()
 
 val databaseModule = module {

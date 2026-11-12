@@ -19,4 +19,6 @@ actual val platformModule: Module = module {
     single<VaultCryptoEngine> { IosStubVaultCryptoEngine() }
     single<SecureScreenPort> { IosStubSecureScreenPort() }
     single<BackgroundSyncScheduler> { IosStubBackgroundSyncScheduler() }
+    single<ShareGateway> { IosStubShareGateway() }
 }
+

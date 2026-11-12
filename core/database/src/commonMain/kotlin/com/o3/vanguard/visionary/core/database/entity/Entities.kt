@@ -109,3 +109,12 @@ data class SyncCheckpointEntity(
     val lastTimestampMs: Long,
     val lastGeneration: Long,
 )
+
+@Entity(tableName = "trash_item")
+data class TrashItemEntity(
+    @PrimaryKey val id: Long,
+    val uri: String,
+    val category: String,
+    val fileName: String,
+    val deletedAtMs: Long,
+)
