@@ -29,9 +29,6 @@ sealed interface AppRoute : NavKey {
         val sizeBytes: Long = 0L,
     ) : AppRoute
     @Serializable data object TeleportReceiver : AppRoute
-
-@Serializable
-data object BiometricSetup : AppRoute
 }
 
 val AppNavSavedStateConfig = SavedStateConfiguration {

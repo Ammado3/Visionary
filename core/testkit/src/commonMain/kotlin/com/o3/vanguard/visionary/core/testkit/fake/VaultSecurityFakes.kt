@@ -105,6 +105,13 @@ class FakeVaultCryptoEngine : VaultCryptoEngine {
         deleteBlobsCalls.add(itemId)
         return nextDeleteBlobsResult
     }
+
+    val copyToTrashCalls = mutableListOf<Pair<String, String>>()
+    var nextCopyToTrashResult: AppResult<String> = AppResult.Ok("")
+    override suspend fun copyToTrash(sourceUri: String, itemId: String): AppResult<String> {
+        copyToTrashCalls.add(sourceUri to itemId)
+        return nextCopyToTrashResult
+    }
 }
 
 class FakeSecureScreenPort : SecureScreenPort {

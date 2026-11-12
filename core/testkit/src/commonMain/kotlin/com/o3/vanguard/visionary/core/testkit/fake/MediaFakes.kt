@@ -9,11 +9,13 @@ import com.o3.vanguard.visionary.domain.model.MediaId
 import com.o3.vanguard.visionary.domain.model.MediaItem
 import com.o3.vanguard.visionary.domain.model.OcrTextLine
 import com.o3.vanguard.visionary.domain.model.StorageAlbum
+import com.o3.vanguard.visionary.domain.model.TrashItem
 import com.o3.vanguard.visionary.domain.port.MediaDeleteGateway
 import com.o3.vanguard.visionary.domain.port.MediaSourceEngine
 import com.o3.vanguard.visionary.domain.port.PermissionGateway
 import com.o3.vanguard.visionary.domain.port.StorageAlbumSourceEngine
 import com.o3.vanguard.visionary.domain.repository.MediaRepository
+import com.o3.vanguard.visionary.domain.repository.TrashRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -38,6 +40,11 @@ class FakeMediaRepository : MediaRepository {
 
     override fun observeRecentFinds(limit: Int): Flow<List<MediaItem>> =
         recentFinds.map { it.take(limit) }
+
+    val deleteMediaCalls = mutableListOf<MediaId>()
+    override suspend fun deleteMedia(id: MediaId) {
+        deleteMediaCalls.add(id)
+    }
 }
 
 class FakePermissionGateway(initialAccess: MediaAccess = MediaAccess.Full) : PermissionGateway {
@@ -86,5 +93,26 @@ class FakeMediaSourceEngine : MediaSourceEngine {
     override suspend fun queryAllLibraryIds(): AppResult<Set<Long>> {
         queryAllLibraryIdsCalls++
         return nextQueryAllLibraryIdsResult
+    }
+}
+
+class FakeTrashRepository : TrashRepository {
+    val trashItems = MutableStateFlow<List<TrashItem>>(emptyList())
+    val moveToTrashCalls = mutableListOf<MediaItem>()
+    val deleteFromTrashCalls = mutableListOf<MediaId>()
+    val restoreFromTrashCalls = mutableListOf<MediaId>()
+
+    override fun observeTrashItems(): Flow<List<TrashItem>> = trashItems
+
+    override suspend fun moveToTrash(item: MediaItem) {
+        moveToTrashCalls.add(item)
+    }
+
+    override suspend fun deleteFromTrash(id: MediaId) {
+        deleteFromTrashCalls.add(id)
+    }
+
+    override suspend fun restoreFromTrash(id: MediaId) {
+        restoreFromTrashCalls.add(id)
     }
 }

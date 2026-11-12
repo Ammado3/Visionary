@@ -1,15 +1,16 @@
 package com.o3.vanguard.visionary.feature.teleport.gesture
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 
 @Composable
-actual fun CameraAirGestureOverlay(
+actual fun AirGestureTracker(
     targetGesture: TargetAirGesture,
     enabled: Boolean,
+    tracking: Boolean,
+    onHint: (AirHint) -> Unit,
     onGestureProgress: (Float) -> Unit,
     onGestureCommitted: () -> Unit,
-    modifier: Modifier,
+    onUnavailable: () -> Unit,
 ) {
-    // iOS camera air gesture stub
+    // Unsupported on iOS
 }

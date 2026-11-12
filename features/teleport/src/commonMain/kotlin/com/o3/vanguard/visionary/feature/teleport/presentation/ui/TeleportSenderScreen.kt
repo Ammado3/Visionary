@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
 import com.o3.vanguard.visionary.feature.teleport.domain.model.*
-import com.o3.vanguard.visionary.feature.teleport.gesture.CameraAirGestureOverlay
+import com.o3.vanguard.visionary.feature.teleport.gesture.AirGestureTracker
 import com.o3.vanguard.visionary.feature.teleport.gesture.SpreadMode
 import com.o3.vanguard.visionary.feature.teleport.gesture.TargetAirGesture
 import com.o3.vanguard.visionary.feature.teleport.gesture.teleportGesture
@@ -93,9 +93,11 @@ fun TeleportSenderScreen(
                 modifier = Modifier.fillMaxSize(),
             )
 
-            CameraAirGestureOverlay(
+            AirGestureTracker(
                 targetGesture = TargetAirGesture.GRAB,
                 enabled = state is SenderState.Connected,
+                tracking = state is SenderState.Connected,
+                onHint = { },
                 onGestureProgress = { value -> scope.launch { animatableGesture.snapTo(value) } },
                 onGestureCommitted = {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -104,7 +106,6 @@ fun TeleportSenderScreen(
                     }
                     viewModel.onGrabCommitted()
                 },
-                modifier = Modifier.fillMaxSize(),
             )
 
             Row(
