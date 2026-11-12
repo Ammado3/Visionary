@@ -109,7 +109,7 @@ fun TeleportReceiverScreen(
     val photoScaleAnim = remember { Animatable(0.96f) }
 
     val incomingState = state as? ReceiverState.Incoming
-    val canDrop = incomingState != null && !incomingState.userDropped
+    val isReceiverActive = state is ReceiverState.Waiting || state is ReceiverState.Connected || (incomingState != null && !incomingState.userDropped)
 
     LaunchedEffect(currentStage, incomingState != null) {
         if (currentStage == PortalStage.Live && (incomingState != null || state is ReceiverState.Committed)) {
@@ -127,7 +127,7 @@ fun TeleportReceiverScreen(
     }
 
     val targetHintText = when {
-        !canDrop -> null
+        !isReceiverActive -> null
         isCameraUnavailable -> TeleportCopy.fallbackHintFor(TargetAirGesture.OPEN_HAND)
         else -> TeleportCopy.hintFor(rawAirHint ?: AirHint.NoHand, TargetAirGesture.OPEN_HAND)
     }
@@ -140,7 +140,7 @@ fun TeleportReceiverScreen(
         AirGestureTracker(
             targetGesture = TargetAirGesture.OPEN_HAND,
             enabled = true,
-            tracking = currentStage == PortalStage.Live && canDrop,
+            tracking = currentStage == PortalStage.Live && isReceiverActive,
             onHint = { rawAirHint = it },
             onGestureProgress = { value -> scope.launch { animatableGesture.snapTo(value) } },
             onGestureCommitted = {
@@ -153,23 +153,23 @@ fun TeleportReceiverScreen(
             onUnavailable = { isCameraUnavailable = true },
         )
 
-        // Photo Stage layer
+        // Photo / Portal Stage layer
         val imageModel = when (val s = state) {
-            is ReceiverState.Incoming -> s.thumbnailPath?.let { "file://$it" }
+            is ReceiverState.Incoming -> s.thumbnailPath?.let { if (it.startsWith("file://")) it else "file://$it" }
             is ReceiverState.Committed -> s.savedUri
             else -> null
         }
 
-        if (imageModel != null && (currentStage == PortalStage.Live || currentStage == PortalStage.Ready)) {
+        if (currentStage == PortalStage.Live || currentStage == PortalStage.Ready) {
             val transferProgress = if (incomingState != null && !incomingState.senderReleased) incomingState.transferProgress else null
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .alpha(photoAlphaAnim.value)
-                    .scale(photoScaleAnim.value)
+                    .alpha(if (imageModel != null) photoAlphaAnim.value else 1f)
+                    .scale(if (imageModel != null) photoScaleAnim.value else 1f)
                     .teleportGesture(
                         mode = SpreadMode.Spread,
-                        enabled = canDrop,
+                        enabled = isReceiverActive,
                         onStart = { haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove) },
                         onProgress = { value -> scope.launch { animatableGesture.snapTo(value) } },
                         onCommit = {
@@ -228,7 +228,7 @@ fun TeleportReceiverScreen(
                         modifier = Modifier.align(Alignment.Center),
                         size = 80.dp,
                     )
-                } else if (canDrop) {
+                } else if (isReceiverActive) {
                     PortalHint(
                         hint = debouncedHint,
                         modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 48.dp, start = 24.dp, end = 24.dp),
