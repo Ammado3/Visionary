@@ -1,9 +1,13 @@
-package com.o3.vanguard.visionary.features.gallery
+package com.o3.vanguard.visionary.features.gallery.navigation
 
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.o3.vanguard.visionary.core.navigation.AppRoute
 import com.o3.vanguard.visionary.core.navigation.Navigator
+import com.o3.vanguard.visionary.features.gallery.AlbumsRoute
+import com.o3.vanguard.visionary.features.gallery.GalleryRoute
+import com.o3.vanguard.visionary.features.gallery.ViewerRoute
+import com.o3.vanguard.visionary.features.gallery.TrashBinRoute
 
 fun EntryProviderScope<NavKey>.galleryEntries(navigator: Navigator) {
     entry<AppRoute.Albums> {
@@ -12,6 +16,7 @@ fun EntryProviderScope<NavKey>.galleryEntries(navigator: Navigator) {
             onPhotos = { navigator.replaceTop(AppRoute.Home) },
             onSearch = { navigator.replaceTop(AppRoute.Search()) },
             onVault = { navigator.replaceTop(AppRoute.VaultLock) },
+            onTrashBin = { navigator.navigate(AppRoute.TrashBin) },
         )
     }
     entry<AppRoute.Gallery> { key ->
@@ -36,6 +41,11 @@ fun EntryProviderScope<NavKey>.galleryEntries(navigator: Navigator) {
                     ),
                 )
             },
+        )
+    }
+    entry<AppRoute.TrashBin> {
+        TrashBinRoute(
+            onBack = { navigator.back() },
         )
     }
 }

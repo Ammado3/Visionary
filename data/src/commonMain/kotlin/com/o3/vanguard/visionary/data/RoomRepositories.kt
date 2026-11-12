@@ -10,15 +10,20 @@ import com.o3.vanguard.visionary.core.common.VectorSearchEngine
 import com.o3.vanguard.visionary.core.common.toByteArray
 import com.o3.vanguard.visionary.core.common.toFloatArray
 import com.o3.vanguard.visionary.core.database.AppDatabase
+import com.o3.vanguard.visionary.core.database.entity.IndexExclusionEntity
 import com.o3.vanguard.visionary.core.database.entity.MediaEntity
 import com.o3.vanguard.visionary.core.database.entity.MediaTextEntity
+import com.o3.vanguard.visionary.core.database.entity.TrashItemEntity
 import com.o3.vanguard.visionary.domain.model.*
 import com.o3.vanguard.visionary.domain.port.ImageLabelEngine
 import com.o3.vanguard.visionary.domain.port.MediaSourceEngine
 import com.o3.vanguard.visionary.domain.port.OcrEngine
 import com.o3.vanguard.visionary.domain.repository.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.math.min
+import kotlin.time.Clock
 
 class RoomMediaRepository(private val db: AppDatabase) : MediaRepository {
     override fun observeCollections(): Flow<List<CollectionSummary>> =
@@ -57,6 +62,10 @@ class RoomMediaRepository(private val db: AppDatabase) : MediaRepository {
                 entity.toDomain(textEntity)
             }
         }
+
+    override suspend fun deleteMedia(id: MediaId) {
+        db.mediaDao().delete(listOf(id.value))
+    }
 }
 
 class RoomSearchRepository(
@@ -264,14 +273,33 @@ class RoomIndexRepository(
 ) : IndexRepository {
     private val progress = MutableStateFlow(IndexProgress(0, 0, 0, 0, IndexState.IDLE))
 
+    /**
+     * Mutex that serialises concurrent rebuild() calls.
+     * [indexedThisSession] is set to true once the first successful run completes
+     * so that subsequent calls (e.g. from Activity re-creation on rotation) are
+     * cheap no-ops instead of full MediaStore + OCR re-scans.
+     */
+    private val rebuildMutex = Mutex()
+    private var indexedThisSession = false
+
     override fun observeProgress(): Flow<IndexProgress> = progress
 
-    override suspend fun retryFailed(): AppResult<Unit> = rebuild()
+    override suspend fun retryFailed(): AppResult<Unit> {
+        // Force a full re-run even if we already indexed this session.
+        indexedThisSession = false
+        return rebuild()
+    }
 
-    override suspend fun rebuild(): AppResult<Unit> {
+    override suspend fun rebuild(): AppResult<Unit> = rebuildMutex.withLock {
+        // If indexing is already running (concurrent callers waiting on the
+        // mutex) or was successfully completed this session, skip.
+        if (indexedThisSession || progress.value.state == IndexState.RUNNING) {
+            return AppResult.Ok(Unit)
+        }
         val source = mediaSource.queryDelta(0L)
         if (source !is AppResult.Ok) return source as AppResult.Err
-        val media = source.value
+        val excludedRefs = db.exclusionDao().getAllExclusions().toSet()
+        val media = source.value.filter { it.uri !in excludedRefs }
         progress.value = IndexProgress(media.size, 0, media.size, 0, IndexState.RUNNING)
 
         val currentRefs = media.map { it.uri }.toSet()
@@ -340,6 +368,7 @@ class RoomIndexRepository(
             progress.value = IndexProgress(media.size, indexed, media.size - indexed - failed, failed, IndexState.RUNNING)
         }
         progress.value = IndexProgress(media.size, indexed, 0, failed, IndexState.IDLE)
+        indexedThisSession = true
         return AppResult.Ok(Unit)
     }
 }
@@ -452,4 +481,72 @@ private fun buildSnippet(text: String, query: String): String {
     if (text.isBlank()) return "No text recognized"
     val index = text.indexOf(query, ignoreCase = true).coerceAtLeast(0)
     return text.substring(index.coerceAtMost(text.length), min(text.length, index + 180))
+}
+
+class RoomTrashRepository(
+    private val db: AppDatabase,
+    private val vaultCryptoEngine: VaultCryptoEngine,
+) : TrashRepository {
+    override fun observeTrashItems(): Flow<List<TrashItem>> =
+        db.trashDao().observeTrashItems().map { list ->
+            list.map { entity ->
+                TrashItem(
+                    id = MediaId(entity.id),
+                    uri = entity.uri,
+                    category = MediaCategory.valueOf(entity.category),
+                    fileName = entity.fileName,
+                    deletedAtMs = entity.deletedAtMs,
+                )
+            }
+        }
+
+    override suspend fun moveToTrash(item: MediaItem) {
+        val trashUri = when (val res = vaultCryptoEngine.copyToTrash(item.uri, item.id.value.toString())) {
+            is AppResult.Ok -> res.value
+            else -> item.uri
+        }
+        db.trashDao().insertTrashItem(
+            TrashItemEntity(
+                id = item.id.value,
+                uri = trashUri,
+                category = item.category.name,
+                fileName = item.fileName,
+                deletedAtMs = Clock.System.now().toEpochMilliseconds(),
+            )
+        )
+        db.exclusionDao().upsertExclusion(
+            IndexExclusionEntity(
+                ref = item.uri,
+                excludedAtMs = Clock.System.now().toEpochMilliseconds(),
+            )
+        )
+    }
+
+    override suspend fun deleteFromTrash(id: MediaId) {
+        db.trashDao().deleteTrashItem(id.value)
+    }
+
+    override suspend fun restoreFromTrash(id: MediaId) {
+        val entity = db.trashDao().getTrashItem(id.value) ?: return
+        db.mediaDao().upsert(
+            listOf(
+                MediaEntity(
+                    id = entity.id,
+                    ref = entity.uri,
+                    origin = "GALLERY",
+                    category = entity.category,
+                    sortKey = entity.deletedAtMs,
+                    mime = "image/*",
+                    width = 0,
+                    height = 0,
+                    sizeBytes = 0L,
+                    isScreenshot = false,
+                    entityFlags = 0,
+                    fingerprint = ""
+                )
+            )
+        )
+        db.exclusionDao().deleteExclusion(entity.uri)
+        db.trashDao().deleteTrashItem(entity.id)
+    }
 }
