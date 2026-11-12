@@ -129,8 +129,7 @@ fun TeleportReceiverScreen(
     val targetHintText = when {
         !canDrop -> null
         isCameraUnavailable -> TeleportCopy.fallbackHintFor(TargetAirGesture.OPEN_HAND)
-        rawAirHint != null -> TeleportCopy.hintFor(rawAirHint!!, TargetAirGesture.OPEN_HAND)
-        else -> null
+        else -> TeleportCopy.hintFor(rawAirHint ?: AirHint.NoHand, TargetAirGesture.OPEN_HAND)
     }
 
     val debouncedHint = rememberDebouncedHint(targetHintText)

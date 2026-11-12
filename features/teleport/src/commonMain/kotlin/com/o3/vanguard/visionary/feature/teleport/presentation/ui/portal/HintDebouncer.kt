@@ -65,9 +65,20 @@ fun rememberDebouncedHint(
     LaunchedEffect(targetHint) {
         if (targetHint == displayedHint) return@LaunchedEffect
 
-        delay(ignoreShorterThanMs)
-        displayedHint = targetHint
-        delay(minDisplayMs)
+        if (displayedHint == null) {
+            // Immediate display when transitioning from no hint to a hint
+            displayedHint = targetHint
+            delay(minDisplayMs)
+        } else if (targetHint == null) {
+            // Delay before clearing hint
+            delay(minDisplayMs)
+            displayedHint = null
+        } else {
+            // Transitioning between hints: debounce change
+            delay(ignoreShorterThanMs)
+            displayedHint = targetHint
+            delay(minDisplayMs)
+        }
     }
 
     return displayedHint
