@@ -1,26 +1,56 @@
 package com.o3.vanguard.visionary.feature.teleport.presentation.ui
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
-import com.o3.vanguard.visionary.feature.teleport.domain.model.*
+import com.o3.vanguard.visionary.feature.teleport.domain.model.ReceiverState
 import com.o3.vanguard.visionary.feature.teleport.gesture.AirGestureTracker
+import com.o3.vanguard.visionary.feature.teleport.gesture.AirHint
 import com.o3.vanguard.visionary.feature.teleport.gesture.SpreadMode
 import com.o3.vanguard.visionary.feature.teleport.gesture.TargetAirGesture
 import com.o3.vanguard.visionary.feature.teleport.gesture.teleportGesture
+import com.o3.vanguard.visionary.feature.teleport.presentation.TeleportCopy
 import com.o3.vanguard.visionary.feature.teleport.presentation.TeleportReceiverViewModel
+import com.o3.vanguard.visionary.feature.teleport.presentation.ui.portal.CheckmarkAnimation
+import com.o3.vanguard.visionary.feature.teleport.presentation.ui.portal.PortalBackground
+import com.o3.vanguard.visionary.feature.teleport.presentation.ui.portal.PortalCaption
+import com.o3.vanguard.visionary.feature.teleport.presentation.ui.portal.PortalChoreography
+import com.o3.vanguard.visionary.feature.teleport.presentation.ui.portal.PortalHint
+import com.o3.vanguard.visionary.feature.teleport.presentation.ui.portal.PortalPalette
+import com.o3.vanguard.visionary.feature.teleport.presentation.ui.portal.PortalStage
+import com.o3.vanguard.visionary.feature.teleport.presentation.ui.portal.rememberDebouncedHint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -36,9 +66,33 @@ fun TeleportReceiverScreen(
     val scope = rememberCoroutineScope()
     val animatableGesture = remember { Animatable(0f) }
 
-    LaunchedEffect(Unit) { viewModel.start() }
+    val choreography = remember { PortalChoreography() }
+    var currentStage by remember { mutableStateOf(choreography.stage) }
+
+    var rawAirHint by remember { mutableStateOf<AirHint?>(null) }
+    var isCameraUnavailable by remember { mutableStateOf(false) }
+
+    val sessionReady = state is ReceiverState.Waiting || state is ReceiverState.Connected || state is ReceiverState.Incoming || state is ReceiverState.Committed
+    val sessionFailed = state is ReceiverState.Failed
+
+    LaunchedEffect(Unit) {
+        viewModel.start()
+    }
+
+    LaunchedEffect(sessionReady, sessionFailed) {
+        if (sessionReady) {
+            choreography.onSessionReady()
+            currentStage = choreography.stage
+        }
+        if (sessionFailed) {
+            choreography.onSessionFailed()
+            currentStage = choreography.stage
+        }
+    }
+
     LaunchedEffect(state) {
         if (state is ReceiverState.Committed) {
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
             delay(1_500)
             onClose()
         }
@@ -47,197 +101,193 @@ fun TeleportReceiverScreen(
         }
     }
 
+    TeleportBackHandler {
+        viewModel.cancel()
+    }
+
+    val photoAlphaAnim = remember { Animatable(0f) }
+    val photoScaleAnim = remember { Animatable(0.96f) }
+
     val incomingState = state as? ReceiverState.Incoming
     val canDrop = incomingState != null && !incomingState.userDropped
 
-    Surface(modifier = modifier.fillMaxSize(), color = VisionaryColors.colorF4FDF7) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .teleportGesture(
+    LaunchedEffect(currentStage, incomingState != null) {
+        if (currentStage == PortalStage.Live && (incomingState != null || state is ReceiverState.Committed)) {
+            launch { photoAlphaAnim.animateTo(1f, tween(500, easing = FastOutSlowInEasing)) }
+            launch { photoScaleAnim.animateTo(1f, tween(500, easing = FastOutSlowInEasing)) }
+        }
+    }
+
+    val energyValue = when {
+        incomingState != null -> 0.8f
+        state is ReceiverState.Committed -> 0.9f
+        currentStage == PortalStage.Live -> 0.4f
+        currentStage == PortalStage.Holding -> 0.4f
+        else -> 0.3f
+    }
+
+    val targetHintText = when {
+        !canDrop -> null
+        isCameraUnavailable -> TeleportCopy.fallbackHintFor(TargetAirGesture.OPEN_HAND)
+        rawAirHint != null -> TeleportCopy.hintFor(rawAirHint!!, TargetAirGesture.OPEN_HAND)
+        else -> null
+    }
+
+    val debouncedHint = rememberDebouncedHint(targetHintText)
+
+    Box(modifier = modifier.fillMaxSize()) {
+        PortalBackground(energy = { energyValue })
+
+        AirGestureTracker(
+            targetGesture = TargetAirGesture.OPEN_HAND,
+            enabled = true,
+            tracking = currentStage == PortalStage.Live && canDrop,
+            onHint = { rawAirHint = it },
+            onGestureProgress = { value -> scope.launch { animatableGesture.snapTo(value) } },
+            onGestureCommitted = {
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                scope.launch {
+                    animatableGesture.animateTo(1f, animationSpec = tween(250))
+                }
+                viewModel.onDropCommitted()
+            },
+            onUnavailable = { isCameraUnavailable = true },
+        )
+
+        // Photo Stage layer
+        val imageModel = when (val s = state) {
+            is ReceiverState.Incoming -> s.thumbnailPath?.let { "file://$it" }
+            is ReceiverState.Committed -> s.savedUri
+            else -> null
+        }
+
+        if (imageModel != null && (currentStage == PortalStage.Live || currentStage == PortalStage.Ready)) {
+            val transferProgress = if (incomingState != null && !incomingState.senderReleased) incomingState.transferProgress else null
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .alpha(photoAlphaAnim.value)
+                    .scale(photoScaleAnim.value)
+                    .teleportGesture(
+                        mode = SpreadMode.Spread,
+                        enabled = canDrop,
+                        onStart = { haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove) },
+                        onProgress = { value -> scope.launch { animatableGesture.snapTo(value) } },
+                        onCommit = {
+                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            scope.launch {
+                                animatableGesture.animateTo(1f, animationSpec = tween(250))
+                            }
+                            viewModel.onDropCommitted()
+                        },
+                        onCancel = {
+                            scope.launch {
+                                animatableGesture.animateTo(0f, animationSpec = tween(200))
+                            }
+                        },
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                TeleportStage(
+                    imageModel = imageModel,
+                    progress = { animatableGesture.value },
                     mode = SpreadMode.Spread,
-                    enabled = canDrop,
-                    onStart = { haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove) },
-                    onProgress = { value -> scope.launch { animatableGesture.snapTo(value) } },
-                    onCommit = {
-                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                        scope.launch {
-                            animatableGesture.animateTo(1f, animationSpec = tween(250))
-                        }
-                        viewModel.onDropCommitted()
-                    },
-                    onCancel = {
-                        scope.launch {
-                            animatableGesture.animateTo(0f, animationSpec = tween(200))
-                        }
-                    },
-                ),
-        ) {
-            val imageModel = when (val s = state) {
-                is ReceiverState.Incoming -> s.thumbnailPath?.let { "file://$it" }
-                is ReceiverState.Committed -> s.savedUri
-                else -> null
-            }
-
-            TeleportStage(
-                imageModel = imageModel,
-                progress = { animatableGesture.value },
-                mode = SpreadMode.Spread,
-                modifier = Modifier.fillMaxSize(),
-            )
-
-            AirGestureTracker(
-                targetGesture = TargetAirGesture.OPEN_HAND,
-                enabled = canDrop,
-                tracking = canDrop,
-                onHint = { },
-                onGestureProgress = { value -> scope.launch { animatableGesture.snapTo(value) } },
-                onGestureCommitted = {
-                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    scope.launch {
-                        animatableGesture.animateTo(1f, animationSpec = tween(250))
-                    }
-                    viewModel.onDropCommitted()
-                },
-            )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp)
-                    .align(Alignment.TopCenter),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = "Air Teleport Receiver",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = VisionaryColors.color0B1B14,
+                    modifier = Modifier.fillMaxSize(),
+                    transferProgress = transferProgress,
                 )
-                TextButton(onClick = { viewModel.cancel() }) {
-                    Text("Close", color = VisionaryColors.color007847)
+            }
+        }
+
+        // Caption / Stage Choreography Overlay
+        when (currentStage) {
+            PortalStage.Opening -> {
+                PortalCaption(
+                    text = TeleportCopy.OpeningPortal,
+                    onFinished = {
+                        choreography.onIntroAnimationFinished(sessionReady)
+                        currentStage = choreography.stage
+                    },
+                    modifier = Modifier.align(Alignment.Center).padding(32.dp),
+                )
+            }
+            PortalStage.Holding -> {
+                // No text displayed while holding for session ready
+            }
+            PortalStage.Ready -> {
+                PortalCaption(
+                    text = TeleportCopy.ReadyToReceive,
+                    onFinished = {
+                        choreography.onReadyAnimationFinished()
+                        currentStage = choreography.stage
+                    },
+                    modifier = Modifier.align(Alignment.Center).padding(32.dp),
+                )
+            }
+            PortalStage.Live -> {
+                if (state is ReceiverState.Committed) {
+                    CheckmarkAnimation(
+                        modifier = Modifier.align(Alignment.Center),
+                        size = 80.dp,
+                    )
+                } else if (canDrop) {
+                    PortalHint(
+                        hint = debouncedHint,
+                        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 48.dp, start = 24.dp, end = 24.dp),
+                    )
                 }
             }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                when (val currentState = state) {
-                    ReceiverState.Idle, ReceiverState.Waiting -> {
-                        Text(
-                            text = "Waiting for sender nearby…",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = VisionaryColors.color0B1B14,
-                        )
-                        Text(
-                            text = "Open Air Teleport on the sending phone to begin.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = VisionaryColors.color496156,
-                            textAlign = TextAlign.Center,
-                        )
-                        LinearProgressIndicator(
-                            modifier = Modifier.fillMaxWidth(0.6f),
-                            color = VisionaryColors.color007847,
-                        )
-                    }
-
-                    is ReceiverState.Connected -> {
-                        Text(
-                            text = "Connected to ${currentState.peer.name}",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = VisionaryColors.color0B1B14,
-                        )
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = VisionaryColors.colorCEDED3,
-                        ) {
+            PortalStage.Failed -> {
+                val err = (state as? ReceiverState.Failed)?.error
+                val msg = err?.toMessage() ?: "Connection failed"
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    Text(
+                        text = msg,
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.W300,
+                            fontSize = 20.sp,
+                        ),
+                        color = PortalPalette.TextWhite,
+                        textAlign = TextAlign.Center,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        TextButton(onClick = { viewModel.start() }) {
                             Text(
-                                text = "Pairing Code: ${currentState.pairingCode}",
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                style = MaterialTheme.typography.labelLarge,
+                                TeleportCopy.TryAgain,
+                                color = PortalPalette.EmeraldAccent,
                                 fontWeight = FontWeight.SemiBold,
                             )
                         }
-                    }
-
-                    is ReceiverState.Incoming -> {
-                        if (currentState.userDropped) {
+                        TextButton(onClick = onClose) {
                             Text(
-                                text = "Finishing transfer…",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = VisionaryColors.color007847,
-                            )
-                            CircularProgressIndicator(color = VisionaryColors.color007847)
-                        } else if (currentState.senderReleased) {
-                            Text(
-                                text = "Photo in the air!",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = VisionaryColors.color007847,
-                            )
-                            Text(
-                                text = "Open your hand in front of the camera or spread three fingers to catch the photo.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = VisionaryColors.color496156,
-                                textAlign = TextAlign.Center,
-                            )
-                        } else {
-                            Text(
-                                text = "Receiving ${currentState.fileName}… ${(currentState.transferProgress * 100).toInt()}%",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = VisionaryColors.color0B1B14,
-                            )
-                            LinearProgressIndicator(
-                                progress = { currentState.transferProgress },
-                                modifier = Modifier.fillMaxWidth(0.8f),
-                                color = VisionaryColors.color007847,
+                                TeleportCopy.Close,
+                                color = PortalPalette.EmeraldAccent.copy(alpha = 0.7f),
                             )
                         }
                     }
-
-                    is ReceiverState.Committed -> {
-                        Text(
-                            text = "Saved to your gallery ✓",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = VisionaryColors.color007847,
-                        )
-                        Button(
-                            onClick = onClose,
-                            colors = ButtonDefaults.buttonColors(containerColor = VisionaryColors.color007847),
-                        ) {
-                            Text("Done")
-                        }
-                    }
-
-                    is ReceiverState.Failed -> {
-                        Text(
-                            text = currentState.error.toMessage(),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.error,
-                            textAlign = TextAlign.Center,
-                        )
-                        Button(
-                            onClick = onClose,
-                            colors = ButtonDefaults.buttonColors(containerColor = VisionaryColors.color007847),
-                        ) {
-                            Text("Close")
-                        }
-                    }
-
-                    ReceiverState.Cancelled -> Unit
                 }
             }
+        }
+
+        // Top-End Small Icon-Only Close Button
+        IconButton(
+            onClick = { viewModel.cancel() },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+                .size(48.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = TeleportCopy.Close,
+                tint = PortalPalette.TextWhite.copy(alpha = 0.6f),
+                modifier = Modifier.size(24.dp),
+            )
         }
     }
 }
