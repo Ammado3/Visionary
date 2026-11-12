@@ -96,12 +96,14 @@ private fun RowScope.NavigationItem(
             modifier = Modifier
                 .height(28.dp)
                 .background(
+                    color = if (selected) selectedColor else Color.Transparent,
                     shape = RoundedCornerShape(50),
                 )
                 .padding(horizontal = 18.dp),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
+                painter = painterResource(tab.icon),
                 contentDescription = tab.label,
                 modifier = Modifier.size(20.dp),
                 tint = if (selected) VisionaryColors.colorFFFFFFFF else mutedColor,

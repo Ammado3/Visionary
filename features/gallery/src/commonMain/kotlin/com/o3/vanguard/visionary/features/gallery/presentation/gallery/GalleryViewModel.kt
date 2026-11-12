@@ -92,14 +92,6 @@ class ViewerViewModel(
                     }
                 }
             }
-            ViewerIntent.OnDeleteClicked -> {
-                val currentItem = state.value.item ?: return
-                viewModelScope.launch {
-                    if (deleteMediaUseCase(currentItem.uri) is DeleteConsentResult.Deleted) {
-                        sendEvent(ViewerEvent.NavigateBack)
-                    }
-                }
-            }
         }
     }
 }
