@@ -1,6 +1,5 @@
 package com.o3.vanguard.visionary.feature.teleport.presentation.ui
 
-
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -89,7 +88,6 @@ fun TeleportSenderScreen(
     val animatableGesture = remember { Animatable(0f) }
 
     val choreography = remember { PortalChoreography() }
-    var currentStage by remember { mutableStateOf(choreography.stage) }
 
     var rawAirHint by remember { mutableStateOf<AirHint?>(null) }
     var isCameraUnavailable by remember { mutableStateOf(false) }
@@ -102,13 +100,9 @@ fun TeleportSenderScreen(
     }
 
     LaunchedEffect(sessionReady, sessionFailed) {
-        if (sessionReady) {
-            choreography.onSessionReady()
-            currentStage = choreography.stage
-        }
+        choreography.updateSessionReady(sessionReady)
         if (sessionFailed) {
             choreography.onSessionFailed()
-            currentStage = choreography.stage
         }
     }
 
@@ -130,8 +124,8 @@ fun TeleportSenderScreen(
     val photoAlphaAnim = remember { Animatable(0f) }
     val photoScaleAnim = remember { Animatable(0.96f) }
 
-    LaunchedEffect(currentStage) {
-        if (currentStage == PortalStage.Live) {
+    LaunchedEffect(choreography.stage) {
+        if (choreography.stage == PortalStage.Live) {
             launch { photoAlphaAnim.animateTo(1f, tween(500, easing = FastOutSlowInEasing)) }
             launch { photoScaleAnim.animateTo(1f, tween(500, easing = FastOutSlowInEasing)) }
         }
@@ -139,8 +133,8 @@ fun TeleportSenderScreen(
 
     val energyValue = when {
         state is SenderState.Released -> 1.0f
-        currentStage == PortalStage.Live -> 0.5f
-        currentStage == PortalStage.Holding -> 0.4f
+        choreography.stage == PortalStage.Live -> 0.5f
+        choreography.stage == PortalStage.Holding -> 0.4f
         else -> 0.3f
     }
 
@@ -158,7 +152,7 @@ fun TeleportSenderScreen(
         AirGestureTracker(
             targetGesture = TargetAirGesture.GRAB,
             enabled = true,
-            tracking = currentStage == PortalStage.Live && state is SenderState.Connected,
+            tracking = choreography.stage == PortalStage.Live && state is SenderState.Connected,
             onHint = { rawAirHint = it },
             onGestureProgress = { value -> scope.launch { animatableGesture.snapTo(value) } },
             onGestureCommitted = {
@@ -172,7 +166,7 @@ fun TeleportSenderScreen(
         )
 
         // Photo Stage layer
-        if (currentStage == PortalStage.Live || currentStage == PortalStage.Ready) {
+        if (choreography.stage == PortalStage.Live || choreography.stage == PortalStage.Ready) {
             val transferProgress = (state as? SenderState.Released)?.transferProgress
             Box(
                 modifier = Modifier
@@ -210,13 +204,12 @@ fun TeleportSenderScreen(
         }
 
         // Caption / Stage Choreography Overlay
-        when (currentStage) {
+        when (choreography.stage) {
             PortalStage.Opening -> {
                 PortalCaption(
                     text = TeleportCopy.OpeningPortal,
                     onFinished = {
-                        choreography.onIntroAnimationFinished(sessionReady)
-                        currentStage = choreography.stage
+                        choreography.onIntroAnimationFinished()
                     },
                     modifier = Modifier.align(Alignment.Center).padding(32.dp),
                 )
@@ -229,7 +222,6 @@ fun TeleportSenderScreen(
                     text = TeleportCopy.ReadyToShare,
                     onFinished = {
                         choreography.onReadyAnimationFinished()
-                        currentStage = choreography.stage
                     },
                     modifier = Modifier.align(Alignment.Center).padding(32.dp),
                 )

@@ -1,5 +1,9 @@
 package com.o3.vanguard.visionary.feature.teleport.presentation.ui.portal
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+
 enum class PortalStage {
     Opening,
     Holding,
@@ -11,18 +15,22 @@ enum class PortalStage {
 class PortalChoreography(
     initialStage: PortalStage = PortalStage.Opening,
 ) {
-    var stage: PortalStage = initialStage
+    var stage: PortalStage by mutableStateOf(initialStage)
         private set
 
-    fun onIntroAnimationFinished(sessionReady: Boolean) {
-        if (stage == PortalStage.Opening) {
-            stage = if (sessionReady) PortalStage.Ready else PortalStage.Holding
+    var isSessionReady: Boolean by mutableStateOf(false)
+        private set
+
+    fun updateSessionReady(ready: Boolean) {
+        isSessionReady = ready
+        if (ready && stage == PortalStage.Holding) {
+            stage = PortalStage.Ready
         }
     }
 
-    fun onSessionReady() {
-        if (stage == PortalStage.Holding) {
-            stage = PortalStage.Ready
+    fun onIntroAnimationFinished() {
+        if (stage == PortalStage.Opening) {
+            stage = if (isSessionReady) PortalStage.Ready else PortalStage.Holding
         }
     }
 

@@ -67,7 +67,6 @@ fun TeleportReceiverScreen(
     val animatableGesture = remember { Animatable(0f) }
 
     val choreography = remember { PortalChoreography() }
-    var currentStage by remember { mutableStateOf(choreography.stage) }
 
     var rawAirHint by remember { mutableStateOf<AirHint?>(null) }
     var isCameraUnavailable by remember { mutableStateOf(false) }
@@ -80,13 +79,9 @@ fun TeleportReceiverScreen(
     }
 
     LaunchedEffect(sessionReady, sessionFailed) {
-        if (sessionReady) {
-            choreography.onSessionReady()
-            currentStage = choreography.stage
-        }
+        choreography.updateSessionReady(sessionReady)
         if (sessionFailed) {
             choreography.onSessionFailed()
-            currentStage = choreography.stage
         }
     }
 
@@ -111,8 +106,8 @@ fun TeleportReceiverScreen(
     val incomingState = state as? ReceiverState.Incoming
     val isReceiverActive = state is ReceiverState.Waiting || state is ReceiverState.Connected || (incomingState != null && !incomingState.userDropped)
 
-    LaunchedEffect(currentStage, incomingState != null) {
-        if (currentStage == PortalStage.Live && (incomingState != null || state is ReceiverState.Committed)) {
+    LaunchedEffect(choreography.stage, incomingState != null) {
+        if (choreography.stage == PortalStage.Live && (incomingState != null || state is ReceiverState.Committed)) {
             launch { photoAlphaAnim.animateTo(1f, tween(500, easing = FastOutSlowInEasing)) }
             launch { photoScaleAnim.animateTo(1f, tween(500, easing = FastOutSlowInEasing)) }
         }
@@ -121,8 +116,8 @@ fun TeleportReceiverScreen(
     val energyValue = when {
         incomingState != null -> 0.8f
         state is ReceiverState.Committed -> 0.9f
-        currentStage == PortalStage.Live -> 0.4f
-        currentStage == PortalStage.Holding -> 0.4f
+        choreography.stage == PortalStage.Live -> 0.4f
+        choreography.stage == PortalStage.Holding -> 0.4f
         else -> 0.3f
     }
 
@@ -140,7 +135,7 @@ fun TeleportReceiverScreen(
         AirGestureTracker(
             targetGesture = TargetAirGesture.OPEN_HAND,
             enabled = true,
-            tracking = currentStage == PortalStage.Live && isReceiverActive,
+            tracking = choreography.stage == PortalStage.Live && isReceiverActive,
             onHint = { rawAirHint = it },
             onGestureProgress = { value -> scope.launch { animatableGesture.snapTo(value) } },
             onGestureCommitted = {
@@ -160,7 +155,7 @@ fun TeleportReceiverScreen(
             else -> null
         }
 
-        if (currentStage == PortalStage.Live || currentStage == PortalStage.Ready) {
+        if (choreography.stage == PortalStage.Live || choreography.stage == PortalStage.Ready) {
             val transferProgress = if (incomingState != null && !incomingState.senderReleased) incomingState.transferProgress else null
             Box(
                 modifier = Modifier
@@ -198,13 +193,12 @@ fun TeleportReceiverScreen(
         }
 
         // Caption / Stage Choreography Overlay
-        when (currentStage) {
+        when (choreography.stage) {
             PortalStage.Opening -> {
                 PortalCaption(
                     text = TeleportCopy.OpeningPortal,
                     onFinished = {
-                        choreography.onIntroAnimationFinished(sessionReady)
-                        currentStage = choreography.stage
+                        choreography.onIntroAnimationFinished()
                     },
                     modifier = Modifier.align(Alignment.Center).padding(32.dp),
                 )
@@ -217,7 +211,6 @@ fun TeleportReceiverScreen(
                     text = TeleportCopy.ReadyToReceive,
                     onFinished = {
                         choreography.onReadyAnimationFinished()
-                        currentStage = choreography.stage
                     },
                     modifier = Modifier.align(Alignment.Center).padding(32.dp),
                 )

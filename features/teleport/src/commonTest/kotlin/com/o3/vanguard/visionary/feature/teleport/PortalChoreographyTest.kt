@@ -12,10 +12,10 @@ class PortalChoreographyTest {
         val choreography = PortalChoreography()
         assertEquals(PortalStage.Opening, choreography.stage)
 
-        choreography.onSessionReady()
+        choreography.updateSessionReady(true)
         assertEquals(PortalStage.Opening, choreography.stage)
 
-        choreography.onIntroAnimationFinished(sessionReady = true)
+        choreography.onIntroAnimationFinished()
         assertEquals(PortalStage.Ready, choreography.stage)
 
         choreography.onReadyAnimationFinished()
@@ -27,10 +27,10 @@ class PortalChoreographyTest {
         val choreography = PortalChoreography()
         assertEquals(PortalStage.Opening, choreography.stage)
 
-        choreography.onIntroAnimationFinished(sessionReady = false)
+        choreography.onIntroAnimationFinished()
         assertEquals(PortalStage.Holding, choreography.stage)
 
-        choreography.onSessionReady()
+        choreography.updateSessionReady(true)
         assertEquals(PortalStage.Ready, choreography.stage)
 
         choreography.onReadyAnimationFinished()
@@ -47,7 +47,7 @@ class PortalChoreographyTest {
     @Test
     fun choreography_failureInHolding_transitionsToFailed() {
         val choreography = PortalChoreography()
-        choreography.onIntroAnimationFinished(sessionReady = false)
+        choreography.onIntroAnimationFinished()
         assertEquals(PortalStage.Holding, choreography.stage)
 
         choreography.onSessionFailed()
@@ -57,7 +57,8 @@ class PortalChoreographyTest {
     @Test
     fun choreography_failureInReady_transitionsToFailed() {
         val choreography = PortalChoreography()
-        choreography.onIntroAnimationFinished(sessionReady = true)
+        choreography.updateSessionReady(true)
+        choreography.onIntroAnimationFinished()
         assertEquals(PortalStage.Ready, choreography.stage)
 
         choreography.onSessionFailed()
@@ -67,7 +68,8 @@ class PortalChoreographyTest {
     @Test
     fun choreography_failureInLive_transitionsToFailed() {
         val choreography = PortalChoreography()
-        choreography.onIntroAnimationFinished(sessionReady = true)
+        choreography.updateSessionReady(true)
+        choreography.onIntroAnimationFinished()
         choreography.onReadyAnimationFinished()
         assertEquals(PortalStage.Live, choreography.stage)
 
@@ -80,10 +82,10 @@ class PortalChoreographyTest {
         val choreography = PortalChoreography(initialStage = PortalStage.Live)
         assertEquals(PortalStage.Live, choreography.stage)
 
-        choreography.onIntroAnimationFinished(sessionReady = true)
+        choreography.onIntroAnimationFinished()
         assertEquals(PortalStage.Live, choreography.stage)
 
-        choreography.onSessionReady()
+        choreography.updateSessionReady(true)
         assertEquals(PortalStage.Live, choreography.stage)
     }
 }
