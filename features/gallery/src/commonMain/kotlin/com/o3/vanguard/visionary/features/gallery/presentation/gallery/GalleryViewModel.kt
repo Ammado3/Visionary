@@ -31,6 +31,7 @@ class GalleryViewModel(
         when (intent) {
             is GalleryIntent.OnItemClicked -> sendEvent(GalleryEvent.OpenViewer(intent.id))
             GalleryIntent.OnBackClicked -> sendEvent(GalleryEvent.NavigateBack)
+            else -> {}
         }
     }
 }
@@ -82,7 +83,7 @@ class ViewerViewModel(
                 val currentItem = state.value.item ?: return
                 updateState { copy(isProcessing = true, errorMessage = null) }
                 viewModelScope.launch {
-                    val deleteResult = deleteMediaUseCase(currentItem.uri)
+                    val deleteResult = deleteMediaUseCase(currentItem)
                     updateState { copy(isProcessing = false) }
                     when (deleteResult) {
                         is DeleteConsentResult.Deleted -> sendEvent(ViewerEvent.NavigateBack)

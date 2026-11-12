@@ -10,6 +10,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import org.koin.dsl.module
+import kotlin.time.Clock
 
 class FakeFailure : RuntimeException("fake failure")
 
@@ -45,6 +46,10 @@ class FakeMediaRepository(private val controls: FakeControls) : MediaRepository 
 
     override fun observeRecentFinds(limit: Int): Flow<List<MediaItem>> =
         scenarioFlow(emptyList(), items.map { list -> list.filter { it.textPreview != null }.take(limit) })
+
+    override suspend fun deleteMedia(id: MediaId) {
+        items.value = items.value.filterNot { it.id == id }
+    }
 
     private fun matchesKind(item: MediaItem, kind: CollectionKind): Boolean = when (kind) {
         CollectionKind.ALL -> true
@@ -147,6 +152,20 @@ class FakeBiometricAuthenticator : BiometricAuthenticator {
     override suspend fun authenticate(): AppResult<Unit> = AppResult.Ok(Unit)
 }
 
+class FakeTrashRepository : TrashRepository {
+    private val trashItems = MutableStateFlow<List<TrashItem>>(emptyList())
+    override fun observeTrashItems(): Flow<List<TrashItem>> = trashItems
+    override suspend fun moveToTrash(item: MediaItem) {
+        trashItems.value = trashItems.value + TrashItem(item.id, item.uri, item.category, item.fileName, Clock.System.now().toEpochMilliseconds())
+    }
+    override suspend fun deleteFromTrash(id: MediaId) {
+        trashItems.value = trashItems.value.filterNot { it.id == id }
+    }
+    override suspend fun restoreFromTrash(id: MediaId) {
+        trashItems.value = trashItems.value.filterNot { it.id == id }
+    }
+}
+
 val fakeDataModule = module {
     single { FakeControls() }
     single<MediaRepository> { FakeMediaRepository(get()) }
@@ -157,4 +176,5 @@ val fakeDataModule = module {
     single<PermissionGateway> { FakePermissionGateway() }
     single<ScannerPort> { FakeScannerPort() }
     single<BiometricAuthenticator> { FakeBiometricAuthenticator() }
+    single<TrashRepository> { FakeTrashRepository() }
 }

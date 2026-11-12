@@ -21,6 +21,7 @@ actual class AppDirectories {
 
     actual fun vaultBlobsDirPath(): String = "${docRoot()}/vault_blobs"
     actual fun scansDirPath(): String = "${docRoot()}/scans"
+    actual fun trashBlobsDirPath(): String = "${docRoot()}/trash_blobs"
     @OptIn(ExperimentalForeignApi::class)
     actual fun cacheDirPath(): String {
         val url = NSFileManager.defaultManager.URLForDirectory(

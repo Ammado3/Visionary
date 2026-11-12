@@ -10,6 +10,9 @@ actual class AppDirectories(private val context: Context) {
     actual fun scansDirPath(): String =
         File(context.filesDir, "scans").apply { mkdirs() }.absolutePath
 
+    actual fun trashBlobsDirPath(): String =
+        File(context.filesDir, "trash_blobs").apply { mkdirs() }.absolutePath
+
     actual fun cacheDirPath(): String =
         context.cacheDir.absolutePath
 }
