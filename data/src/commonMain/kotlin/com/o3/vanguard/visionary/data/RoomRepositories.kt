@@ -20,6 +20,8 @@ import com.o3.vanguard.visionary.domain.port.MediaSourceEngine
 import com.o3.vanguard.visionary.domain.port.OcrEngine
 import com.o3.vanguard.visionary.domain.repository.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.math.min
 import kotlin.time.Clock
 
@@ -271,11 +273,29 @@ class RoomIndexRepository(
 ) : IndexRepository {
     private val progress = MutableStateFlow(IndexProgress(0, 0, 0, 0, IndexState.IDLE))
 
+    /**
+     * Mutex that serialises concurrent rebuild() calls.
+     * [indexedThisSession] is set to true once the first successful run completes
+     * so that subsequent calls (e.g. from Activity re-creation on rotation) are
+     * cheap no-ops instead of full MediaStore + OCR re-scans.
+     */
+    private val rebuildMutex = Mutex()
+    private var indexedThisSession = false
+
     override fun observeProgress(): Flow<IndexProgress> = progress
 
-    override suspend fun retryFailed(): AppResult<Unit> = rebuild()
+    override suspend fun retryFailed(): AppResult<Unit> {
+        // Force a full re-run even if we already indexed this session.
+        indexedThisSession = false
+        return rebuild()
+    }
 
-    override suspend fun rebuild(): AppResult<Unit> {
+    override suspend fun rebuild(): AppResult<Unit> = rebuildMutex.withLock {
+        // If indexing is already running (concurrent callers waiting on the
+        // mutex) or was successfully completed this session, skip.
+        if (indexedThisSession || progress.value.state == IndexState.RUNNING) {
+            return AppResult.Ok(Unit)
+        }
         val source = mediaSource.queryDelta(0L)
         if (source !is AppResult.Ok) return source as AppResult.Err
         val excludedRefs = db.exclusionDao().getAllExclusions().toSet()
@@ -340,6 +360,7 @@ class RoomIndexRepository(
             progress.value = IndexProgress(media.size, indexed, media.size - indexed - failed, failed, IndexState.RUNNING)
         }
         progress.value = IndexProgress(media.size, indexed, 0, failed, IndexState.IDLE)
+        indexedThisSession = true
         return AppResult.Ok(Unit)
     }
 }
