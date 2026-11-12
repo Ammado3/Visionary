@@ -3,18 +3,24 @@ package com.o3.vanguard.visionary.feature.teleport.presentation.ui
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -51,7 +57,6 @@ import com.o3.vanguard.visionary.feature.teleport.presentation.ui.portal.PortalH
 import com.o3.vanguard.visionary.feature.teleport.presentation.ui.portal.PortalPalette
 import com.o3.vanguard.visionary.feature.teleport.presentation.ui.portal.PortalStage
 import com.o3.vanguard.visionary.feature.teleport.presentation.ui.portal.rememberDebouncedHint
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -88,8 +93,6 @@ fun TeleportReceiverScreen(
     LaunchedEffect(state) {
         if (state is ReceiverState.Committed) {
             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-            delay(1_500)
-            onClose()
         }
         if (state is ReceiverState.Cancelled) {
             onClose()
@@ -217,10 +220,68 @@ fun TeleportReceiverScreen(
             }
             PortalStage.Live -> {
                 if (state is ReceiverState.Committed) {
-                    CheckmarkAnimation(
-                        modifier = Modifier.align(Alignment.Center),
-                        size = 80.dp,
-                    )
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 48.dp, start = 24.dp, end = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(24.dp),
+                    ) {
+                        CheckmarkAnimation(
+                            size = 80.dp,
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(0.85f),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            // Back Button
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp)
+                                    .clickable {
+                                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        onClose()
+                                    },
+                                shape = RoundedCornerShape(24.dp),
+                                color = PortalPalette.GlassSurface,
+                                border = BorderStroke(1.dp, PortalPalette.GlassBorder),
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = "Back",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = PortalPalette.TextWhite,
+                                    )
+                                }
+                            }
+
+                            // Save Button
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp)
+                                    .clickable {
+                                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        onClose()
+                                    },
+                                shape = RoundedCornerShape(24.dp),
+                                color = PortalPalette.EmeraldAccent,
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = "Save",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = PortalPalette.BaseDark,
+                                    )
+                                }
+                            }
+                        }
+                    }
                 } else if (isReceiverActive) {
                     PortalHint(
                         hint = debouncedHint,
