@@ -2,6 +2,7 @@ package com.o3.vanguard.visionary.domain.usecase
 
 import com.o3.vanguard.visionary.core.common.AppResult
 import com.o3.vanguard.visionary.domain.model.*
+import com.o3.vanguard.visionary.domain.port.MediaDeleteGateway
 import com.o3.vanguard.visionary.domain.port.ScannerPort
 import com.o3.vanguard.visionary.domain.port.StorageAlbumSourceEngine
 import com.o3.vanguard.visionary.domain.repository.*
@@ -55,9 +56,44 @@ class MoveToVaultUseCase(private val vaultRepository: VaultRepository) {
     suspend operator fun invoke(id: MediaId): AppResult<Unit> = vaultRepository.moveToVault(id)
 }
 
-class DeleteMediaUseCase(private val mediaDeleteGateway: com.o3.vanguard.visionary.domain.port.MediaDeleteGateway) {
-    suspend operator fun invoke(uri: String): DeleteConsentResult =
-        mediaDeleteGateway.requestDelete(listOf(uri))
+class DeleteMediaUseCase(
+    private val mediaDeleteGateway: MediaDeleteGateway,
+    private val mediaRepository: MediaRepository,
+    private val trashRepository: TrashRepository,
+) {
+    suspend operator fun invoke(item: MediaItem): DeleteConsentResult = invoke(listOf(item))
+
+    suspend operator fun invoke(items: List<MediaItem>): DeleteConsentResult {
+        if (items.isEmpty()) return DeleteConsentResult.Deleted
+
+        for (item in items) {
+            try {
+                trashRepository.moveToTrash(item)
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
+
+        val result = mediaDeleteGateway.requestDelete(items.map { it.uri })
+        if (result is DeleteConsentResult.Deleted) {
+            for (item in items) {
+                try {
+                    mediaRepository.deleteMedia(item.id)
+                } catch (e: Exception) {
+                    // ignore
+                }
+            }
+        } else {
+            for (item in items) {
+                try {
+                    trashRepository.deleteFromTrash(item.id)
+                } catch (e: Exception) {
+                    // ignore
+                }
+            }
+        }
+        return result
+    }
 }
 
 class StartScanUseCase(private val scannerPort: ScannerPort) {

@@ -19,4 +19,6 @@ actual val platformModule: Module = module {
     single<VaultCryptoEngine> { AndroidVaultCryptoEngine(get(), get()) }
     single<SecureScreenPort> { AndroidSecureScreenPort(get()) }
     single<BackgroundSyncScheduler> { WorkManagerSyncScheduler(get()) }
+    single<ShareGateway> { AndroidShareGateway(get()) }
 }
+

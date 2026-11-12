@@ -17,7 +17,7 @@ import com.o3.vanguard.visionary.core.navigation.AppRoute
 import com.o3.vanguard.visionary.core.navigation.Navigator
 import com.o3.vanguard.visionary.domain.model.MediaAccess
 import com.o3.vanguard.visionary.domain.port.PermissionGateway
-import com.o3.vanguard.visionary.features.gallery.galleryEntries
+import com.o3.vanguard.visionary.features.gallery.navigation.galleryEntries
 import com.o3.vanguard.visionary.features.home.homeEntries
 import com.o3.vanguard.visionary.features.onboarding.onboardingEntries
 import com.o3.vanguard.visionary.features.scanner.scannerEntries

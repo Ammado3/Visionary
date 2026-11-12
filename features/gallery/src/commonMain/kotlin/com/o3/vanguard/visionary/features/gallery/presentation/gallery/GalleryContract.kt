@@ -13,10 +13,16 @@ data class GalleryState(
     val collectionKind: CollectionKind = CollectionKind.ALL,
     val items: List<MediaItem> = emptyList(),
     val loading: Boolean = true,
+    val selectedIds: Set<MediaId> = emptySet(),
 ) : UiState
 
 sealed interface GalleryIntent : UiIntent {
     data class OnItemClicked(val id: MediaId) : GalleryIntent
+    data class OnItemLongClicked(val id: MediaId) : GalleryIntent
+    data class OnItemSelectedToggled(val id: MediaId) : GalleryIntent
+    data object OnClearSelection : GalleryIntent
+    data object OnDeleteSelectedClicked : GalleryIntent
+    data object OnShareSelectedClicked : GalleryIntent
     data object OnBackClicked : GalleryIntent
 }
 
