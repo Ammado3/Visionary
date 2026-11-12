@@ -11,5 +11,5 @@ val dataModule = module {
     single<SearchRepository> { RoomSearchRepository(get(), get()) }
     single<IndexRepository> { RoomIndexRepository(get(), get(), get(), get(), get()) }
     single<SettingsRepository> { RoomSettingsRepository() }
-    single<VaultRepository> { RoomVaultRepository(get()) }
+    single<VaultRepository> { RoomVaultRepository(get(), get(), get()) }
 }

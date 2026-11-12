@@ -2,9 +2,18 @@ plugins {
     id("visionary.kmp.compose")
 }
 
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "com.o3.vanguard.visionary.core.designsystem.generated.resources"
+
+}
+
 kotlin {
     android {
         namespace = "com.o3.vanguard.visionary.core.designsystem"
+        androidResources {
+            enable = true
+        }
     }
 
     sourceSets {
@@ -13,6 +22,15 @@ kotlin {
             implementation(compose.material3)
             implementation(compose.materialIconsExtended)
             implementation(libs.coil.compose)
+            implementation("org.jetbrains.compose.components:components-ui-tooling-preview:1.7.3")
+
+            // Compose Multiplatform resources
+            implementation(compose.components.resources)
+            implementation(libs.composeUiToolingPreview)
+        }
+
+        androidMain.dependencies {
+            implementation(libs.composeUiTooling)
         }
     }
 }
