@@ -27,6 +27,7 @@ kotlin {
             implementation(project(":features:scanner"))
             implementation(project(":features:vault"))
             implementation(project(":features:settings"))
+            implementation(project(":features:teleport"))
 
 
             implementation(compose.material3)
@@ -38,6 +39,14 @@ kotlin {
             implementation(libs.lifecycle.viewmodel.nav3)
             implementation(libs.nav3.ui)
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.coil.compose)
+        }
+        androidMain.dependencies {
+            implementation(libs.androidx.material.icons.extended)
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }

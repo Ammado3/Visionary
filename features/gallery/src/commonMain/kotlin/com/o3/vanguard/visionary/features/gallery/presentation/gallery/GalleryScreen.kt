@@ -115,13 +115,14 @@ fun ViewerRoute(
     mediaId: Long,
     highlight: String?,
     onBack: () -> Unit,
+    onShareToTeleport: ((MediaItem) -> Unit)? = null,
     viewModel: ViewerViewModel = koinViewModel { parametersOf(mediaId, highlight) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     CollectEvents(viewModel.events) { event ->
         if (event == ViewerEvent.NavigateBack) onBack()
     }
-    ViewerScreen(state = state, onIntent = viewModel::onIntent)
+    ViewerScreen(state = state, onIntent = viewModel::onIntent, onShareToTeleport = onShareToTeleport)
 }
 
 @Composable
@@ -129,6 +130,7 @@ fun ViewerRoute(
 fun ViewerScreen(
     state: ViewerState,
     onIntent: (ViewerIntent) -> Unit,
+    onShareToTeleport: ((MediaItem) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val item = state.item
@@ -290,7 +292,7 @@ fun ViewerScreen(
                         horizontalArrangement = Arrangement.SpaceAround,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        FullscreenViewerAction(Icons.Default.Share, "Share") { }
+                        FullscreenViewerAction(Icons.Default.Share, "Teleport") { onShareToTeleport?.invoke(item) }
                         FullscreenViewerAction(Icons.Default.Edit, "Edit") { }
                         FullscreenViewerAction(Icons.Default.Add, "Add to") { showMoveToValutDialog = true }
                         FullscreenViewerAction(Icons.Default.Delete, "Bin") { showDeleteConfirmDialog = true }
@@ -308,9 +310,12 @@ fun ViewerScreen(
                                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
                             )
                             TextButton(
-                                onClick = { showOptionsSheet = false },
+                                onClick = {
+                                    showOptionsSheet = false
+                                    onShareToTeleport?.invoke(item)
+                                },
                                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                            ) { Text("Share", modifier = Modifier.fillMaxWidth()) }
+                            ) { Text("Share via Air Teleport", modifier = Modifier.fillMaxWidth()) }
                             TextButton(
                                 onClick = { showOptionsSheet = false },
                                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),

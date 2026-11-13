@@ -15,6 +15,7 @@ fun EntryProviderScope<NavKey>.homeEntries(navigator: Navigator) {
             onOpenScanner = { navigator.navigate(AppRoute.Scanner) },
             onOpenVault = { navigator.navigate(AppRoute.VaultLock) },
             onOpenSettings = { navigator.navigate(AppRoute.Settings) },
+            onOpenAirTeleportReceiver = { navigator.navigate(AppRoute.TeleportReceiver) },
         )
     }
 }

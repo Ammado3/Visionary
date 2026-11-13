@@ -3,7 +3,6 @@ package com.o3.vanguard.visionary.features.home
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,29 +23,34 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -59,7 +63,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -91,6 +94,7 @@ fun HomeRoute(
     onOpenScanner: () -> Unit,
     onOpenVault: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenAirTeleportReceiver: () -> Unit = {},
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -105,13 +109,18 @@ fun HomeRoute(
             HomeEvent.OpenSettings -> onOpenSettings()
         }
     }
-    HomeScreen(state = state, onIntent = viewModel::onIntent)
+    HomeScreen(
+        state = state,
+        onIntent = viewModel::onIntent,
+        onAirTeleportReceiverClick = onOpenAirTeleportReceiver,
+    )
 }
 
 @Composable
 fun HomeScreen(
     state: HomeState,
     onIntent: (HomeIntent) -> Unit,
+    onAirTeleportReceiverClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var searchOpen by rememberSaveable { mutableStateOf(false) }
@@ -157,6 +166,7 @@ fun HomeScreen(
                     searchQuery = ""
                     searchOpen = false
                 },
+                onAirTeleportReceiverClick = onAirTeleportReceiverClick,
                 isSelectionMode = isSelectionMode,
                 selectedCount = selectedMediaIds.size,
                 onClearSelection = { selectedMediaIds = emptySet() },
@@ -320,6 +330,7 @@ private fun HomeHeader(
     onSearchClick: () -> Unit,
     onQueryChanged: (String) -> Unit,
     onCloseSearch: () -> Unit,
+    onAirTeleportReceiverClick: () -> Unit = {},
     isSelectionMode: Boolean,
     selectedCount: Int,
     onClearSelection: () -> Unit,
@@ -399,6 +410,9 @@ private fun HomeHeader(
             fontWeight = FontWeight.Bold,
             color = VisionaryColors.color0B1B14,
         )
+        IconButton(onClick = onAirTeleportReceiverClick) {
+            Icon(Icons.Default.Share, contentDescription = "Air Teleport Receiver", tint = VisionaryColors.color007847)
+        }
         IconButton(onClick = onSearchClick) {
             Icon(Icons.Default.Search, contentDescription = "Search", tint = VisionaryColors.color0B1B14)
         }

@@ -22,6 +22,13 @@ sealed interface AppRoute : NavKey {
     @Serializable data object IndexHealth : AppRoute
     @Serializable data object BiometricSetup : AppRoute
     @Serializable data object TrashBin : AppRoute
+    @Serializable data class TeleportSender(
+        val uri: String,
+        val displayName: String,
+        val mimeType: String = "image/jpeg",
+        val sizeBytes: Long = 0L,
+    ) : AppRoute
+    @Serializable data object TeleportReceiver : AppRoute
 }
 
 val AppNavSavedStateConfig = SavedStateConfiguration {
@@ -39,6 +46,8 @@ val AppNavSavedStateConfig = SavedStateConfiguration {
             subclass(AppRoute.VaultViewer::class, AppRoute.VaultViewer.serializer())
             subclass(AppRoute.Settings::class, AppRoute.Settings.serializer())
             subclass(AppRoute.IndexHealth::class, AppRoute.IndexHealth.serializer())
+            subclass(AppRoute.TeleportSender::class, AppRoute.TeleportSender.serializer())
+            subclass(AppRoute.TeleportReceiver::class, AppRoute.TeleportReceiver.serializer())
             subclass(AppRoute.BiometricSetup::class, AppRoute.BiometricSetup.serializer())
             subclass(AppRoute.TrashBin::class, AppRoute.TrashBin.serializer())
         }

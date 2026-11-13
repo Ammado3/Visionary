@@ -312,6 +312,14 @@ class RoomIndexRepository(
                 // Persist every media item, including videos. OCR and image labeling
                 // are only available for still images.
                 db.mediaDao().upsert(listOf(item.toEntity()))
+                
+                // Resume where it left off: skip if already indexed in database
+                if (item.category != MediaCategory.VIDEO && db.mediaDao().getText(item.id.value) != null) {
+                    indexed++
+                    progress.value = IndexProgress(media.size, indexed, media.size - indexed - failed, failed, IndexState.RUNNING)
+                    return@forEach
+                }
+
                 if (item.category == MediaCategory.VIDEO) {
                     indexed++
                     progress.value = IndexProgress(media.size, indexed, media.size - indexed - failed, failed, IndexState.RUNNING)
