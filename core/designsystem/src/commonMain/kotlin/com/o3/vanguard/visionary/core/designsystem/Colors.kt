@@ -19,4 +19,5 @@ object VisionaryColors {
     val colorFF000000 = Color(0xFF000000)
     val colorFF444444 = Color(0xFF444444)
     val colorFFD3D3D3 = Color(0xFFD3D3D3)
+    val colorE6F3EA = Color(0xFFE6F3EA)
 }
