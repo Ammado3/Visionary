@@ -266,18 +266,6 @@ fun HomeScreen(
                         selectedMediaIds = emptySet()
                     },
                 )
-            } else {
-                AppBottomNavigation(
-                    selected = AppTab.PHOTOS,
-                    onSelected = { tab ->
-                        when (tab) {
-                            AppTab.PHOTOS -> {}
-                            AppTab.ALBUMS -> onIntent(HomeIntent.OnAlbumsClicked)
-                            AppTab.SEARCH -> onIntent(HomeIntent.OnSearchClicked)
-                            AppTab.VAULT -> onIntent(HomeIntent.OnVaultClicked)
-                        }
-                    },
-                )
             }
         }
     }

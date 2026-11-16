@@ -74,7 +74,6 @@ fun VaultLockScreen(
                 }
                 Text("You can change Vault settings anytime.", style = MaterialTheme.typography.bodySmall, color = VisionaryColors.color496156)
             }
-            AppBottomNavigation(AppTab.VAULT, onNavigate)
         }
     }
 }

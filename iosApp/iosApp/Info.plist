@@ -4,5 +4,13 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Visionary needs access to your photo library to organize, index, and search your photos locally on your device.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Visionary needs permission to save images to your photo library.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Visionary needs access to your camera to scan documents and capture media.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Visionary uses Face ID to securely unlock your Private Vault.</string>
 </dict>
 </plist>

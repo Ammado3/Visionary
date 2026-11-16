@@ -152,17 +152,6 @@ fun AlbumsRoute(
                     }
                 }
             }
-            AppBottomNavigation(
-                selected = AppTab.ALBUMS,
-                onSelected = { tab ->
-                    when (tab) {
-                        AppTab.PHOTOS -> onPhotos()
-                        AppTab.SEARCH -> onSearch()
-                        AppTab.VAULT -> onVault()
-                        AppTab.ALBUMS -> Unit
-                    }
-                },
-            )
         }
     }
 }
