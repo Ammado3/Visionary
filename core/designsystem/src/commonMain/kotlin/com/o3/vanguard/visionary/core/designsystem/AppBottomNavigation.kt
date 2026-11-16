@@ -111,7 +111,9 @@ private fun RowScope.NavigationItem(
         }
         Text(
             text = tab.label,
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif
+            ),
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
             color = if (selected) selectedColor else mutedColor,
         )
