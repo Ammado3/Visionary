@@ -176,3 +176,11 @@ data class AppSettings(
     val indexOnlyWhileCharging: Boolean = false,
     val vaultLockTimeoutSeconds: Int = 30,
 )
+
+data class TrashItem(
+    val id: MediaId,
+    val uri: String,
+    val category: MediaCategory,
+    val fileName: String,
+    val deletedAtMs: Long,
+)

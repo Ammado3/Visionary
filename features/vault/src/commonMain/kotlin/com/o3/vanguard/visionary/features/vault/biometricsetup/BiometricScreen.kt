@@ -44,7 +44,7 @@ import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
 import com.o3.vanguard.visionary.core.designsystem.VisionaryTheme
 import com.o3.vanguard.visionary.core.designsystem.component.VisionaryHeader
 import com.o3.vanguard.visionary.core.designsystem.generated.resources.Res
-import com.o3.vanguard.visionary.core.designsystem.generated.resources.lock_ic
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.vault
 import com.o3.vanguard.visionary.core.mvi.CollectEvents
 import com.o3.vanguard.visionary.features.vault.biometricsetup.states.BiometricEvent
 import com.o3.vanguard.visionary.features.vault.biometricsetup.states.BiometricIntent
@@ -129,7 +129,7 @@ fun BiometricSetupScreen(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                             Image(
-                                painter = painterResource(Res.drawable.lock_ic),
+                                painter = painterResource(Res.drawable.vault),
                                 contentDescription = "Lock",
                                 modifier = Modifier.size(36.dp),
                                 colorFilter = ColorFilter.tint(VisionaryColors.color007847)

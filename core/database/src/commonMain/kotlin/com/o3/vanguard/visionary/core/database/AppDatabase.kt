@@ -15,8 +15,9 @@ import com.o3.vanguard.visionary.core.database.entity.*
         VaultItemEntity::class,
         RecentSearchEntity::class,
         SyncCheckpointEntity::class,
+        TrashItemEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 @ConstructedBy(AppDatabaseConstructor::class)
@@ -25,4 +26,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun searchDao(): SearchDao
     abstract fun indexJobDao(): IndexJobDao
     abstract fun vaultDao(): VaultDao
+    abstract fun trashDao(): TrashDao
+    abstract fun exclusionDao(): ExclusionDao
 }

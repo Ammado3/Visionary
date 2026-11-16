@@ -58,6 +58,8 @@ class IosStubVaultCryptoEngine : VaultCryptoEngine {
         AppResult.Err(AppError.Unsupported("OS_NOT_SUPPORTED_YET"))
     override suspend fun deleteVaultBlobs(itemId: String): AppResult<Unit> =
         AppResult.Err(AppError.Unsupported("OS_NOT_SUPPORTED_YET"))
+    override suspend fun copyToTrash(sourceUri: String, itemId: String): AppResult<String> =
+        AppResult.Err(AppError.Unsupported("OS_NOT_SUPPORTED_YET"))
 }
 
 class IosStubSecureScreenPort : SecureScreenPort {
@@ -67,3 +69,8 @@ class IosStubSecureScreenPort : SecureScreenPort {
 class IosStubBackgroundSyncScheduler : BackgroundSyncScheduler {
     override fun scheduleIncrementalIndexing(chargingOnly: Boolean) {}
 }
+
+class IosStubShareGateway : ShareGateway {
+    override fun share(uris: List<String>) {}
+}
+

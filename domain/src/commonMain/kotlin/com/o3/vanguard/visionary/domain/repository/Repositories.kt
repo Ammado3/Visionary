@@ -11,6 +11,7 @@ interface MediaRepository {
     fun observeItem(id: MediaId): Flow<MediaItem?>
     fun observeOcrLines(id: MediaId): Flow<List<OcrTextLine>>
     fun observeRecentFinds(limit: Int): Flow<List<MediaItem>>
+    suspend fun deleteMedia(id: MediaId)
 }
 
 interface SearchRepository {
@@ -38,4 +39,11 @@ interface VaultRepository {
     suspend fun moveToVault(id: MediaId): AppResult<Unit>
     suspend fun restore(itemId: String): AppResult<Unit>
     suspend fun delete(itemId: String): AppResult<Unit>
+}
+
+interface TrashRepository {
+    fun observeTrashItems(): Flow<List<TrashItem>>
+    suspend fun moveToTrash(item: MediaItem)
+    suspend fun deleteFromTrash(id: MediaId)
+    suspend fun restoreFromTrash(id: MediaId)
 }

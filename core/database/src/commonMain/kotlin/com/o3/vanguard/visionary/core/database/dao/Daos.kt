@@ -105,3 +105,27 @@ interface VaultDao {
     @Upsert suspend fun upsertVaultItem(item: VaultItemEntity)
     @Query("DELETE FROM vault_item WHERE id = :id") suspend fun deleteVaultItem(id: String)
 }
+
+@Dao
+interface TrashDao {
+    @Query("SELECT * FROM trash_item ORDER BY deletedAtMs DESC")
+    fun observeTrashItems(): Flow<List<TrashItemEntity>>
+
+    @Query("SELECT * FROM trash_item WHERE id = :id")
+    suspend fun getTrashItem(id: Long): TrashItemEntity?
+
+    @Upsert suspend fun insertTrashItem(item: TrashItemEntity)
+
+    @Query("DELETE FROM trash_item WHERE id = :id") suspend fun deleteTrashItem(id: Long)
+}
+
+@Dao
+interface ExclusionDao {
+    @Query("SELECT ref FROM index_exclusion")
+    suspend fun getAllExclusions(): List<String>
+
+    @Upsert suspend fun upsertExclusion(exclusion: IndexExclusionEntity)
+
+    @Query("DELETE FROM index_exclusion WHERE ref = :ref")
+    suspend fun deleteExclusion(ref: String)
+}

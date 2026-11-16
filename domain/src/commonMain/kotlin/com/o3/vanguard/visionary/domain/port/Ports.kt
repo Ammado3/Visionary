@@ -22,6 +22,10 @@ interface MediaDeleteGateway {
     suspend fun requestDelete(uris: List<String>): DeleteConsentResult
 }
 
+interface ShareGateway {
+    fun share(uris: List<String>)
+}
+
 interface OcrEngine {
     suspend fun recognizeText(uri: String): AppResult<OcrResult>
 }
@@ -45,6 +49,7 @@ interface VaultCryptoEngine {
     suspend fun encryptToVault(sourceUri: String, itemId: String): AppResult<Unit>
     suspend fun decryptFromVault(itemId: String, thumbnail: Boolean): AppResult<ByteArray>
     suspend fun deleteVaultBlobs(itemId: String): AppResult<Unit>
+    suspend fun copyToTrash(sourceUri: String, itemId: String): AppResult<String>
 }
 
 interface SecureScreenPort {

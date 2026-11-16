@@ -17,13 +17,14 @@ import com.o3.vanguard.visionary.core.navigation.AppRoute
 import com.o3.vanguard.visionary.core.navigation.Navigator
 import com.o3.vanguard.visionary.domain.model.MediaAccess
 import com.o3.vanguard.visionary.domain.port.PermissionGateway
-import com.o3.vanguard.visionary.features.gallery.galleryEntries
+import com.o3.vanguard.visionary.features.gallery.navigation.galleryEntries
 import com.o3.vanguard.visionary.features.home.homeEntries
 import com.o3.vanguard.visionary.features.onboarding.onboardingEntries
 import com.o3.vanguard.visionary.features.scanner.scannerEntries
 import com.o3.vanguard.visionary.features.search.searchEntries
 import com.o3.vanguard.visionary.features.settings.settingsEntries
 import com.o3.vanguard.visionary.features.vault.vault.vaultEntries
+import com.o3.vanguard.visionary.feature.teleport.teleportEntries
 import com.o3.vanguard.visionary.screens.SPLASH_DURATION_MS
 import com.o3.vanguard.visionary.screens.SplashScreen
 import kotlinx.coroutines.delay
@@ -84,6 +85,7 @@ private fun AppNavHost(start: AppRoute) {
                     scannerEntries(navigator)
                     vaultEntries(navigator)
                     settingsEntries(navigator)
+                    teleportEntries(navigator)
                     biometricSetupEntries(navigator)
                 },
             )

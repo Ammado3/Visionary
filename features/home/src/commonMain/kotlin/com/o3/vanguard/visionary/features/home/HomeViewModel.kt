@@ -2,6 +2,7 @@ package com.o3.vanguard.visionary.features.home
 
 import androidx.lifecycle.viewModelScope
 import com.o3.vanguard.visionary.core.mvi.BaseMviViewModel
+import com.o3.vanguard.visionary.domain.port.ShareGateway
 import com.o3.vanguard.visionary.domain.usecase.*
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
@@ -11,6 +12,8 @@ class HomeViewModel(
     private val observeCollections: ObserveCollectionsUseCase,
     private val observeRecent: ObserveRecentFindsUseCase,
     private val observeIndex: ObserveIndexProgressUseCase,
+    private val deleteMediaUseCase: DeleteMediaUseCase,
+    private val shareGateway: ShareGateway,
 ) : BaseMviViewModel<HomeState, HomeIntent, HomeEvent>(HomeState()) {
 
     init {
@@ -50,6 +53,14 @@ class HomeViewModel(
             HomeIntent.OnVaultClicked -> sendEvent(HomeEvent.OpenVault)
             HomeIntent.OnSettingsClicked -> sendEvent(HomeEvent.OpenSettings)
             HomeIntent.OnRetryClicked -> loadData()
+            is HomeIntent.OnDeleteSelected -> {
+                viewModelScope.launch {
+                    deleteMediaUseCase(intent.items)
+                }
+            }
+            is HomeIntent.OnShareSelected -> {
+                shareGateway.share(intent.items.map { it.uri })
+            }
         }
     }
 }

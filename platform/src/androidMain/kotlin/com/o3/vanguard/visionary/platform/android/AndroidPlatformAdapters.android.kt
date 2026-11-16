@@ -544,6 +544,18 @@ class AndroidVaultCryptoEngine(private val context: Context, private val dirs: A
     } catch (e: Exception) {
         AppResult.Err(AppError.Io(e.message ?: "Failed to delete vault blob"))
     }
+
+    override suspend fun copyToTrash(sourceUri: String, itemId: String): AppResult<String> = try {
+        val destFile = File(dirs.trashBlobsDirPath(), itemId)
+        context.contentResolver.openInputStream(Uri.parse(sourceUri))?.use { input ->
+            FileOutputStream(destFile).use { output ->
+                input.copyTo(output)
+            }
+        } ?: return AppResult.Err(AppError.Io("Could not open input stream for $sourceUri"))
+        AppResult.Ok(destFile.absolutePath)
+    } catch (e: Exception) {
+        AppResult.Err(AppError.Io(e.message ?: "Failed to cache trash item"))
+    }
 }
 
 class AndroidSecureScreenPort(private val context: Context) : SecureScreenPort {
@@ -553,3 +565,40 @@ class AndroidSecureScreenPort(private val context: Context) : SecureScreenPort {
 class WorkManagerSyncScheduler(private val context: Context) : BackgroundSyncScheduler {
     override fun scheduleIncrementalIndexing(chargingOnly: Boolean) {}
 }
+
+class AndroidShareGateway(private val context: Context) : ShareGateway {
+    override fun share(uris: List<String>) {
+        val resolvedUris = uris.mapNotNull { s ->
+            try {
+                Uri.parse(s)
+            } catch (e: Exception) {
+                null
+            }
+        }
+        if (resolvedUris.isEmpty()) return
+
+        val intent = if (resolvedUris.size == 1) {
+            Intent(Intent.ACTION_SEND).apply {
+                type = "image/*"
+                putExtra(Intent.EXTRA_STREAM, resolvedUris[0])
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+        } else {
+            Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+                type = "image/*"
+                putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(resolvedUris))
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+        }
+        val chooser = Intent.createChooser(intent, "Share media").apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        try {
+            context.startActivity(chooser)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+}
+
+

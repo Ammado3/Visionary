@@ -14,7 +14,10 @@ class OnboardingViewModel(
     override fun onIntent(intent: OnboardingIntent) {
         when (intent) {
             OnboardingIntent.OnNextPageClicked -> {
-                updateState { copy(currentPage = (currentPage + 1).coerceAtMost(2)) }
+                updateState { copy(currentPage = (currentPage + 1).coerceAtMost(onboardingPages.lastIndex)) }
+            }
+            OnboardingIntent.OnPreviousPageClicked -> {
+                updateState { copy(currentPage = (currentPage - 1).coerceAtLeast(0)) }
             }
             OnboardingIntent.OnGrantPermissionClicked -> {
                 viewModelScope.launch {

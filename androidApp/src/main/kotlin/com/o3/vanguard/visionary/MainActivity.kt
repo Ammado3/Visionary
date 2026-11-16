@@ -46,7 +46,11 @@ class MainActivity : AppCompatActivity(){
         setContent {
             App()
         }
-        requestMediaAccessIfNeeded()
+        // Only trigger indexing on a true first launch of this process, not on
+        // Activity re-creation (e.g. screen rotation or system-initiated restart).
+        if (savedInstanceState == null) {
+            requestMediaAccessIfNeeded()
+        }
     }
 
     private fun requestMediaAccessIfNeeded() {
