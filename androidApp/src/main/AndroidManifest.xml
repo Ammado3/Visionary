@@ -16,6 +16,7 @@
         android:name=".VisionaryApp"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
+
         android:label="Visionary"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
