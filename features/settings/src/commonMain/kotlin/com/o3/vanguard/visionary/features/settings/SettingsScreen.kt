@@ -32,8 +32,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
 import com.o3.vanguard.visionary.core.mvi.CollectEvents
 import com.o3.vanguard.visionary.domain.model.IndexState
-import com.o3.vanguard.visionary.features.settings.generated.resources.Res
-import com.o3.vanguard.visionary.features.settings.generated.resources.*
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.Res
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
