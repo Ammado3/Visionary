@@ -16,6 +16,7 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.coil.compose)
+            implementation(libs.datastore.preferences.core)
         }
 
         androidMain.dependencies {

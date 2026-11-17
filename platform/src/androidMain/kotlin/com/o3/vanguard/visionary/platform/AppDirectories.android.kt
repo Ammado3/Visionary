@@ -15,4 +15,7 @@ actual class AppDirectories(private val context: Context) {
 
     actual fun cacheDirPath(): String =
         context.cacheDir.absolutePath
+
+    actual fun settingsFilePath(): String =
+        File(context.filesDir, "datastore").apply { mkdirs() }.absolutePath + "/settings.preferences_pb"
 }

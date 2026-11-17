@@ -1,6 +1,7 @@
 package com.o3.vanguard.visionary.platform
 
 import kotlinx.cinterop.ExperimentalForeignApi
+import platform.Foundation.NSApplicationSupportDirectory
 import platform.Foundation.NSCachesDirectory
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
@@ -32,5 +33,18 @@ actual class AppDirectories {
             error = null,
         )
         return requireNotNull(url?.path)
+    }
+
+    @OptIn(ExperimentalForeignApi::class)
+    actual fun settingsFilePath(): String {
+        val url = NSFileManager.defaultManager.URLForDirectory(
+            directory = NSApplicationSupportDirectory,
+            inDomain = NSUserDomainMask,
+            appropriateForURL = null,
+            create = true,
+            error = null,
+        )
+        val appSupport = requireNotNull(url?.path)
+        return "$appSupport/settings.preferences_pb"
     }
 }

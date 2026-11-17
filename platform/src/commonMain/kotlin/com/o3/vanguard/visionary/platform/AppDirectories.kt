@@ -5,4 +5,5 @@ expect class AppDirectories {
     fun scansDirPath(): String
     fun trashBlobsDirPath(): String
     fun cacheDirPath(): String
+    fun settingsFilePath(): String
 }
