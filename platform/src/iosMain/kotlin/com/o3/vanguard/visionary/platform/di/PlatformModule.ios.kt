@@ -8,17 +8,17 @@ import org.koin.dsl.module
 
 actual val platformModule: Module = module {
     single { AppDirectories() }
-    single<PermissionGateway> { IosStubPermissionGateway() }
-    single<MediaSourceEngine> { IosStubMediaSourceEngine() }
-    single<StorageAlbumSourceEngine> { IosStubStorageAlbumSourceEngine() }
-    single<MediaDeleteGateway> { IosStubMediaDeleteGateway() }
-    single<OcrEngine> { IosStubOcrEngine() }
-    single<ImageLabelEngine> { IosStubImageLabelEngine() }
+    single<PermissionGateway> { IosPermissionGateway() }
+    single<MediaSourceEngine> { IosMediaSourceEngine() }
+    single<StorageAlbumSourceEngine> { IosStorageAlbumSourceEngine() }
+    single<MediaDeleteGateway> { IosMediaDeleteGateway() }
+    single<OcrEngine> { IosOcrEngine() }
+    single<ImageLabelEngine> { IosImageLabelEngine() }
     single<ScannerPort> { IosStubScannerPort() }
-    single<BiometricAuthenticator> { IosStubBiometricAuthenticator() }
-    single<VaultCryptoEngine> { IosStubVaultCryptoEngine() }
+    single<BiometricAuthenticator> { IosBiometricAuthenticator() }
+    single<VaultCryptoEngine> { IosVaultCryptoEngine(get()) }
     single<SecureScreenPort> { IosStubSecureScreenPort() }
     single<BackgroundSyncScheduler> { IosStubBackgroundSyncScheduler() }
-    single<ShareGateway> { IosStubShareGateway() }
+    single<ShareGateway> { IosShareGateway() }
 }
 

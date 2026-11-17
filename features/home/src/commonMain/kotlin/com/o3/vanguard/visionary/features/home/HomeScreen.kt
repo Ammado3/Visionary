@@ -65,6 +65,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -206,15 +208,17 @@ fun HomeScreen(
                                     key = "header_${section.title}",
                                     span = { GridItemSpan(maxLineSpan) },
                                 ) {
-                                    val labelMedium = MaterialTheme.typography.labelMedium
-                                    val ls = labelMedium.letterSpacing
                                     Text(
                                         text = section.title.uppercase(),
                                         modifier = Modifier.padding(top = 12.dp, bottom = 8.dp),
-                                        style = labelMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = VisionaryColors.color496156,
-                                        letterSpacing = if (ls.isUnspecified) 0.sp else ls * 1.4f,
+                                        style = TextStyle(
+                                            fontFamily = FontFamily.SansSerif,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 11.76.sp,
+                                            lineHeight = 15.7.sp,
+                                            letterSpacing = 2.35.sp,
+                                        ),
+                                        color = VisionaryColors.color95A6BF,
                                     )
                                 }
                                 items(section.items, key = { it.id.value }) { item ->
@@ -262,18 +266,6 @@ fun HomeScreen(
                         selectedMediaIds = emptySet()
                     },
                 )
-            } else {
-                AppBottomNavigation(
-                    selected = AppTab.PHOTOS,
-                    onSelected = { tab ->
-                        when (tab) {
-                            AppTab.PHOTOS -> {}
-                            AppTab.ALBUMS -> onIntent(HomeIntent.OnAlbumsClicked)
-                            AppTab.SEARCH -> onIntent(HomeIntent.OnSearchClicked)
-                            AppTab.VAULT -> onIntent(HomeIntent.OnVaultClicked)
-                        }
-                    },
-                )
             }
         }
     }
@@ -290,7 +282,7 @@ private fun groupHomeMedia(media: List<MediaItem>): List<HomeMediaSection> {
         val title = if (date == today) {
             "Today"
         } else {
-            "${MONTH_NAMES[date.month - 1]} ${date.year}"
+            "${MONTH_NAMES[date.month - 1]}, ${date.year}"
         }
         grouped.getOrPut(title) { mutableListOf() }.add(item)
     }
@@ -432,7 +424,7 @@ private fun MediaItem.matchesGalleryQuery(query: String): Boolean {
         textPreview.orEmpty(),
         labels,
         takenAtMs.toString(),
-        epochDate(takenAtMs).let { "${MONTH_NAMES[it.month - 1]} ${it.year}" },
+        epochDate(takenAtMs).let { "${MONTH_NAMES[it.month - 1]}, ${it.year}" },
     )
     return searchableText.any { it.lowercase().contains(normalizedQuery) }
 }

@@ -13,6 +13,7 @@ kotlin {
             implementation(project(":domain"))
             implementation(libs.koin.core)
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.coil.compose)
         }
 
         androidMain.dependencies {

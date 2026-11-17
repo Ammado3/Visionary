@@ -51,6 +51,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import coil3.compose.AsyncImage
 import com.o3.vanguard.visionary.core.common.AppResult
@@ -101,7 +102,15 @@ fun AlbumsRoute(
                         ShortcutCard("Favorites", "0 files", Icons.Default.FavoriteBorder)
                     }
                     Spacer(Modifier.height(24.dp))
-                    Text("On this device", style = MaterialTheme.typography.bodyMedium, color = VisionaryColors.color496156)
+                    Text(
+                        text = "On this device",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 14.sp,
+                            lineHeight = 20.sp,
+                            letterSpacing = 0.sp,
+                        ),
+                        color = VisionaryColors.color95A6BF,
+                    )
                     Spacer(Modifier.height(16.dp))
                     val visibleAlbums = albums.filter { album ->
                         searchQuery.isBlank() || album.name.contains(searchQuery.trim(), ignoreCase = true)
@@ -143,17 +152,6 @@ fun AlbumsRoute(
                     }
                 }
             }
-            AppBottomNavigation(
-                selected = AppTab.ALBUMS,
-                onSelected = { tab ->
-                    when (tab) {
-                        AppTab.PHOTOS -> onPhotos()
-                        AppTab.SEARCH -> onSearch()
-                        AppTab.VAULT -> onVault()
-                        AppTab.ALBUMS -> Unit
-                    }
-                },
-            )
         }
     }
 }

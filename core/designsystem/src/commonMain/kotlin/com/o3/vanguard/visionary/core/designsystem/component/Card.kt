@@ -37,7 +37,7 @@ fun VisionaryCard(
     content: @Composable () -> Unit
 ) {
     val shape = RoundedCornerShape(8.dp)
-    val border = BorderStroke(1.dp, borderColor)
+    val border = BorderStroke(0.dp, borderColor)
     val colors = CardDefaults.cardColors(containerColor = backgroundColor)
 
     if (onClick != null) {
@@ -93,14 +93,18 @@ fun VisionaryCard(
                     text = title,
                     color = AppTheme.colorScheme.black,
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 16.8.sp,
+                    letterSpacing = 0.sp
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = value,
                     color = AppTheme.colorScheme.regularText,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Normal
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium,
+                    lineHeight = 12.sp,
+                    letterSpacing = 0.sp
                 )
             }
         }
