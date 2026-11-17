@@ -8,7 +8,7 @@ import kotlinx.serialization.modules.polymorphic
 
 @Serializable
 sealed interface AppRoute : NavKey {
-    @Serializable data object Onboarding : AppRoute
+    @Serializable data class Onboarding(val skipIntro: Boolean = false) : AppRoute
     @Serializable data object Home : AppRoute
     @Serializable data object Albums : AppRoute
     @Serializable data class Gallery(val collectionId: String) : AppRoute

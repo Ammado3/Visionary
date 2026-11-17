@@ -16,8 +16,8 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 fun EntryProviderScope<NavKey>.onboardingEntries(navigator: Navigator) {
-    entry<AppRoute.Onboarding> {
-        var showPermissionGate by remember { mutableStateOf(false) }
+    entry<AppRoute.Onboarding> { key ->
+        var showPermissionGate by remember { mutableStateOf(key.skipIntro) }
         var navigated by remember { mutableStateOf(false) }
         val permissionGateway = koinInject<PermissionGateway>()
         val indexRepository = koinInject<IndexRepository>()
