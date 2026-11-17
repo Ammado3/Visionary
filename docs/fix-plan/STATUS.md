@@ -1,8 +1,7 @@
 # Fix-plan status
 
 **Next:** Reviewer
-**Action:** review `STEP_02b_use_onboarding_flag.md`
-**Last implemented commit:** `bbc725b` (Step 02b.3)
+**Action:** review Step 02b (spec: STEP_02b_use_onboarding_flag.md, report: REPORT_02b.md)
 **Last reviewed commit:** `d853216` (Step 02.4)
 
 ## History
@@ -11,7 +10,7 @@
 |---|---|---|
 | 01 | Stop silent data loss | Approved |
 | 02 | Persist settings (DataStore) | Approved |
-| 02b | Use the saved onboarding flag at startup | Ready for Review |
+| 02b | Use the saved onboarding flag at startup | Ready for review |
 
 ## Human sign-off
 
