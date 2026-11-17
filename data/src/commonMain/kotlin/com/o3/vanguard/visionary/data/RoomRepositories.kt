@@ -450,9 +450,12 @@ class RoomVaultRepository(
         return AppResult.Ok(Unit)
     }
 
-    override suspend fun restore(itemId: String): AppResult<Unit> = AppResult.Ok(Unit)
+    override suspend fun restore(itemId: String): AppResult<Unit> =
+        AppResult.Err(AppError.Unsupported("VAULT_RESTORE_NOT_IMPLEMENTED"))
 
     override suspend fun delete(itemId: String): AppResult<Unit> {
+        val result = vaultCryptoEngine.deleteVaultBlobs(itemId)
+        if (result is AppResult.Err) return result
         db.vaultDao().deleteVaultItem(itemId)
         return AppResult.Ok(Unit)
     }
