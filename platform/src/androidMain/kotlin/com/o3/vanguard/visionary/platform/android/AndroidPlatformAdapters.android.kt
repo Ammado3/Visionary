@@ -4,12 +4,15 @@ import android.Manifest
 import android.app.Activity
 import android.app.RecoverableSecurityException
 import android.content.ContentUris
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
+import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
 import com.o3.vanguard.visionary.platform.AppDirectories
@@ -38,6 +41,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import java.io.FileInputStream
+import java.io.InputStream
 import kotlin.coroutines.resume
 
 class AndroidPermissionGateway(private val context: Context) : PermissionGateway {
@@ -513,13 +519,33 @@ class AndroidBiometricAuthenticator(private val context: Context) : BiometricAut
     }
 }
 
+private fun openStreamForUri(context: Context, sourceUri: String): InputStream? {
+    val uri = Uri.parse(sourceUri)
+    return if (uri.scheme == "content") {
+        context.contentResolver.openInputStream(uri)
+    } else {
+        val filePath = if (uri.scheme == "file") uri.path else sourceUri
+        if (filePath != null && File(filePath).exists()) {
+            FileInputStream(File(filePath))
+        } else {
+            try {
+                context.contentResolver.openInputStream(uri)
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+}
+
 class AndroidVaultCryptoEngine(private val context: Context, private val dirs: AppDirectories) : VaultCryptoEngine {
     override suspend fun unlockSession(): AppResult<Unit> = AppResult.Ok(Unit)
     override fun lockSession() {}
 
+    override fun getBlobPath(itemId: String): String = File(dirs.vaultBlobsDirPath(), itemId).absolutePath
+
     override suspend fun encryptToVault(sourceUri: String, itemId: String): AppResult<Unit> = try {
         val destFile = File(dirs.vaultBlobsDirPath(), itemId)
-        context.contentResolver.openInputStream(Uri.parse(sourceUri))?.use { input ->
+        openStreamForUri(context, sourceUri)?.use { input ->
             FileOutputStream(destFile).use { output ->
                 input.copyTo(output)
             }
@@ -545,9 +571,85 @@ class AndroidVaultCryptoEngine(private val context: Context, private val dirs: A
         AppResult.Err(AppError.Io(e.message ?: "Failed to delete vault blob"))
     }
 
+
+    override suspend fun restoreToStorage(
+        itemId: String,
+        mime: String?,
+        takenAtMs: Long,
+    ): AppResult<String> = withContext(Dispatchers.IO) {
+        try {
+            val blobFile = File(dirs.vaultBlobsDirPath(), itemId)
+            if (!blobFile.exists()) {
+                return@withContext AppResult.Err(AppError.Io("Vault blob not found"))
+            }
+
+            val isVideo = mime?.startsWith("video", ignoreCase = true)
+                ?: (itemId.startsWith("v_") || blobFile.length() > 5_000_000)
+            val extension = if (isVideo) "mp4" else "jpg"
+            val mimeType = mime ?: if (isVideo) "video/mp4" else "image/jpeg"
+            val displayName = "Restored_${System.currentTimeMillis()}.$extension"
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val resolver = context.contentResolver
+                val collection = if (isVideo) {
+                    MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+                } else {
+                    MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+                }
+                val values = ContentValues().apply {
+                    put(MediaStore.MediaColumns.DISPLAY_NAME, displayName)
+                    put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
+                    put(
+                        MediaStore.MediaColumns.RELATIVE_PATH,
+                        if (isVideo) "${Environment.DIRECTORY_MOVIES}/Visionary"
+                        else "${Environment.DIRECTORY_PICTURES}/Visionary"
+                    )
+                    if (takenAtMs > 0) put(MediaStore.MediaColumns.DATE_TAKEN, takenAtMs)
+                    put(MediaStore.MediaColumns.IS_PENDING, 1)
+                }
+                val newUri = resolver.insert(collection, values)
+                    ?: return@withContext AppResult.Err(AppError.Io("MediaStore insert failed"))
+                try {
+                    resolver.openOutputStream(newUri, "w")?.use { out ->
+                        FileInputStream(blobFile).use { it.copyTo(out) }
+                    } ?: throw java.io.IOException("Could not open output stream")
+                    resolver.update(
+                        newUri,
+                        ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) },
+                        null, null
+                    )
+                } catch (e: Exception) {
+                    resolver.delete(newUri, null, null)
+                    throw e
+                }
+                blobFile.delete()
+                AppResult.Ok(newUri.toString())
+            } else {
+                // Android 9 and below
+                val baseDir = Environment.getExternalStoragePublicDirectory(
+                    if (isVideo) Environment.DIRECTORY_MOVIES else Environment.DIRECTORY_PICTURES
+                )
+                val appDir = File(baseDir, "Visionary").apply { mkdirs() }
+                val targetFile = File(appDir, displayName)
+                blobFile.copyTo(targetFile, overwrite = true)
+                blobFile.delete()
+                val scanned = suspendCancellableCoroutine<String> { cont ->
+                    MediaScannerConnection.scanFile(
+                        context, arrayOf(targetFile.absolutePath), arrayOf(mimeType)
+                    ) { _, uri ->
+                        if (cont.isActive) cont.resume(uri?.toString() ?: Uri.fromFile(targetFile).toString())
+                    }
+                }
+                AppResult.Ok(scanned)
+            }
+        } catch (e: Exception) {
+            AppResult.Err(AppError.Io(e.message ?: "Failed to restore file to public gallery"))
+        }
+    }
+
     override suspend fun copyToTrash(sourceUri: String, itemId: String): AppResult<String> = try {
         val destFile = File(dirs.trashBlobsDirPath(), itemId)
-        context.contentResolver.openInputStream(Uri.parse(sourceUri))?.use { input ->
+        openStreamForUri(context, sourceUri)?.use { input ->
             FileOutputStream(destFile).use { output ->
                 input.copyTo(output)
             }

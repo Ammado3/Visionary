@@ -392,7 +392,16 @@ class RoomVaultRepository(
 
     override fun observeItems(): Flow<List<VaultItem>> =
         db.vaultDao().observeVaultItems().map { list ->
-            list.map { VaultItem(it.id, it.createdAtMs, it.width, it.height) }
+            list.map { 
+                VaultItem(
+                    id = it.id,
+                    filePath = vaultCryptoEngine.getBlobPath(it.id),
+                    createdAtMs = it.createdAtMs,
+                    width = it.width,
+                    height = it.height,
+                    mime = it.mime
+                )
+            }
         }
 
     override suspend fun unlock(): AppResult<Unit> {
@@ -411,10 +420,12 @@ class RoomVaultRepository(
         val enc = vaultCryptoEngine.encryptToVault(media.ref, media.id.toString())
         if (enc is AppResult.Err) return enc
 
+        val filePath = media.ref
         val vaultEntity = VaultItemEntity(
             id = media.id.toString(),
+            filePath = filePath,
             createdAtMs = currentTimeMillis(),
-            mime = media.mime ?: "image/*",
+            mime = if (media.category.equals("VIDEO", ignoreCase = true)) "video/mp4" else "image/jpeg",
             sizeBytes = media.sizeBytes,
             width = media.width,
             height = media.height,
@@ -436,10 +447,47 @@ class RoomVaultRepository(
         return AppResult.Ok(Unit)
     }
 
-    override suspend fun restore(itemId: String): AppResult<Unit> = AppResult.Ok(Unit)
+    override suspend fun restore(itemId: String): AppResult<Unit> {
+        val vaultEntity = db.vaultDao().getVaultItem(itemId)
+            ?: return AppResult.Err(AppError.Io("Media item not found"))
+
+        val restored = vaultCryptoEngine.restoreToStorage(
+            itemId = itemId,
+            mime = vaultEntity.mime,
+            takenAtMs = vaultEntity.originalTakenAtMs,
+        )
+        val newUri = when (restored) {
+            is AppResult.Ok -> restored.value
+            is AppResult.Err -> return restored
+        }
+
+        // MediaStore ki nayi id (Images/Video/Files teeno table mein same _ID hoti hai)
+        val newId = newUri.substringAfterLast("/").toLongOrNull()
+            ?: return AppResult.Err(AppError.Io("Invalid restored URI: $newUri"))
+        // queryDelta wali same format, taake dobara vault mein add karne par resolve ho
+        val newRef = "content://media/external/file/$newId"
+
+        val mediaEntity = MediaEntity(
+            id = newId,
+            ref = newRef,
+            origin = "LIBRARY",
+            category = if (vaultEntity.mime.contains("video", true)) "VIDEO" else "PHOTO",
+            sortKey = vaultEntity.originalTakenAtMs,
+            width = vaultEntity.width,
+            height = vaultEntity.height,
+            sizeBytes = vaultEntity.sizeBytes,
+            isScreenshot = false,
+            entityFlags = 0,
+            fingerprint = newRef
+        )
+        db.mediaDao().upsert(listOf(mediaEntity))
+        db.vaultDao().deleteVaultItem(itemId)
+        return AppResult.Ok(Unit)
+    }
 
     override suspend fun delete(itemId: String): AppResult<Unit> {
         db.vaultDao().deleteVaultItem(itemId)
+        vaultCryptoEngine.deleteVaultBlobs(itemId)
         return AppResult.Ok(Unit)
     }
 }

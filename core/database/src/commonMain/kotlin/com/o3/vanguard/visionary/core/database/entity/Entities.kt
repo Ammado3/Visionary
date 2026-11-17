@@ -89,6 +89,7 @@ data class IndexExclusionEntity(
 @Entity(tableName = "vault_item")
 data class VaultItemEntity(
     @PrimaryKey val id: String,
+    val filePath: String,
     val createdAtMs: Long,
     val mime: String,
     val sizeBytes: Long,

@@ -40,6 +40,7 @@ class MainActivity : AppCompatActivity(){
         }
         val systemBarColor = VisionaryColors.colorF4FDF7.toArgb()
         enableEdgeToEdge(
+
             statusBarStyle = SystemBarStyle.light(systemBarColor, systemBarColor),
             navigationBarStyle = SystemBarStyle.light(systemBarColor, systemBarColor)
         )

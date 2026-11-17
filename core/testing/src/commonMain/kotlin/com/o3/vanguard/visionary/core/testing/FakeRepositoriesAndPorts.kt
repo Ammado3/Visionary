@@ -117,7 +117,14 @@ class FakeVaultRepository : VaultRepository {
     }
 
     override suspend fun moveToVault(id: MediaId): AppResult<Unit> {
-        val item = VaultItem("vault_${id.value}", 1_760_000_000_000L, 1080, 1920)
+        val item = VaultItem(
+            id = "vault_${id.value}",
+            filePath = "",
+            createdAtMs = 1_760_000_000_000L,
+            width = 1080,
+            height = 1920,
+            mime = "image/jpeg"
+        )
         vaultItems.update { it + item }
         return AppResult.Ok(Unit)
     }

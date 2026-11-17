@@ -25,7 +25,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -64,9 +63,9 @@ fun SettingsScreen(
     val indexed = progress?.indexed ?: 1842
     val percent = ((indexed * 100f / total).toInt()).coerceIn(0, 100)
     val progressStatus = when (progress?.state) {
-        IndexState.PAUSED_BATTERY -> stringResource(Res.string.settings_index_paused)
-        IndexState.RUNNING -> stringResource(Res.string.settings_indexing)
-        else -> stringResource(Res.string.settings_index_paused)
+        IndexState.PAUSED_BATTERY -> "Indexing paused"
+        IndexState.RUNNING -> "Indexing..."
+        else -> "Indexing paused"
     }
 
     Surface(modifier = modifier.fillMaxSize(), color = VisionaryColors.colorF4FDF7) {
@@ -84,13 +83,13 @@ fun SettingsScreen(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(Res.string.settings_back),
+                        contentDescription = "Back",
                         tint = VisionaryColors.color0B1B14,
                         modifier = Modifier.size(20.dp),
                     )
                 }
                 Text(
-                    text = stringResource(Res.string.settings_title),
+                    text = "Settings",
                     color = VisionaryColors.color0B1B14,
                     fontSize = 18.sp,
                     lineHeight = 28.sp,
@@ -105,11 +104,11 @@ fun SettingsScreen(
                     .padding(horizontal = 16.dp).padding(top = 24.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp),
             ) {
-                SettingsSection(title = stringResource(Res.string.settings_appearance)) {
+                SettingsSection(title = "Appearance") {
                     Column {
                         SettingsRow(
-                            title = stringResource(Res.string.settings_theme),
-                            subtitle = stringResource(Res.string.settings_system_default),
+                            title = "Theme",
+                            subtitle = "System default",
                             trailing = {
                                 Icon(
                                     Icons.Default.ExpandMore,
@@ -123,7 +122,7 @@ fun SettingsScreen(
                     }
                 }
 
-                SettingsSection(title = stringResource(Res.string.settings_ai_search)) {
+                SettingsSection(title = "AI Search") {
                     Column {
                         Column(
                             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp)
@@ -133,7 +132,7 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    stringResource(Res.string.settings_ocr_indexing),
+                                    "OCR Indexing",
                                     color = VisionaryColors.color0B1B14,
                                     fontSize = 16.sp,
                                     lineHeight = 24.sp,
@@ -148,11 +147,7 @@ fun SettingsScreen(
                                 )
                             }
                             Text(
-                                text = stringResource(
-                                    Res.string.settings_indexed_count,
-                                    indexed,
-                                    total
-                                ),
+                                text = "Indexed $indexed of $total photos",
                                 color = VisionaryColors.color496156, fontSize = 14.sp, lineHeight = 20.sp,
                             )
                             Spacer(Modifier.height(12.dp))
@@ -175,7 +170,7 @@ fun SettingsScreen(
                         ) {
                             Column(Modifier.weight(1f)) {
                                 Text(
-                                    stringResource(Res.string.settings_visual_analysis),
+                                    "Visual Analysis",
                                     color = VisionaryColors.color0B1B14,
                                     fontSize = 16.sp,
                                     lineHeight = 24.sp,
@@ -200,40 +195,34 @@ fun SettingsScreen(
                         }
                         SettingsDivider()
                         SettingsRow(
-                            title = stringResource(Res.string.settings_reindex_library),
-                            subtitle = stringResource(Res.string.settings_continue_device),
+                            title = "Reindex library",
+                            subtitle = "Continue on this device",
                             trailing = { Chevron() },
                             onClick = { onIntent(SettingsIntent.OnOpenIndexHealthClicked) },
                         )
                         SettingsDivider()
                         SettingsRow(
-                            title = stringResource(Res.string.settings_indexing_preferences),
-                            subtitle = stringResource(
-                                Res.string.settings_preferences_summary,
-                                stringResource(Res.string.settings_wifi_only),
-                                if (state.settings.indexOnlyWhileCharging) stringResource(Res.string.settings_charging_only) else stringResource(
-                                    Res.string.settings_any_power
-                                ),
-                            ),
+                            title = "Indexing preferences",
+                            subtitle = "Wi-Fi only, ${if (state.settings.indexOnlyWhileCharging) "Charging only" else "Any power"}",
                             trailing = { Chevron() },
                             onClick = { onIntent(SettingsIntent.OnOpenIndexHealthClicked) },
                         )
                     }
                 }
 
-                SettingsSection(title = stringResource(Res.string.settings_about)) {
+                SettingsSection(title = "About") {
                     Column {
                         SettingsRow(
-                            title = stringResource(Res.string.settings_help),
+                            title = "Help",
                             trailing = { Chevron() })
                         SettingsDivider()
                         SettingsRow(
-                            title = stringResource(Res.string.settings_privacy_policy),
+                            title = "Privacy policy",
                             trailing = { Chevron() })
                         SettingsDivider()
                         SettingsRow(
-                            title = stringResource(Res.string.settings_app_version),
-                            subtitle = stringResource(Res.string.settings_version_value),
+                            title = "App Version",
+                            subtitle = "1.0.0",
                         )
                     }
                 }
@@ -307,11 +296,7 @@ private fun ThemeSelector() {
         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp)
             .clip(RoundedCornerShape(8.dp)).background(VisionaryColors.colorE6F3EA).padding(3.dp),
     ) {
-        listOf(
-            stringResource(Res.string.settings_theme_light),
-            stringResource(Res.string.settings_theme_dark),
-            stringResource(Res.string.settings_theme_system),
-        ).forEachIndexed { index, label ->
+        listOf("Light", "Dark", "System").forEachIndexed { index, label ->
             Box(
                 modifier = Modifier.weight(1f).height(30.dp)
                     .clip(RoundedCornerShape(6.dp))
@@ -340,15 +325,15 @@ private fun IndexHealthScreen(onBack: () -> Unit) {
             verticalArrangement = Arrangement.Center,
         ) {
             Text(
-                stringResource(Res.string.settings_index_health),
+                "Index Health",
                 style = MaterialTheme.typography.headlineLarge,
                 color = VisionaryColors.color0B1B14
             )
             Spacer(Modifier.height(16.dp))
-            Text(stringResource(Res.string.settings_ocr_status), color = VisionaryColors.color496156)
+            Text("OCR Status", color = VisionaryColors.color496156)
             Spacer(Modifier.height(24.dp))
             Text(
-                stringResource(Res.string.settings_back),
+                "Back",
                 color = VisionaryColors.color007847,
                 modifier = Modifier.clickable(onClick = onBack)
             )
@@ -359,11 +344,3 @@ private fun IndexHealthScreen(onBack: () -> Unit) {
 @Composable
 fun IndexHealthRoute(onBack: () -> Unit) = IndexHealthScreen(onBack)
 
-@Preview
-@Composable
-fun SettingsScreenPreview() {
-    SettingsScreen(
-        state = SettingsState(),
-        onIntent = {},
-    )
-}

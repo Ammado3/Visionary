@@ -39,6 +39,9 @@ import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
 import com.o3.vanguard.visionary.core.designsystem.component.PrimaryButton
 import com.o3.vanguard.visionary.core.designsystem.component.VisionaryHeader
 import com.o3.vanguard.visionary.core.mvi.CollectEvents
+import com.o3.vanguard.visionary.features.vault.vault.states.VaultEvent
+import com.o3.vanguard.visionary.features.vault.vault.states.VaultIntent
+import com.o3.vanguard.visionary.features.vault.vault.states.VaultState
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
