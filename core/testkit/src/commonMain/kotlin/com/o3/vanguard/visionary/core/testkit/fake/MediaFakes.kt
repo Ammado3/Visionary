@@ -106,10 +106,18 @@ class FakeTrashRepository : TrashRepository {
 
     override suspend fun moveToTrash(item: MediaItem) {
         moveToTrashCalls.add(item)
+        trashItems.value = trashItems.value + TrashItem(
+            id = item.id,
+            uri = item.uri,
+            category = item.category,
+            fileName = item.fileName,
+            deletedAtMs = item.takenAtMs,
+        )
     }
 
     override suspend fun deleteFromTrash(id: MediaId) {
         deleteFromTrashCalls.add(id)
+        trashItems.value = trashItems.value.filterNot { it.id == id }
     }
 
     override suspend fun restoreFromTrash(id: MediaId) {

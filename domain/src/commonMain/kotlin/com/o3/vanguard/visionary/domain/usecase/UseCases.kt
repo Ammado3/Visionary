@@ -6,6 +6,7 @@ import com.o3.vanguard.visionary.domain.port.MediaDeleteGateway
 import com.o3.vanguard.visionary.domain.port.ScannerPort
 import com.o3.vanguard.visionary.domain.port.StorageAlbumSourceEngine
 import com.o3.vanguard.visionary.domain.repository.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -69,8 +70,10 @@ class DeleteMediaUseCase(
         for (item in items) {
             try {
                 trashRepository.moveToTrash(item)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                // ignore
+                // best-effort: continue with the remaining items
             }
         }
 
@@ -79,16 +82,20 @@ class DeleteMediaUseCase(
             for (item in items) {
                 try {
                     mediaRepository.deleteMedia(item.id)
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
-                    // ignore
+                    // best-effort: continue with the remaining items
                 }
             }
         } else {
             for (item in items) {
                 try {
                     trashRepository.deleteFromTrash(item.id)
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
-                    // ignore
+                    // best-effort: continue with the remaining items
                 }
             }
         }
