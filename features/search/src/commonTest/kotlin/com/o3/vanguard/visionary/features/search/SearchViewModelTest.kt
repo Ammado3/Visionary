@@ -1,0 +1,169 @@
+package com.o3.vanguard.visionary.features.search
+
+import app.cash.turbine.test
+import com.o3.vanguard.visionary.core.testkit.dispatcher.runViewModelTest
+import com.o3.vanguard.visionary.core.testkit.factory.testMediaItem
+import com.o3.vanguard.visionary.core.testkit.fake.FakeIndexRepository
+import com.o3.vanguard.visionary.core.testkit.fake.FakeMediaDeleteGateway
+import com.o3.vanguard.visionary.core.testkit.fake.FakeMediaRepository
+import com.o3.vanguard.visionary.core.testkit.fake.FakeSearchRepository
+import com.o3.vanguard.visionary.core.testkit.fake.FakeTrashRepository
+import com.o3.vanguard.visionary.core.testkit.mvi.collectEvents
+import com.o3.vanguard.visionary.domain.model.CollectionKind
+import com.o3.vanguard.visionary.domain.model.DeleteConsentResult
+import com.o3.vanguard.visionary.domain.model.MediaId
+import com.o3.vanguard.visionary.domain.model.SearchHit
+import com.o3.vanguard.visionary.domain.usecase.DeleteMediaUseCase
+import com.o3.vanguard.visionary.domain.usecase.ObserveIndexProgressUseCase
+import com.o3.vanguard.visionary.domain.usecase.ObserveMediaUseCase
+import com.o3.vanguard.visionary.domain.usecase.RebuildIndexUseCase
+import com.o3.vanguard.visionary.domain.usecase.SearchMediaUseCase
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+
+class SearchViewModelTest {
+
+    private fun createViewModel(
+        searchRepository: FakeSearchRepository,
+        mediaRepository: FakeMediaRepository,
+        indexRepository: FakeIndexRepository,
+        trashRepository: FakeTrashRepository,
+        deleteGateway: FakeMediaDeleteGateway,
+        initialQuery: String = "cat",
+    ): SearchViewModel {
+        val searchMediaUseCase = SearchMediaUseCase(searchRepository)
+        val observeMediaUseCase = ObserveMediaUseCase(mediaRepository)
+        val observeIndexProgressUseCase = ObserveIndexProgressUseCase(indexRepository)
+        val rebuildIndexUseCase = RebuildIndexUseCase(indexRepository)
+        val deleteMediaUseCase = DeleteMediaUseCase(deleteGateway, mediaRepository, trashRepository)
+
+        return SearchViewModel(
+            initialQuery = initialQuery,
+            searchMediaUseCase = searchMediaUseCase,
+            observeMediaUseCase = observeMediaUseCase,
+            observeIndexProgressUseCase = observeIndexProgressUseCase,
+            rebuildIndexUseCase = rebuildIndexUseCase,
+            searchRepository = searchRepository,
+            deleteMediaUseCase = deleteMediaUseCase,
+        )
+    }
+
+    @Test
+    fun onDeleteImage_withDeletedResult_removesItemAndEmitsToastAndRequestsDelete() = runViewModelTest {
+        val searchRepository = FakeSearchRepository()
+        val mediaRepository = FakeMediaRepository()
+        val indexRepository = FakeIndexRepository()
+        val trashRepository = FakeTrashRepository()
+        val deleteGateway = FakeMediaDeleteGateway()
+        deleteGateway.nextResult = DeleteConsentResult.Deleted
+
+        val item = testMediaItem(id = MediaId(1L), uri = "content://media/1")
+        val hit = SearchHit(item = item, snippet = "cat picture", matchedTerms = listOf("cat"))
+        searchRepository.searchHits = listOf(hit)
+        mediaRepository.mediaItemsByKind.value = mapOf(CollectionKind.ALL to listOf(item))
+
+        val viewModel = createViewModel(
+            searchRepository = searchRepository,
+            mediaRepository = mediaRepository,
+            indexRepository = indexRepository,
+            trashRepository = trashRepository,
+            deleteGateway = deleteGateway,
+            initialQuery = "cat",
+        )
+        testScheduler.advanceUntilIdle()
+
+        val events = collectEvents(viewModel)
+
+        viewModel.onIntent(SearchIntent.OnDeleteImage(item))
+        testScheduler.advanceUntilIdle()
+
+        viewModel.state.test {
+            val state = awaitItem()
+            assertTrue(state.results.isEmpty())
+            assertTrue(state.allImages.isEmpty())
+        }
+
+        assertEquals(1, events.size)
+        assertEquals(SearchEvent.ShowToast("Image moved to Bin"), events[0])
+        assertEquals(1, deleteGateway.deleteRequests.size)
+        assertEquals(listOf("content://media/1"), deleteGateway.deleteRequests[0])
+    }
+
+    @Test
+    fun onDeleteImage_withDeclinedByUserResult_keepsItemAndEmitsNoToast() = runViewModelTest {
+        val searchRepository = FakeSearchRepository()
+        val mediaRepository = FakeMediaRepository()
+        val indexRepository = FakeIndexRepository()
+        val trashRepository = FakeTrashRepository()
+        val deleteGateway = FakeMediaDeleteGateway()
+        deleteGateway.nextResult = DeleteConsentResult.DeclinedByUser
+
+        val item = testMediaItem(id = MediaId(1L), uri = "content://media/1")
+        val hit = SearchHit(item = item, snippet = "cat picture", matchedTerms = listOf("cat"))
+        searchRepository.searchHits = listOf(hit)
+        mediaRepository.mediaItemsByKind.value = mapOf(CollectionKind.ALL to listOf(item))
+
+        val viewModel = createViewModel(
+            searchRepository = searchRepository,
+            mediaRepository = mediaRepository,
+            indexRepository = indexRepository,
+            trashRepository = trashRepository,
+            deleteGateway = deleteGateway,
+            initialQuery = "cat",
+        )
+        testScheduler.advanceUntilIdle()
+
+        val events = collectEvents(viewModel)
+
+        viewModel.onIntent(SearchIntent.OnDeleteImage(item))
+        testScheduler.advanceUntilIdle()
+
+        viewModel.state.test {
+            val state = awaitItem()
+            assertEquals(1, state.results.size)
+            assertEquals(item.id, state.results[0].item.id)
+        }
+
+        assertTrue(events.isEmpty())
+    }
+
+    @Test
+    fun onDeleteImage_withNotPossibleResult_keepsItemAndEmitsErrorToast() = runViewModelTest {
+        val searchRepository = FakeSearchRepository()
+        val mediaRepository = FakeMediaRepository()
+        val indexRepository = FakeIndexRepository()
+        val trashRepository = FakeTrashRepository()
+        val deleteGateway = FakeMediaDeleteGateway()
+        deleteGateway.nextResult = DeleteConsentResult.NotPossible("Permission denied")
+
+        val item = testMediaItem(id = MediaId(1L), uri = "content://media/1")
+        val hit = SearchHit(item = item, snippet = "cat picture", matchedTerms = listOf("cat"))
+        searchRepository.searchHits = listOf(hit)
+        mediaRepository.mediaItemsByKind.value = mapOf(CollectionKind.ALL to listOf(item))
+
+        val viewModel = createViewModel(
+            searchRepository = searchRepository,
+            mediaRepository = mediaRepository,
+            indexRepository = indexRepository,
+            trashRepository = trashRepository,
+            deleteGateway = deleteGateway,
+            initialQuery = "cat",
+        )
+        testScheduler.advanceUntilIdle()
+
+        val events = collectEvents(viewModel)
+
+        viewModel.onIntent(SearchIntent.OnDeleteImage(item))
+        testScheduler.advanceUntilIdle()
+
+        viewModel.state.test {
+            val state = awaitItem()
+            assertEquals(1, state.results.size)
+            assertEquals(item.id, state.results[0].item.id)
+        }
+
+        assertEquals(1, events.size)
+        assertEquals(SearchEvent.ShowToast("Couldn't delete image"), events[0])
+    }
+}

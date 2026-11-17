@@ -4,9 +4,11 @@ import androidx.lifecycle.viewModelScope
 import com.o3.vanguard.visionary.core.common.AppResult
 import com.o3.vanguard.visionary.core.mvi.BaseMviViewModel
 import com.o3.vanguard.visionary.domain.model.CollectionKind
+import com.o3.vanguard.visionary.domain.model.DeleteConsentResult
 import com.o3.vanguard.visionary.domain.model.SearchFilter
 import com.o3.vanguard.visionary.domain.model.SearchMode
 import com.o3.vanguard.visionary.domain.repository.SearchRepository
+import com.o3.vanguard.visionary.domain.usecase.DeleteMediaUseCase
 import com.o3.vanguard.visionary.domain.usecase.ObserveIndexProgressUseCase
 import com.o3.vanguard.visionary.domain.usecase.ObserveMediaUseCase
 import com.o3.vanguard.visionary.domain.usecase.RebuildIndexUseCase
@@ -25,6 +27,7 @@ class SearchViewModel(
     observeIndexProgressUseCase: ObserveIndexProgressUseCase,
     private val rebuildIndexUseCase: RebuildIndexUseCase,
     private val searchRepository: SearchRepository,
+    private val deleteMediaUseCase: DeleteMediaUseCase,
 ) : BaseMviViewModel<SearchState, SearchIntent, SearchEvent>(
     SearchState(query = initialQuery)
 ) {
@@ -130,14 +133,26 @@ class SearchViewModel(
                 updateState { copy(selectedImage = null) }
             }
             is SearchIntent.OnDeleteImage -> {
-                updateState {
-                    copy(
-                        selectedImage = null,
-                        allImages = allImages.filterNot { it.id == intent.item.id },
-                        results = results.filterNot { it.item.id == intent.item.id }
-                    )
+                viewModelScope.launch {
+                    when (deleteMediaUseCase(intent.item)) {
+                        DeleteConsentResult.Deleted -> {
+                            updateState {
+                                copy(
+                                    selectedImage = null,
+                                    allImages = allImages.filterNot { it.id == intent.item.id },
+                                    results = results.filterNot { it.item.id == intent.item.id }
+                                )
+                            }
+                            sendEvent(SearchEvent.ShowToast("Image moved to Bin"))
+                        }
+                        DeleteConsentResult.DeclinedByUser -> {
+                            updateState { copy(selectedImage = null) }
+                        }
+                        is DeleteConsentResult.NotPossible -> {
+                            sendEvent(SearchEvent.ShowToast("Couldn't delete image"))
+                        }
+                    }
                 }
-                sendEvent(SearchEvent.ShowToast("Image moved to Bin"))
             }
             SearchIntent.OnReindexClicked -> {
                 viewModelScope.launch {
