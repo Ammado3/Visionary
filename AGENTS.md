@@ -34,3 +34,8 @@
    - Wrap ViewModel tests with `runViewModelTest` and collect one-shot MVI events using `collectEvents(viewModel)`.
 5. **Data Layer / Room Testing Note**:
    - In-memory Room 3 databases using `BundledSQLiteDriver` require native SQLite binary loading on the target platform. For host JVM unit testing, repository/use case unit tests use handwritten fakes (e.g. `FakeMediaRepository`), while full Room SQLite integration tests run as instrumented Android tests (`androidTest`).
+
+## Database rules
+- Never add a blanket destructive fallback (`fallbackToDestructiveMigration()`).
+- Every version bump after 3 needs an explicit `Migration` and a committed schema JSON in `core/database/schemas/`.
+
