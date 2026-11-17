@@ -11,6 +11,9 @@ kotlin {
     }
 
     sourceSets {
+        commonMain.dependencies {
+            implementation(project(":platform"))
+        }
         androidMain.dependencies {
             implementation(libs.composeUiTooling)
         }
