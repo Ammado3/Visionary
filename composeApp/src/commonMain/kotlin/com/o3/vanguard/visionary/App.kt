@@ -31,6 +31,7 @@ import com.o3.vanguard.visionary.core.navigation.Navigator
 import com.o3.vanguard.visionary.domain.model.MediaAccess
 import com.o3.vanguard.visionary.domain.port.PermissionGateway
 import com.o3.vanguard.visionary.domain.repository.IndexRepository
+import com.o3.vanguard.visionary.domain.usecase.ResolveStartRouteUseCase
 import com.o3.vanguard.visionary.feature.teleport.teleportEntries
 import com.o3.vanguard.visionary.features.gallery.navigation.galleryEntries
 import com.o3.vanguard.visionary.features.home.homeEntries
@@ -67,17 +68,15 @@ fun App() {
     VisionaryTheme {
         val permissionGateway = koinInject<PermissionGateway>()
         val indexRepository = koinInject<IndexRepository>()
+        val resolveStartRoute = koinInject<ResolveStartRouteUseCase>()
         var startRoute by remember { mutableStateOf<AppRoute?>(null) }
 
         LaunchedEffect(Unit) {
             delay(SPLASH_DURATION_MS)
             val access = permissionGateway.requestAccess()
-            if (access is MediaAccess.Full || access is MediaAccess.Partial) {
-                launch { indexRepository.rebuild() }
-                startRoute = AppRoute.Home
-            } else {
-                startRoute = AppRoute.Onboarding
-            }
+            val route = chooseStartRoute(resolveStartRoute(), access)
+            if (route == AppRoute.Home) launch { indexRepository.rebuild() }
+            startRoute = route
         }
 
         startRoute?.let { AppNavHost(it) }
