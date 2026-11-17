@@ -387,15 +387,6 @@ class RoomIndexRepository(
     }
 }
 
-class RoomSettingsRepository : SettingsRepository {
-    private val settings = MutableStateFlow(AppSettings())
-
-    override fun observe(): Flow<AppSettings> = settings
-
-    override suspend fun update(transform: (AppSettings) -> AppSettings) {
-        settings.update(transform)
-    }
-}
 
 class RoomVaultRepository(
     private val db: AppDatabase,
