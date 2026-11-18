@@ -1,7 +1,7 @@
 # Fix-plan status
 
-**Next:** Implementer
-**Action:** implement Step 03 (spec: STEP_03_category_mapping.md)
+**Next:** Reviewer
+**Action:** review Step 03 (spec: STEP_03_category_mapping.md, report: REPORT_03.md)
 **Last reviewed commit:** `ac3f8ef` (Step 02b report)
 
 ## History
@@ -11,7 +11,7 @@
 | 01 | Stop silent data loss | Approved |
 | 02 | Persist settings (DataStore) | Approved |
 | 02b | Use the saved onboarding flag at startup | Approved (REVIEW_02b.md) |
-| 03 | Category mapping (collections, gallery, search filters) | Ready to implement |
+| 03 | Category mapping (collections, gallery, search filters) | Ready for review |
 
 ## Human sign-off
 
