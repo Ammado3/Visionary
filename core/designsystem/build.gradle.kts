@@ -31,6 +31,9 @@ kotlin {
 
         androidMain.dependencies {
             implementation(libs.composeUiTooling)
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.lifecycle.runtime.compose)
+            implementation("androidx.core:core-ktx:1.15.0")
         }
     }
 }

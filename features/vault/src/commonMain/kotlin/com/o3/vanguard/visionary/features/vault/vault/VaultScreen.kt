@@ -114,8 +114,7 @@ fun VaultLockScreen(
                         color = VisionaryColors.color496156
                     )
                 }
-                }
-            AppBottomNavigation(AppTab.VAULT, onNavigate)
+            }
         }
     }
 }

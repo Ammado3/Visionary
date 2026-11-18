@@ -135,9 +135,6 @@ fun SearchScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        bottomBar = {
-            AppBottomNavigation(AppTab.SEARCH, onNavigate)
-        },
         topBar = {
             TopAppBar(
                 title = { Text("AI Gallery Search", fontWeight = FontWeight.Bold) },

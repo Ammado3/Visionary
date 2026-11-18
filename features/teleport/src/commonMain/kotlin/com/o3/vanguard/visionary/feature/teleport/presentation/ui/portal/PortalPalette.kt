@@ -1,13 +1,14 @@
 package com.o3.vanguard.visionary.feature.teleport.presentation.ui.portal
 
 import androidx.compose.ui.graphics.Color
+import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
 
 object PortalPalette {
-    val BaseDark = Color(0xFF050B09)
-    val BaseDarkGradientBottom = Color(0xFF0A1F17)
-    val EmeraldAccent = Color(0xFF00C27A)
-    val EmeraldGlow = Color(0xFF6BFFC8)
-    val TextWhite = Color(0xEBFFFFFF) // ~92% alpha
-    val GlassSurface = Color(0x2600C27A)
-    val GlassBorder = Color(0x6600C27A)
+    val BaseDark = VisionaryColors.colorF4FDF7
+    val BaseDarkGradientBottom = VisionaryColors.colorF4FDF7
+    val EmeraldAccent = VisionaryColors.color007847
+    val EmeraldGlow = Color(0xFF00C27A)
+    val TextWhite = VisionaryColors.color0B1B14
+    val GlassSurface = VisionaryColors.colorE6F3EA
+    val GlassBorder = VisionaryColors.colorCEDED3
 }
