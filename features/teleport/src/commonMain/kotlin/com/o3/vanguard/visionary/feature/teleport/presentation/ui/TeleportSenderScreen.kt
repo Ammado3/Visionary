@@ -146,6 +146,13 @@ fun TeleportSenderScreen(
 
     val debouncedHint = rememberDebouncedHint(targetHintText)
 
+    com.o3.vanguard.visionary.core.designsystem.SystemBarColors(
+        statusBarColor = PortalPalette.BaseDark,
+        darkStatusBarIcons = true,
+        navigationBarColor = PortalPalette.BaseDark,
+        darkNavigationBarIcons = true,
+    )
+
     Box(modifier = modifier.fillMaxSize()) {
         PortalBackground(energy = { energyValue })
 

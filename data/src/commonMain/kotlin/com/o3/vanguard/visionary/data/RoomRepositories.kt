@@ -19,6 +19,7 @@ import com.o3.vanguard.visionary.domain.port.ImageLabelEngine
 import com.o3.vanguard.visionary.domain.port.MediaSourceEngine
 import com.o3.vanguard.visionary.domain.port.OcrEngine
 import com.o3.vanguard.visionary.domain.repository.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -292,8 +293,8 @@ class RoomIndexRepository(
 
     override suspend fun rebuild(): AppResult<Unit> = rebuildMutex.withLock {
         // If indexing is already running (concurrent callers waiting on the
-        // mutex) or was successfully completed this session, skip.
-        if (indexedThisSession || progress.value.state == IndexState.RUNNING) {
+        // mutex), skip.
+        if (progress.value.state == IndexState.RUNNING) {
             return AppResult.Ok(Unit)
         }
         val source = mediaSource.queryDelta(0L)
@@ -303,16 +304,27 @@ class RoomIndexRepository(
         progress.value = IndexProgress(media.size, 0, media.size, 0, IndexState.RUNNING)
 
         val currentRefs = media.map { it.uri }.toSet()
-        db.mediaDao().deleteNonExistingImages(currentRefs.toList())
+        if (currentRefs.isNotEmpty()) {
+            db.mediaDao().deleteNonExistingImages(currentRefs.toList())
+        }
+
+        // Upsert all media items with conflict fallback so no item is skipped
+        media.forEach { item ->
+            val entity = item.toEntity()
+            try {
+                db.mediaDao().upsert(listOf(entity))
+            } catch (_: Throwable) {
+                db.mediaDao().deleteByRef(entity.ref)
+                try {
+                    db.mediaDao().upsert(listOf(entity))
+                } catch (_: Throwable) {}
+            }
+        }
 
         var indexed = 0
         var failed = 0
         media.forEach { item ->
             try {
-                // Persist every media item, including videos. OCR and image labeling
-                // are only available for still images.
-                db.mediaDao().upsert(listOf(item.toEntity()))
-                
                 // Resume where it left off: skip if already indexed in database
                 if (item.category != MediaCategory.VIDEO && db.mediaDao().getText(item.id.value) != null) {
                     indexed++
@@ -362,6 +374,8 @@ class RoomIndexRepository(
                     )
                 )
                 indexed++
+            } catch (e: CancellationException) {
+                throw e
             } catch (_: Throwable) {
                 failed++
             }

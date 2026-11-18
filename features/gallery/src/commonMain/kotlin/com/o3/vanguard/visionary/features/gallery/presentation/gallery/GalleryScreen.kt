@@ -61,6 +61,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.o3.vanguard.visionary.core.mvi.CollectEvents
+import androidx.compose.ui.graphics.Color
+import com.o3.vanguard.visionary.core.designsystem.SystemBarColors
 import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
 import com.o3.vanguard.visionary.domain.model.MediaCategory
 import com.o3.vanguard.visionary.domain.model.MediaId
@@ -180,6 +182,12 @@ fun ViewerScreen(
             dismissOnClickOutside = false,
         ),
     ) {
+        SystemBarColors(
+            statusBarColor = Color.Black,
+            darkStatusBarIcons = false,
+            navigationBarColor = Color.Black,
+            darkNavigationBarIcons = false,
+        )
         Surface(modifier = Modifier.fillMaxSize(), color = VisionaryColors.colorFF000000) {
             Box(Modifier.fillMaxSize()) {
                 if (item.category == MediaCategory.VIDEO) {
