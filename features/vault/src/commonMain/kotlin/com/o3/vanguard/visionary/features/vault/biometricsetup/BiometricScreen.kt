@@ -1,18 +1,12 @@
 package com.o3.vanguard.visionary.features.vault.biometricsetup
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import org.jetbrains.compose.resources.painterResource
@@ -27,12 +21,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -49,6 +46,7 @@ import com.o3.vanguard.visionary.core.mvi.CollectEvents
 import com.o3.vanguard.visionary.features.vault.biometricsetup.states.BiometricEvent
 import com.o3.vanguard.visionary.features.vault.biometricsetup.states.BiometricIntent
 import com.o3.vanguard.visionary.features.vault.biometricsetup.states.BiometricState
+import com.o3.vanguard.visionary.features.vault.biometricsetup.states.LockMode
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -90,7 +88,7 @@ fun BiometricSetupScreen(
     if (state.showFailureDialog) {
         AlertDialog(
             onDismissRequest = { onIntent(BiometricIntent.DismissDialog) },
-            title = { Text("Authentication Failed") },
+            title = { Text("Authentication") },
             text = { Text(state.dialogMessage) },
             confirmButton = {
                 Button(onClick = { onIntent(BiometricIntent.DismissDialog) }) {
@@ -128,13 +126,12 @@ fun BiometricSetupScreen(
                     color = VisionaryColors.color1A007847,
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                            Image(
-                                painter = painterResource(Res.drawable.vault),
-                                contentDescription = "Lock",
-                                modifier = Modifier.size(36.dp),
-                                colorFilter = ColorFilter.tint(VisionaryColors.color007847)
-                            )
-
+                        Image(
+                            painter = painterResource(Res.drawable.vault),
+                            contentDescription = "Lock",
+                            modifier = Modifier.size(36.dp),
+                            colorFilter = ColorFilter.tint(VisionaryColors.color007847)
+                        )
                     }
                 }
 
@@ -151,7 +148,7 @@ fun BiometricSetupScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Enter your 8-digit PIN to continue.",
+                    text = if (state.lockMode == LockMode.PATTERN) "Connect at least 4 dots." else "Enter your PIN to continue.",
                     fontSize = 14.sp,
                     color = VisionaryColors.color496156,
                     textAlign = TextAlign.Center,
@@ -159,21 +156,40 @@ fun BiometricSetupScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Minimum 4 dots indicator
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    repeat(4) { index ->
-                        val isFilled = index < state.pin.length
-                        Box(
-                            modifier = Modifier
-                                .size(14.dp)
-                                .background(
-                                    color = if (isFilled) VisionaryColors.color007847 else VisionaryColors.colorCEDED3,
-                                    shape = CircleShape,
-                                )
-                        )
+                if (state.lockMode == LockMode.PIN) {
+                    // Dots indicator
+                    val dotCount = maxOf(4, state.pin.length)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        repeat(dotCount) { index ->
+                            val isFilled = index < state.pin.length
+                            Box(
+                                modifier = Modifier
+                                    .size(14.dp)
+                                    .background(
+                                        color = if (isFilled) VisionaryColors.color007847 else Color.Transparent,
+                                        shape = CircleShape,
+                                    )
+                                    .then(
+                                        if (!isFilled) Modifier.border(1.5.dp, VisionaryColors.color007847, CircleShape)
+                                        else Modifier
+                                    )
+                            )
+                        }
+                    }
+                } else {
+                    // Pattern Lock 3x3 Grid
+                    PatternLockGrid(
+                        selectedDots = state.patternSequence,
+                        onDotSelected = { dot -> onIntent(BiometricIntent.OnDotSelected(dot)) },
+                        onPatternCompleted = { onIntent(BiometricIntent.OnPatternCompleted) },
+                        onCleared = { onIntent(BiometricIntent.OnClearPatternClicked) }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TextButton(onClick = { onIntent(BiometricIntent.OnClearPatternClicked) }) {
+                        Text("Clear pattern", color = VisionaryColors.color007847, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
 
@@ -187,38 +203,39 @@ fun BiometricSetupScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // Keypad
-                val rows = state.rowNumber
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    for (row in rows) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            for (item in row) {
-                                KeypadButton(
-                                    item = item,
-                                    onClick = {
-                                        when (item) {
-                                            "delete" -> onIntent(BiometricIntent.OnDeleteClicked)
-                                            "biometric" -> onIntent(BiometricIntent.OnBiometricClicked)
-                                            else -> onIntent(BiometricIntent.OnNumberClicked(item.first()))
+                if (state.lockMode == LockMode.PIN) {
+                    // Keypad
+                    val rows = state.rowNumber
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        for (row in rows) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                for (item in row) {
+                                    KeypadButton(
+                                        item = item,
+                                        onClick = {
+                                            when (item) {
+                                                "delete" -> onIntent(BiometricIntent.OnDeleteClicked)
+                                                "biometric" -> onIntent(BiometricIntent.OnBiometricClicked)
+                                                else -> onIntent(BiometricIntent.OnNumberClicked(item.first()))
+                                            }
                                         }
-                                    }
-                                )
+                                    )
+                                }
                             }
                         }
                     }
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
-
-                Spacer(modifier = Modifier.height(20.dp))
 
                 // Use biometric button
                 Button(
@@ -248,10 +265,25 @@ fun BiometricSetupScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Toggle between PIN and Pattern
+                TextButton(onClick = {
+                    val newMode = if (state.lockMode == LockMode.PIN) LockMode.PATTERN else LockMode.PIN
+                    onIntent(BiometricIntent.OnSwitchMode(newMode))
+                }) {
+                    Text(
+                        text = if (state.lockMode == LockMode.PIN) "Use Pattern lock instead" else "Use PIN instead",
+                        color = VisionaryColors.color007847,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Forgot PIN?\nRecovery options depend on your device security settings.",
+                    text = "Forgot security credentials?\nRecovery options depend on your device security settings.",
                     textAlign = TextAlign.Center,
                     fontSize = 12.sp,
                     color = VisionaryColors.color496156,
@@ -260,6 +292,121 @@ fun BiometricSetupScreen(
             }
         }
     }
+}
+
+@Composable
+fun PatternLockGrid(
+    selectedDots: List<Int>,
+    onDotSelected: (Int) -> Unit,
+    onPatternCompleted: () -> Unit,
+    onCleared: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var currentPosition by remember { mutableStateOf<Offset?>(null) }
+
+    Box(
+        modifier = modifier
+            .size(260.dp)
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDragStart = { offset ->
+                        val dot = getDotAtOffset(offset, size.width.toFloat(), size.height.toFloat())
+                        if (dot != null && !selectedDots.contains(dot)) {
+                            onDotSelected(dot)
+                        }
+                        currentPosition = offset
+                    },
+                    onDrag = { change, _ ->
+                        currentPosition = change.position
+                        val dot = getDotAtOffset(change.position, size.width.toFloat(), size.height.toFloat())
+                        if (dot != null && !selectedDots.contains(dot)) {
+                            onDotSelected(dot)
+                        }
+                    },
+                    onDragEnd = {
+                        currentPosition = null
+                        onPatternCompleted()
+                    },
+                    onDragCancel = {
+                        currentPosition = null
+                    }
+                )
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val width = size.width
+            val height = size.height
+            val spacingX = width / 4f
+            val spacingY = height / 4f
+
+            val points = listOf(
+                Offset(spacingX, spacingY), Offset(width / 2f, spacingY), Offset(width - spacingX, spacingY),
+                Offset(spacingX, height / 2f), Offset(width / 2f, height / 2f), Offset(width - spacingX, height / 2f),
+                Offset(spacingX, height - spacingY), Offset(width / 2f, height - spacingY), Offset(width - spacingX, height - spacingY)
+            )
+
+            // Draw lines between selected dots
+            for (i in 0 until selectedDots.size - 1) {
+                val start = points[selectedDots[i]]
+                val end = points[selectedDots[i + 1]]
+                drawLine(
+                    color = VisionaryColors.color007847,
+                    start = start,
+                    end = end,
+                    strokeWidth = 6.dp.toPx(),
+                    cap = StrokeCap.Round
+                )
+            }
+
+            // Draw line to current drag position
+            if (currentPosition != null && selectedDots.isNotEmpty()) {
+                val lastPoint = points[selectedDots.last()]
+                drawLine(
+                    color = VisionaryColors.color007847.copy(alpha = 0.7f),
+                    start = lastPoint,
+                    end = currentPosition!!,
+                    strokeWidth = 6.dp.toPx(),
+                    cap = StrokeCap.Round
+                )
+            }
+
+            // Draw 9 dots
+            points.forEachIndexed { index, point ->
+                val isSelected = selectedDots.contains(index)
+                drawCircle(
+                    color = if (isSelected) VisionaryColors.color007847 else VisionaryColors.colorCEDED3,
+                    radius = if (isSelected) 14.dp.toPx() else 8.dp.toPx(),
+                    center = point
+                )
+                if (isSelected) {
+                    drawCircle(
+                        color = VisionaryColors.color1A007847,
+                        radius = 24.dp.toPx(),
+                        center = point
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun getDotAtOffset(offset: Offset, width: Float, height: Float): Int? {
+    val spacingX = width / 4f
+    val spacingY = height / 4f
+    val points = listOf(
+        Offset(spacingX, spacingY), Offset(width / 2f, spacingY), Offset(width - spacingX, spacingY),
+        Offset(spacingX, height / 2f), Offset(width / 2f, height / 2f), Offset(width - spacingX, height / 2f),
+        Offset(spacingX, height - spacingY), Offset(width / 2f, height - spacingY), Offset(width - spacingX, height - spacingY)
+    )
+    val threshold = width / 5f
+    points.forEachIndexed { index, point ->
+        val distance = (offset - point).getDistance()
+        if (distance < threshold) {
+            return index
+        }
+    }
+    return null
 }
 
 @Composable
@@ -307,7 +454,7 @@ fun KeypadButton(
 fun BiometricSetupScreenPreview() {
     VisionaryTheme {
         BiometricSetupScreen(
-            state = BiometricState(pin = "1234"),
+            state = BiometricState(lockMode = LockMode.PATTERN),
             onIntent = {},
         )
     }
