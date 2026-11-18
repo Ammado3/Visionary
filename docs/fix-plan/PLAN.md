@@ -14,7 +14,7 @@ Findings come from a code review of `Develop` at `67767e3` (17 Nov 2026). Line n
 |---|---|---|
 | 01 | Stop silent data loss | Destructive migration removed (only versions 1–2 may be wiped); Search delete is real; `DeleteMediaUseCase` rethrows cancellation; vault delete removes the blob; vault restore returns `VAULT_RESTORE_NOT_IMPLEMENTED`. |
 | 02 | Persist settings | `DataStoreSettingsRepository` (keys `onboarding_done`, `index_only_while_charging`, `vault_lock_timeout_seconds`). One DataStore via Koin in `:platform`. iOS file in Application Support. |
-| 02b | Use onboarding flag at startup | In progress. `App.kt` chooses the start route from `ResolveStartRouteUseCase` + media access. |
+| 02b | Use onboarding flag at startup | `App.kt` chooses the start route from `ResolveStartRouteUseCase` + media access; `AppRoute.Onboarding(skipIntro)` goes straight to the permission gate. |
 
 ---
 

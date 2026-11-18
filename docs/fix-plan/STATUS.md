@@ -1,8 +1,8 @@
 # Fix-plan status
 
-**Next:** Reviewer
-**Action:** review Step 02b (spec: STEP_02b_use_onboarding_flag.md, report: REPORT_02b.md)
-**Last reviewed commit:** `d853216` (Step 02.4)
+**Next:** Implementer
+**Action:** implement Step 03 (spec: STEP_03_category_mapping.md)
+**Last reviewed commit:** `ac3f8ef` (Step 02b report)
 
 ## History
 
@@ -10,7 +10,8 @@
 |---|---|---|
 | 01 | Stop silent data loss | Approved |
 | 02 | Persist settings (DataStore) | Approved |
-| 02b | Use the saved onboarding flag at startup | Ready for review |
+| 02b | Use the saved onboarding flag at startup | Approved (REVIEW_02b.md) |
+| 03 | Category mapping (collections, gallery, search filters) | Ready to implement |
 
 ## Human sign-off
 
@@ -18,3 +19,4 @@ Record device-check results here, one line per step, e.g. `Step 04: device check
 
 - Step 01: device checks not yet confirmed (delete from Search; cancel delete dialog; fresh install launches)
 - Step 02: device checks not yet confirmed (kill and relaunch keeps settings)
+- Step 02b: device checks not yet confirmed (see REVIEW_02b.md, "Device checks")
