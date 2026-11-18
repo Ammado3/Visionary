@@ -32,27 +32,29 @@ sealed interface AppRoute : NavKey {
     @Serializable data object TeleportReceiver : AppRoute
 }
 
-val AppNavSavedStateConfig = SavedStateConfiguration {
-    serializersModule = SerializersModule {
-        polymorphic(NavKey::class) {
-            subclass(AppRoute.Onboarding::class, AppRoute.Onboarding.serializer())
-            subclass(AppRoute.Photos::class, AppRoute.Photos.serializer())
-            subclass(AppRoute.Albums::class, AppRoute.Albums.serializer())
-            subclass(AppRoute.Gallery::class, AppRoute.Gallery.serializer())
-            subclass(AppRoute.Viewer::class, AppRoute.Viewer.serializer())
-            subclass(AppRoute.Search::class, AppRoute.Search.serializer())
-            subclass(AppRoute.VaultLock::class, AppRoute.VaultLock.serializer())
-            subclass(AppRoute.VaultGrid::class, AppRoute.VaultGrid.serializer())
-            subclass(AppRoute.VaultViewer::class, AppRoute.VaultViewer.serializer())
-            subclass(AppRoute.Settings::class, AppRoute.Settings.serializer())
-            subclass(AppRoute.IndexHealth::class, AppRoute.IndexHealth.serializer())
-            subclass(AppRoute.TeleportSender::class, AppRoute.TeleportSender.serializer())
-            subclass(AppRoute.TeleportReceiver::class, AppRoute.TeleportReceiver.serializer())
-            subclass(AppRoute.BiometricSetup::class, AppRoute.BiometricSetup.serializer())
-            subclass(AppRoute.TrashBin::class, AppRoute.TrashBin.serializer())
-            subclass(AppRoute.Favorites::class, AppRoute.Favorites.serializer())
-        }
+val AppRouteSerializersModule = SerializersModule {
+    polymorphic(NavKey::class) {
+        subclass(AppRoute.Onboarding::class, AppRoute.Onboarding.serializer())
+        subclass(AppRoute.Photos::class, AppRoute.Photos.serializer())
+        subclass(AppRoute.Albums::class, AppRoute.Albums.serializer())
+        subclass(AppRoute.Gallery::class, AppRoute.Gallery.serializer())
+        subclass(AppRoute.Viewer::class, AppRoute.Viewer.serializer())
+        subclass(AppRoute.Search::class, AppRoute.Search.serializer())
+        subclass(AppRoute.VaultLock::class, AppRoute.VaultLock.serializer())
+        subclass(AppRoute.VaultGrid::class, AppRoute.VaultGrid.serializer())
+        subclass(AppRoute.VaultViewer::class, AppRoute.VaultViewer.serializer())
+        subclass(AppRoute.Settings::class, AppRoute.Settings.serializer())
+        subclass(AppRoute.IndexHealth::class, AppRoute.IndexHealth.serializer())
+        subclass(AppRoute.TeleportSender::class, AppRoute.TeleportSender.serializer())
+        subclass(AppRoute.TeleportReceiver::class, AppRoute.TeleportReceiver.serializer())
+        subclass(AppRoute.BiometricSetup::class, AppRoute.BiometricSetup.serializer())
+        subclass(AppRoute.TrashBin::class, AppRoute.TrashBin.serializer())
+        subclass(AppRoute.Favorites::class, AppRoute.Favorites.serializer())
     }
+}
+
+val AppNavSavedStateConfig = SavedStateConfiguration {
+    serializersModule = AppRouteSerializersModule
 }
 
 class Navigator(private val backStack: MutableList<NavKey>) {
