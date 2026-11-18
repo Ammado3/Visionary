@@ -1,5 +1,6 @@
 package com.o3.vanguard.visionary.core.navigation
 
+import com.o3.vanguard.visionary.core.designsystem.AppTab
 import androidx.navigation3.runtime.NavKey
 import androidx.savedstate.serialization.SavedStateConfiguration
 import kotlinx.serialization.Serializable
@@ -69,16 +70,12 @@ class Navigator(private val backStack: MutableList<NavKey>) {
      * returns to Photos; only a second back on Photos can leave the app.
      */
     fun handleBack(): Boolean {
-        return when (backStack.lastOrNull()) {
-            AppRoute.Albums,
-            is AppRoute.Search,
-            AppRoute.VaultLock,
-            AppRoute.VaultGrid
-            -> {
-                replaceTop(AppRoute.Photos)
-                true
-            }
-            else -> back()
+        val tab = (backStack.lastOrNull() as? AppRoute)?.tabOrNull()
+        return if (tab != null && tab != AppTab.PHOTOS) {
+            navigateToTab(AppTab.PHOTOS)
+            true
+        } else {
+            back()
         }
     }
     fun replaceTop(route: AppRoute) {
