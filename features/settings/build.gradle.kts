@@ -16,6 +16,7 @@ kotlin {
             implementation(project(":core:designsystem"))
             implementation(compose.components.resources)
             implementation(libs.composeUiToolingPreview)
+            implementation("org.jetbrains.compose.components:components-ui-tooling-preview:1.7.3")
         }
     }
 }

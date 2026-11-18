@@ -5,9 +5,9 @@ import androidx.navigation3.runtime.NavKey
 import com.o3.vanguard.visionary.core.designsystem.AppTab
 import com.o3.vanguard.visionary.core.navigation.AppRoute
 import com.o3.vanguard.visionary.core.navigation.Navigator
-import com.o3.vanguard.visionary.features.vault.VaultGridRoute
-import com.o3.vanguard.visionary.features.vault.VaultLockRoute
-import com.o3.vanguard.visionary.features.vault.VaultViewerRoute
+import com.o3.vanguard.visionary.features.vault.valutscreen.VaultGridRoute
+import com.o3.vanguard.visionary.features.vault.valutscreen.VaultLockRoute
+import com.o3.vanguard.visionary.features.vault.valutscreen.VaultViewerRoute
 
 fun EntryProviderScope<NavKey>.vaultEntries(navigator: Navigator) {
     entry<AppRoute.VaultLock> {

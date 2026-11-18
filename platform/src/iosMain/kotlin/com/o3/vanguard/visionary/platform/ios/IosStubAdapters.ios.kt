@@ -60,6 +60,9 @@ class IosStubVaultCryptoEngine : VaultCryptoEngine {
         AppResult.Err(AppError.Unsupported("OS_NOT_SUPPORTED_YET"))
     override suspend fun copyToTrash(sourceUri: String, itemId: String): AppResult<String> =
         AppResult.Err(AppError.Unsupported("OS_NOT_SUPPORTED_YET"))
+    override suspend fun restoreToStorage(itemId: String): AppResult<String> =
+        AppResult.Err(AppError.Unsupported("OS_NOT_SUPPORTED_YET"))
+    override fun getBlobPath(itemId: String): String = ""
 }
 
 class IosStubSecureScreenPort : SecureScreenPort {
