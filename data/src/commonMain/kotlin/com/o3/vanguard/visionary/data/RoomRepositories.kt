@@ -83,6 +83,13 @@ class RoomMediaRepository(private val db: AppDatabase) : MediaRepository {
     }
 }
 
+internal fun matchesSearchFilter(category: String, entityFlags: Int, filter: SearchFilter): Boolean {
+    val allowedCategories = filter.categories()?.map { it.name }?.toSet()
+    val requiredFlags = filter.requiredEntityFlags()
+    return (allowedCategories == null || category in allowedCategories) &&
+        (requiredFlags == 0 || (entityFlags and requiredFlags) != 0)
+}
+
 class RoomSearchRepository(
     private val db: AppDatabase,
     private val vectorSearchEngine: VectorSearchEngine,
@@ -96,19 +103,9 @@ class RoomSearchRepository(
 
         val trimmedQuery = query.trim()
         val queryWords = trimmedQuery.lowercase().split(Regex("\\s+")).filter { it.isNotBlank() }
-        val categoryFilter = when (filter) {
-            SearchFilter.ALL, SearchFilter.HAS_PHONE_OR_URL -> "ALL"
-            SearchFilter.SCREENSHOTS -> "SCREENSHOTS"
-            SearchFilter.RECEIPTS -> "RECEIPTS"
-            SearchFilter.DOCUMENTS -> "DOCUMENTS"
-            SearchFilter.SCANS -> "SCANS"
-        }
 
-        val allEntities = db.mediaDao().getAll()
-        val filteredEntities = if (categoryFilter == "ALL") {
-            allEntities
-        } else {
-            allEntities.filter { it.category == categoryFilter }
+        val filteredEntities = db.mediaDao().getAll().filter { entity ->
+            matchesSearchFilter(entity.category, entity.entityFlags, filter)
         }
 
         if (filteredEntities.isEmpty()) {
