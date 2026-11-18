@@ -11,10 +11,10 @@ fun EntryProviderScope<NavKey>.vaultEntries(navigator: Navigator) {
     entry<AppRoute.VaultLock> {
         VaultLockRoute(
             onUnlocked = { navigator.replaceTop(AppRoute.VaultGrid) },
-            onBack = { navigator.back() },
+            onBack = { navigator.handleBack() },
             onNavigate = { tab ->
                 when (tab) {
-                    AppTab.PHOTOS -> navigator.replaceTop(AppRoute.Home)
+                    AppTab.PHOTOS -> navigator.replaceTop(AppRoute.Photos)
                     AppTab.ALBUMS -> navigator.replaceTop(AppRoute.Albums)
                     AppTab.SEARCH -> navigator.replaceTop(AppRoute.Search())
                     AppTab.VAULT -> Unit
@@ -25,13 +25,13 @@ fun EntryProviderScope<NavKey>.vaultEntries(navigator: Navigator) {
     entry<AppRoute.VaultGrid> {
         VaultGridRoute(
             onOpenViewer = { itemId -> navigator.navigate(AppRoute.VaultViewer(itemId)) },
-            onLock = { navigator.popTo(AppRoute.Home) },
+            onLock = { navigator.popTo(AppRoute.Photos) },
         )
     }
     entry<AppRoute.VaultViewer> { key ->
         VaultViewerRoute(
             itemId = key.itemId,
-            onBack = { navigator.back() },
+            onBack = { navigator.handleBack() },
         )
     }
 }

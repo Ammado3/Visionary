@@ -76,6 +76,7 @@ class AndroidMediaStoreSource(private val context: Context) : MediaSourceEngine 
             MediaStore.Images.Media.WIDTH,
             MediaStore.Images.Media.HEIGHT,
             MediaStore.Images.Media.DISPLAY_NAME,
+            MediaStore.Images.Media.BUCKET_ID,
         )
         context.contentResolver.query(
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
@@ -90,6 +91,7 @@ class AndroidMediaStoreSource(private val context: Context) : MediaSourceEngine 
             val width = cursor.getColumnIndex(MediaStore.Images.Media.WIDTH)
             val height = cursor.getColumnIndex(MediaStore.Images.Media.HEIGHT)
             val name = cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME)
+            val bucketId = cursor.getColumnIndex(MediaStore.Images.Media.BUCKET_ID)
             while (cursor.moveToNext()) {
                 val mediaId = cursor.getLong(id)
                 val uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, mediaId)
@@ -104,6 +106,7 @@ class AndroidMediaStoreSource(private val context: Context) : MediaSourceEngine 
                     width = if (width >= 0) cursor.getInt(width) else 0,
                     height = if (height >= 0) cursor.getInt(height) else 0,
                     textPreview = null,
+                    albumId = bucketId.takeIf { it >= 0 }?.let(cursor::getString),
                 )
             }
         }
@@ -116,6 +119,7 @@ class AndroidMediaStoreSource(private val context: Context) : MediaSourceEngine 
             MediaStore.Video.Media.WIDTH,
             MediaStore.Video.Media.HEIGHT,
             MediaStore.Video.Media.DISPLAY_NAME,
+            MediaStore.Video.Media.BUCKET_ID,
         )
         context.contentResolver.query(
             MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
@@ -130,6 +134,7 @@ class AndroidMediaStoreSource(private val context: Context) : MediaSourceEngine 
             val width = cursor.getColumnIndex(MediaStore.Video.Media.WIDTH)
             val height = cursor.getColumnIndex(MediaStore.Video.Media.HEIGHT)
             val name = cursor.getColumnIndex(MediaStore.Video.Media.DISPLAY_NAME)
+            val bucketId = cursor.getColumnIndex(MediaStore.Video.Media.BUCKET_ID)
             while (cursor.moveToNext()) {
                 val mediaId = cursor.getLong(id)
                 val uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, mediaId)
@@ -142,6 +147,7 @@ class AndroidMediaStoreSource(private val context: Context) : MediaSourceEngine 
                     width = if (width >= 0) cursor.getInt(width) else 0,
                     height = if (height >= 0) cursor.getInt(height) else 0,
                     textPreview = null,
+                    albumId = bucketId.takeIf { it >= 0 }?.let(cursor::getString),
                 )
             }
         }
@@ -460,12 +466,6 @@ class MlKitImageLabelEngine(private val context: Context) : ImageLabelEngine {
     } catch (error: Throwable) {
         AppResult.Err(com.o3.vanguard.visionary.core.common.AppError.Io(error.message ?: "Image labeling failed"))
     }
-}
-
-class MlKitDocumentScannerAdapter(private val context: Context, private val dirs: com.o3.vanguard.visionary.platform.AppDirectories) : ScannerPort {
-    override suspend fun isAvailable(): Boolean = true
-    override suspend fun scan(): AppResult<ScannedDocument> =
-        AppResult.Ok(ScannedDocument(emptyList(), null))
 }
 
 class AndroidBiometricAuthenticator(private val context: Context) : BiometricAuthenticator {

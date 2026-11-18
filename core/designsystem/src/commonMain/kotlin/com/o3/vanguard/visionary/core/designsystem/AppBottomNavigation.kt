@@ -135,14 +135,3 @@ private fun RowScope.NavigationItem(
     }
 }
 
-@Preview
-@Composable
-fun AppBottomNavigationPreview() {
-    VisionaryTheme {
-        var selectedTab by remember { mutableStateOf(AppTab.PHOTOS) }
-        AppBottomNavigation(
-            selected = selectedTab,
-            onSelected = { selectedTab = it }
-        )
-    }
-}

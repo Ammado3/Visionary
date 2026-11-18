@@ -1,4 +1,4 @@
-package com.o3.vanguard.visionary.features.gallery
+package com.o3.vanguard.visionary.features.gallery.presentation.trash
 
 import androidx.lifecycle.viewModelScope
 import com.o3.vanguard.visionary.core.mvi.BaseMviViewModel
@@ -23,56 +23,32 @@ class TrashViewModel(
         when (intent) {
             TrashIntent.OnBackClicked -> sendEvent(TrashEvent.NavigateBack)
             is TrashIntent.OnItemClicked -> {
-                val stateValue = state.value
-                if (stateValue.isSelectionMode) {
-                    val isSelected = intent.item.id in stateValue.selectedTrashIds
-                    val newSelection = if (isSelected) {
-                        stateValue.selectedTrashIds - intent.item.id
+                val current = state.value
+                if (current.isSelectionMode) {
+                    val selected = if (intent.item.id in current.selectedTrashIds) {
+                        current.selectedTrashIds - intent.item.id
                     } else {
-                        stateValue.selectedTrashIds + intent.item.id
+                        current.selectedTrashIds + intent.item.id
                     }
-                    updateState { copy(selectedTrashIds = newSelection) }
+                    updateState { copy(selectedTrashIds = selected) }
                 } else {
                     updateState { copy(selectedItem = intent.item) }
                 }
             }
             is TrashIntent.OnItemLongClicked -> {
-                val stateValue = state.value
-                if (!stateValue.isSelectionMode) {
+                if (!state.value.isSelectionMode) {
                     updateState { copy(selectedTrashIds = setOf(intent.item.id)) }
                 }
             }
-            TrashIntent.OnClearSelection -> {
-                updateState { copy(selectedTrashIds = emptySet()) }
+            TrashIntent.OnClearSelection -> updateState { copy(selectedTrashIds = emptySet()) }
+            TrashIntent.OnDismissDetail -> updateState { copy(selectedItem = null) }
+            is TrashIntent.OnDeletePermanently -> viewModelScope.launch {
+                intent.ids.forEach { trashRepository.deleteFromTrash(it) }
+                updateState { copy(selectedTrashIds = emptySet(), selectedItem = null) }
             }
-            TrashIntent.OnDismissDetail -> {
-                updateState { copy(selectedItem = null) }
-            }
-            is TrashIntent.OnDeletePermanently -> {
-                viewModelScope.launch {
-                    for (id in intent.ids) {
-                        trashRepository.deleteFromTrash(id)
-                    }
-                    updateState {
-                        copy(
-                            selectedTrashIds = emptySet(),
-                            selectedItem = null
-                        )
-                    }
-                }
-            }
-            is TrashIntent.OnRestoreItems -> {
-                viewModelScope.launch {
-                    for (id in intent.ids) {
-                        trashRepository.restoreFromTrash(id)
-                    }
-                    updateState {
-                        copy(
-                            selectedTrashIds = emptySet(),
-                            selectedItem = null
-                        )
-                    }
-                }
+            is TrashIntent.OnRestoreItems -> viewModelScope.launch {
+                intent.ids.forEach { trashRepository.restoreFromTrash(it) }
+                updateState { copy(selectedTrashIds = emptySet(), selectedItem = null) }
             }
             is TrashIntent.OnShareItems -> {
                 shareGateway.share(intent.items.map { it.uri })

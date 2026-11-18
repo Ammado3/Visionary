@@ -13,17 +13,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.ui.graphics.toArgb
 import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
-import androidx.lifecycle.lifecycleScope
-import com.o3.vanguard.visionary.domain.repository.IndexRepository
-import kotlinx.coroutines.launch
+import androidx.core.content.ContextCompat
 import com.o3.vanguard.visionary.platform.android.AndroidBiometricAuthenticator
 import com.o3.vanguard.visionary.platform.android.AndroidMediaDeleteGateway
-import androidx.fragment.app.FragmentActivity
-import org.koin.android.ext.android.inject
 
 class MainActivity : AppCompatActivity(){
-    private val indexRepository: IndexRepository by inject()
-
     private val deleteRequestLauncher = registerForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
@@ -85,7 +79,10 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun startIndexing() {
-        lifecycleScope.launch { indexRepository.rebuild() }
+        ContextCompat.startForegroundService(
+            this,
+            Intent(this, IndexingForegroundService::class.java),
+        )
     }
 
     private companion object {

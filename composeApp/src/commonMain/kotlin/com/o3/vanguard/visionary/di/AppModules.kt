@@ -6,10 +6,9 @@ import com.o3.vanguard.visionary.core.database.databaseModule
 import com.o3.vanguard.visionary.core.testing.fakeDataModule
 import com.o3.vanguard.visionary.data.di.dataModule
 import com.o3.vanguard.visionary.domain.di.domainModule
+import com.o3.vanguard.visionary.feature.teleport.di.teleportModule
 import com.o3.vanguard.visionary.features.gallery.di.galleryModule
-import com.o3.vanguard.visionary.features.home.homeModule
 import com.o3.vanguard.visionary.features.onboarding.onboardingModule
-import com.o3.vanguard.visionary.features.scanner.scannerModule
 import com.o3.vanguard.visionary.features.search.searchModule
 import com.o3.vanguard.visionary.features.settings.settingsModule
 import com.o3.vanguard.visionary.features.vault.biometricsetup.di.biometric
@@ -20,14 +19,12 @@ import org.koin.dsl.module
 
 val featureModules = listOf(
     onboardingModule,
-    homeModule,
     galleryModule,
     searchModule,
-    scannerModule,
     vaultModule,
     biometric,
     settingsModule,
-    com.o3.vanguard.visionary.feature.teleport.di.teleportModule,
+    teleportModule,
 )
 
 fun appModules(config: AppConfig): List<Module> = buildList {

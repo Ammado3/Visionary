@@ -7,7 +7,6 @@ import com.o3.vanguard.visionary.domain.model.MediaCategory
 import com.o3.vanguard.visionary.domain.model.MediaId
 import com.o3.vanguard.visionary.domain.model.MediaItem
 import com.o3.vanguard.visionary.domain.model.MediaOrigin
-import com.o3.vanguard.visionary.domain.model.ScannedDocument
 import com.o3.vanguard.visionary.domain.model.VaultItem
 
 fun testMediaItem(
@@ -74,10 +73,3 @@ fun testAppSettings(
     visualAnalysisEnabled = visualAnalysisEnabled,
 )
 
-fun testScannedDocument(
-    pageUris: List<String> = listOf("content://scan/1"),
-    pdfUri: String? = "content://scan/pdf/1",
-): ScannedDocument = ScannedDocument(
-    pageUris = pageUris,
-    pdfUri = pdfUri,
-)

@@ -14,7 +14,6 @@ actual val platformModule: Module = module {
     single<MediaDeleteGateway> { IosMediaDeleteGateway() }
     single<OcrEngine> { IosOcrEngine() }
     single<ImageLabelEngine> { IosImageLabelEngine() }
-    single<ScannerPort> { IosStubScannerPort() }
     single<BiometricAuthenticator> { IosBiometricAuthenticator() }
     single<VaultCryptoEngine> { IosVaultCryptoEngine(get()) }
     single<SecureScreenPort> { IosStubSecureScreenPort() }

@@ -33,13 +33,12 @@ import com.o3.vanguard.visionary.domain.port.PermissionGateway
 import com.o3.vanguard.visionary.domain.repository.IndexRepository
 import com.o3.vanguard.visionary.feature.teleport.teleportEntries
 import com.o3.vanguard.visionary.features.gallery.navigation.galleryEntries
-import com.o3.vanguard.visionary.features.home.homeEntries
 import com.o3.vanguard.visionary.features.onboarding.onboardingEntries
-import com.o3.vanguard.visionary.features.scanner.scannerEntries
 import com.o3.vanguard.visionary.features.search.searchEntries
 import com.o3.vanguard.visionary.features.settings.settingsEntries
 import com.o3.vanguard.visionary.features.vault.biometricsetup.biometricSetupEntries
 import com.o3.vanguard.visionary.features.vault.vault.vaultEntries
+import com.o3.vanguard.visionary.platform.getPlatformDecoderFactories
 import com.o3.vanguard.visionary.platform.getPlatformFetcherFactory
 import com.o3.vanguard.visionary.screens.SPLASH_DURATION_MS
 import com.o3.vanguard.visionary.screens.SplashScreen
@@ -60,6 +59,7 @@ fun App() {
         ImageLoader.Builder(context)
             .components {
                 getPlatformFetcherFactory()?.let { add(it) }
+                getPlatformDecoderFactories().forEach { add(it) }
             }
             .build()
     }
@@ -74,7 +74,7 @@ fun App() {
             val access = permissionGateway.requestAccess()
             if (access is MediaAccess.Full || access is MediaAccess.Partial) {
                 launch { indexRepository.rebuild() }
-                startRoute = AppRoute.Home
+                startRoute = AppRoute.Photos
             } else {
                 startRoute = AppRoute.Onboarding
             }
@@ -96,11 +96,19 @@ private fun AppNavHost(start: AppRoute) {
 
     val currentRoute = backStack.lastOrNull() as? AppRoute
     val currentTab: AppTab? = when (currentRoute) {
-        AppRoute.Home -> AppTab.PHOTOS
+        AppRoute.Photos -> AppTab.PHOTOS
         AppRoute.Albums -> AppTab.ALBUMS
         is AppRoute.Search -> AppTab.SEARCH
         AppRoute.VaultLock, AppRoute.VaultGrid -> AppTab.VAULT
         else -> null
+    }
+    val isSecondaryTab = currentRoute == AppRoute.Albums ||
+        currentRoute is AppRoute.Search ||
+        currentRoute == AppRoute.VaultLock ||
+        currentRoute == AppRoute.VaultGrid
+
+    AppBackHandler(enabled = isSecondaryTab) {
+        navigator.replaceTop(AppRoute.Photos)
     }
 
     val systemBarConfig = when (currentRoute) {
@@ -108,7 +116,7 @@ private fun AppNavHost(start: AppRoute) {
             val darkGreen = Color(0xFF050B09)
             SystemBarConfig(darkGreen, false, darkGreen, false)
         }
-        is AppRoute.Viewer, AppRoute.Scanner, is AppRoute.VaultViewer -> {
+        is AppRoute.Viewer, is AppRoute.VaultViewer -> {
             SystemBarConfig(Color.Black, false, Color.Black, false)
         }
         else -> {
@@ -132,7 +140,7 @@ private fun AppNavHost(start: AppRoute) {
                         selected = selectedTab,
                         onSelected = { tab ->
                             when (tab) {
-                                AppTab.PHOTOS -> navigator.replaceTop(AppRoute.Home)
+                                AppTab.PHOTOS -> navigator.replaceTop(AppRoute.Photos)
                                 AppTab.ALBUMS -> navigator.replaceTop(AppRoute.Albums)
                                 AppTab.SEARCH -> navigator.replaceTop(AppRoute.Search())
                                 AppTab.VAULT -> navigator.replaceTop(AppRoute.VaultLock)
@@ -145,17 +153,15 @@ private fun AppNavHost(start: AppRoute) {
             NavDisplay(
                 modifier = Modifier.fillMaxSize().padding(paddingValues).consumeWindowInsets(paddingValues),
                 backStack = backStack,
-                onBack = { navigator.back() },
+                onBack = { navigator.handleBack() },
                 entryDecorators = listOf(
                     rememberSaveableStateHolderNavEntryDecorator(),
                     rememberViewModelStoreNavEntryDecorator(),
                 ),
                 entryProvider = entryProvider {
                     onboardingEntries(navigator)
-                    homeEntries(navigator)
                     galleryEntries(navigator)
                     searchEntries(navigator)
-                    scannerEntries(navigator)
                     vaultEntries(navigator)
                     settingsEntries(navigator)
                     teleportEntries(navigator)

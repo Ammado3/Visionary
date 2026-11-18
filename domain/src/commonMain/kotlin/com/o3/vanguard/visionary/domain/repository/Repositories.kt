@@ -6,11 +6,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 interface MediaRepository {
-    fun observeCollections(): Flow<List<CollectionSummary>>
     fun observeMedia(kind: CollectionKind): Flow<List<MediaItem>>
+    fun observeMediaByAlbum(albumId: String): Flow<List<MediaItem>>
+    fun observeFavorites(): Flow<List<MediaItem>>
     fun observeItem(id: MediaId): Flow<MediaItem?>
+    suspend fun setFavorite(id: MediaId, isFavorite: Boolean)
     fun observeOcrLines(id: MediaId): Flow<List<OcrTextLine>>
-    fun observeRecentFinds(limit: Int): Flow<List<MediaItem>>
     suspend fun deleteMedia(id: MediaId)
 }
 

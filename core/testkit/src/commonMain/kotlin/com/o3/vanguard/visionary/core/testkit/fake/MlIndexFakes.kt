@@ -4,10 +4,8 @@ import com.o3.vanguard.visionary.core.common.AppResult
 import com.o3.vanguard.visionary.domain.model.IndexProgress
 import com.o3.vanguard.visionary.domain.model.IndexState
 import com.o3.vanguard.visionary.domain.model.OcrResult
-import com.o3.vanguard.visionary.domain.model.ScannedDocument
 import com.o3.vanguard.visionary.domain.port.ImageLabelEngine
 import com.o3.vanguard.visionary.domain.port.OcrEngine
-import com.o3.vanguard.visionary.domain.port.ScannerPort
 import com.o3.vanguard.visionary.domain.repository.IndexRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -70,15 +68,3 @@ class FakeIndexRepository(
     }
 }
 
-class FakeScannerPort : ScannerPort {
-    var available = true
-    var scanCalls = 0
-    var nextScanResult: AppResult<ScannedDocument> = AppResult.Ok(ScannedDocument(emptyList(), null))
-
-    override suspend fun isAvailable(): Boolean = available
-
-    override suspend fun scan(): AppResult<ScannedDocument> {
-        scanCalls++
-        return nextScanResult
-    }
-}

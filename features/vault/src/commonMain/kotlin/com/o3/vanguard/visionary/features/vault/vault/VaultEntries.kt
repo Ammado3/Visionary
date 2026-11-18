@@ -13,10 +13,10 @@ fun EntryProviderScope<NavKey>.vaultEntries(navigator: Navigator) {
     entry<AppRoute.VaultLock> {
         VaultLockRoute(
             onUnlocked = { navigator.replaceTop(AppRoute.BiometricSetup) },
-            onBack = { navigator.back() },
+            onBack = { navigator.handleBack() },
             onNavigate = { tab ->
                 when (tab) {
-                    AppTab.PHOTOS -> navigator.replaceTop(AppRoute.Home)
+                    AppTab.PHOTOS -> navigator.replaceTop(AppRoute.Photos)
                     AppTab.ALBUMS -> navigator.replaceTop(AppRoute.Albums)
                     AppTab.SEARCH -> navigator.replaceTop(AppRoute.Search())
                     AppTab.VAULT -> Unit

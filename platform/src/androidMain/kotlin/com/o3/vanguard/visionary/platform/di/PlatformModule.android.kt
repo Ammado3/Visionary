@@ -14,7 +14,6 @@ actual val platformModule: Module = module {
     single<MediaDeleteGateway> { AndroidMediaDeleteGateway(get()) }
     single<OcrEngine> { MlKitOcrEngine(get()) }
     single<ImageLabelEngine> { MlKitImageLabelEngine(get()) }
-    single<ScannerPort> { MlKitDocumentScannerAdapter(get(), get()) }
     single<BiometricAuthenticator> { AndroidBiometricAuthenticator(get()) }
     single<VaultCryptoEngine> { AndroidVaultCryptoEngine(get(), get()) }
     single<SecureScreenPort> { AndroidSecureScreenPort(get()) }
