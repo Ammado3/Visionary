@@ -51,14 +51,18 @@ fun testCollectionSummary(
 
 fun testVaultItem(
     id: String = "vault_item_1",
+    filePath: String = "/vault/item_1",
     createdAtMs: Long = 1000L,
     width: Int = 1080,
     height: Int = 1920,
+    mime: String = "image/jpeg",
 ): VaultItem = VaultItem(
     id = id,
+    filePath = filePath,
     createdAtMs = createdAtMs,
     width = width,
     height = height,
+    mime = mime,
 )
 
 fun testAppSettings(

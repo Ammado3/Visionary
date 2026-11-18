@@ -112,6 +112,19 @@ class FakeVaultCryptoEngine : VaultCryptoEngine {
         copyToTrashCalls.add(sourceUri to itemId)
         return nextCopyToTrashResult
     }
+
+    val restoreToStorageCalls = mutableListOf<Triple<String, String?, Long>>()
+    var nextRestoreToStorageResult: AppResult<String> = AppResult.Ok("")
+    override suspend fun restoreToStorage(
+        itemId: String,
+        mime: String?,
+        takenAtMs: Long,
+    ): AppResult<String> {
+        restoreToStorageCalls.add(Triple(itemId, mime, takenAtMs))
+        return nextRestoreToStorageResult
+    }
+
+    override fun getBlobPath(itemId: String): String = "/vault/blobs/$itemId"
 }
 
 class FakeSecureScreenPort : SecureScreenPort {
