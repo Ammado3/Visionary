@@ -31,6 +31,16 @@ class SettingsViewModel(
                     settingsRepository.update { it.copy(indexOnlyWhileCharging = intent.enabled) }
                 }
             }
+            is SettingsIntent.OnVisualAnalysisToggled -> {
+                viewModelScope.launch {
+                    settingsRepository.update { it.copy(visualAnalysisEnabled = intent.enabled) }
+                    if (intent.enabled) {
+                        indexRepository.resume()
+                    } else {
+                        indexRepository.pause()
+                    }
+                }
+            }
             SettingsIntent.OnOpenIndexHealthClicked -> sendEvent(SettingsEvent.OpenIndexHealth)
             SettingsIntent.OnBackClicked -> sendEvent(SettingsEvent.NavigateBack)
         }

@@ -42,6 +42,8 @@ import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -61,6 +63,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -183,7 +187,7 @@ fun HomeScreen(
                     else -> LazyVerticalGrid(
                         columns = GridCells.Fixed(3),
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
@@ -203,14 +207,14 @@ fun HomeScreen(
                                 }
                             }
                         } else {
-                            groupHomeMedia(media).forEach { section ->
+                            groupHomeMedia(media).forEachIndexed { sectionIndex, section ->
                                 item(
                                     key = "header_${section.title}",
                                     span = { GridItemSpan(maxLineSpan) },
                                 ) {
                                     Text(
                                         text = section.title.uppercase(),
-                                        modifier = Modifier.padding(top = 12.dp, bottom = 8.dp),
+                                        modifier = Modifier.padding(top = if (sectionIndex == 0) 12.dp else 23.dp, bottom = 12.dp),
                                         style = TextStyle(
                                             fontFamily = FontFamily.SansSerif,
                                             fontWeight = FontWeight.Bold,
@@ -339,6 +343,8 @@ private fun HomeHeader(
     selectedCount: Int,
     onClearSelection: () -> Unit,
 ) {
+    var showMoreOptions by remember { mutableStateOf(false) }
+
     if (isSelectionMode) {
         Row(
             modifier = Modifier
@@ -396,32 +402,64 @@ private fun HomeHeader(
         return
     }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(52.dp)
-            .background(VisionaryColors.colorF4FDF7)
-            .padding(horizontal = 6.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onMenuClick) {
-            Icon(Icons.Default.Menu, contentDescription = "Open navigation", tint = VisionaryColors.color0B1B14)
-        }
-        Text(
-            text = "Gallery",
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = VisionaryColors.color0B1B14,
-        )
-        IconButton(onClick = onAirTeleportReceiverClick) {
-            Icon(Icons.Default.Share, contentDescription = "Air Teleport Receiver", tint = VisionaryColors.color007847)
-        }
-        IconButton(onClick = onSearchClick) {
-            Icon(Icons.Default.Search, contentDescription = "Search", tint = VisionaryColors.color0B1B14)
-        }
-        IconButton(onClick = onMenuClick) {
-            Icon(Icons.Default.MoreVert, contentDescription = "More options", tint = VisionaryColors.color0B1B14)
+    Column {
+        Spacer(Modifier.height(10.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+                .background(VisionaryColors.colorF4FDF7)
+                .drawWithContent {
+                    drawContent()
+                    drawLine(
+                        color = Color.Black.copy(alpha = 0.05f),
+                        start = Offset(0f, size.height - 0.5.dp.toPx()),
+                        end = Offset(size.width, size.height - 0.5.dp.toPx()),
+                        strokeWidth = 1.dp.toPx(),
+                    )
+                }
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onMenuClick, modifier = Modifier.size(40.dp)) {
+                Icon(Icons.Default.Menu, contentDescription = "Open navigation", tint = VisionaryColors.color0B1B14, modifier = Modifier.size(22.dp))
+            }
+            Text(
+                text = "Gallery",
+                modifier = Modifier.weight(1f).padding(start = 8.dp),
+                style = TextStyle(
+                    fontFamily = FontFamily.SansSerif,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    lineHeight = 27.sp,
+                    letterSpacing = (-0.48).sp,
+                ),
+                color = VisionaryColors.color0B1B14,
+            )
+            IconButton(onClick = onSearchClick, modifier = Modifier.size(36.dp)) {
+                Icon(Icons.Default.Search, contentDescription = "Search", tint = VisionaryColors.color0B1B14, modifier = Modifier.size(20.dp))
+            }
+            Box {
+                IconButton(onClick = { showMoreOptions = true }, modifier = Modifier.size(36.dp)) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "More options", tint = VisionaryColors.color0B1B14, modifier = Modifier.size(20.dp))
+                }
+                DropdownMenu(expanded = showMoreOptions, onDismissRequest = { showMoreOptions = false }) {
+                    DropdownMenuItem(
+                        text = { Text("Air Teleport Receiver") },
+                        onClick = {
+                            showMoreOptions = false
+                            onAirTeleportReceiverClick()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Settings") },
+                        onClick = {
+                            showMoreOptions = false
+                            onMenuClick()
+                        },
+                    )
+                }
+            }
         }
     }
 }
@@ -517,13 +555,13 @@ private fun MediaTile(
         if (item.category == MediaCategory.VIDEO && !isSelectionMode) {
             Surface(
                 shape = RoundedCornerShape(50),
-                color = VisionaryColors.colorFF000000.copy(alpha = 0.55f),
+                color = VisionaryColors.colorFFFFFFFF.copy(alpha = 0.5f),
             ) {
                 Icon(
                     Icons.Default.PlayArrow,
                     contentDescription = "Video",
-                    modifier = Modifier.padding(6.dp).size(24.dp),
-                    tint = VisionaryColors.colorFFFFFFFF,
+                    modifier = Modifier.padding(8.dp).size(24.dp),
+                    tint = VisionaryColors.color0B1B14,
                 )
             }
         }

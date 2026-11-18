@@ -22,6 +22,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
@@ -51,12 +53,22 @@ fun AppBottomNavigation(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = modifier
+            .fillMaxWidth()
+            .drawWithContent {
+                drawContent()
+                val stroke = 1.dp.toPx()
+                drawLine(
+                    color = VisionaryColors.colorCEDED3,
+                    start = Offset(0f, stroke / 2),
+                    end = Offset(size.width, stroke / 2),
+                    strokeWidth = stroke,
+                )
+            },
+        color = VisionaryColors.colorF4FDF7,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 8.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
             AppTab.entries.forEach { tab ->

@@ -63,10 +63,12 @@ fun SettingsScreen(
     val total = progress?.total?.takeIf { it > 0 } ?: 2846
     val indexed = progress?.indexed ?: 1842
     val percent = ((indexed * 100f / total).toInt()).coerceIn(0, 100)
-    val progressStatus = when (progress?.state) {
-        IndexState.PAUSED_BATTERY -> stringResource(Res.string.settings_index_paused)
-        IndexState.RUNNING -> stringResource(Res.string.settings_indexing)
-        else -> stringResource(Res.string.settings_index_paused)
+    val isVisualAnalysisEnabled = state.settings.visualAnalysisEnabled
+    val progressStatus = when {
+        !isVisualAnalysisEnabled -> stringResource(Res.string.settings_index_paused, percent)
+        progress?.state == IndexState.PAUSED_BATTERY -> stringResource(Res.string.settings_index_paused, percent)
+        progress?.state == IndexState.RUNNING -> stringResource(Res.string.settings_indexing)
+        else -> stringResource(Res.string.settings_index_paused, percent)
     }
 
     Surface(modifier = modifier.fillMaxSize(), color = VisionaryColors.colorF4FDF7) {
@@ -189,8 +191,10 @@ fun SettingsScreen(
                                 )
                             }
                             Switch(
-                                checked = false,
-                                onCheckedChange = null,
+                                checked = isVisualAnalysisEnabled,
+                                onCheckedChange = { enabled ->
+                                    onIntent(SettingsIntent.OnVisualAnalysisToggled(enabled))
+                                },
                                 colors = SwitchDefaults.colors(
                                     checkedTrackColor = VisionaryColors.color007847,
                                     uncheckedTrackColor = VisionaryColors.colorCEDED3,
@@ -198,26 +202,6 @@ fun SettingsScreen(
                                 ),
                             )
                         }
-                        SettingsDivider()
-                        SettingsRow(
-                            title = stringResource(Res.string.settings_reindex_library),
-                            subtitle = stringResource(Res.string.settings_continue_device),
-                            trailing = { Chevron() },
-                            onClick = { onIntent(SettingsIntent.OnOpenIndexHealthClicked) },
-                        )
-                        SettingsDivider()
-                        SettingsRow(
-                            title = stringResource(Res.string.settings_indexing_preferences),
-                            subtitle = stringResource(
-                                Res.string.settings_preferences_summary,
-                                stringResource(Res.string.settings_wifi_only),
-                                if (state.settings.indexOnlyWhileCharging) stringResource(Res.string.settings_charging_only) else stringResource(
-                                    Res.string.settings_any_power
-                                ),
-                            ),
-                            trailing = { Chevron() },
-                            onClick = { onIntent(SettingsIntent.OnOpenIndexHealthClicked) },
-                        )
                     }
                 }
 
