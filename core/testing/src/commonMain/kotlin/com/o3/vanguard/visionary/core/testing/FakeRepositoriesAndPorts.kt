@@ -85,6 +85,16 @@ class FakeIndexRepository : IndexRepository {
     override suspend fun retryFailed(): AppResult<Unit> = AppResult.Ok(Unit)
 
     override suspend fun rebuild(): AppResult<Unit> = AppResult.Ok(Unit)
+
+    override suspend fun pause(): AppResult<Unit> {
+        progress.update { it.copy(state = IndexState.PAUSED_BATTERY) }
+        return AppResult.Ok(Unit)
+    }
+
+    override suspend fun resume(): AppResult<Unit> {
+        progress.update { it.copy(state = IndexState.RUNNING) }
+        return AppResult.Ok(Unit)
+    }
 }
 
 class FakeSettingsRepository : SettingsRepository {

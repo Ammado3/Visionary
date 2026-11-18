@@ -15,6 +15,7 @@ data class SettingsState(
 
 sealed interface SettingsIntent : UiIntent {
     data class OnChargingOnlyToggled(val enabled: Boolean) : SettingsIntent
+    data class OnVisualAnalysisToggled(val enabled: Boolean) : SettingsIntent
     data object OnOpenIndexHealthClicked : SettingsIntent
     data object OnBackClicked : SettingsIntent
 }

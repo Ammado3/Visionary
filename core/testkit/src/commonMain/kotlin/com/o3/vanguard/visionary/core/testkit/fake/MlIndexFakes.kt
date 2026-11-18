@@ -58,6 +58,16 @@ class FakeIndexRepository(
         rebuildCalls++
         return nextRebuildResult
     }
+
+    override suspend fun pause(): AppResult<Unit> {
+        progress.value = progress.value.copy(state = IndexState.PAUSED_BATTERY)
+        return AppResult.Ok(Unit)
+    }
+
+    override suspend fun resume(): AppResult<Unit> {
+        progress.value = progress.value.copy(state = IndexState.RUNNING)
+        return AppResult.Ok(Unit)
+    }
 }
 
 class FakeScannerPort : ScannerPort {

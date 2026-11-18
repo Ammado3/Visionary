@@ -70,6 +70,9 @@ interface MediaDao {
     @Query("DELETE FROM media_item WHERE ref NOT IN (:existingUris)")
     suspend fun deleteNonExistingImages(existingUris: List<String>)
 
+    @Query("DELETE FROM media_item WHERE ref = :ref")
+    suspend fun deleteByRef(ref: String)
+
     @Query("SELECT * FROM media_item WHERE id = :id")
     suspend fun getById(id: Long): MediaEntity?
 

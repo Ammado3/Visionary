@@ -19,6 +19,7 @@ import com.o3.vanguard.visionary.domain.port.ImageLabelEngine
 import com.o3.vanguard.visionary.domain.port.MediaSourceEngine
 import com.o3.vanguard.visionary.domain.port.OcrEngine
 import com.o3.vanguard.visionary.domain.repository.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -270,6 +271,7 @@ class RoomIndexRepository(
     private val ocrEngine: OcrEngine,
     private val labelEngine: ImageLabelEngine,
     private val vectorSearchEngine: VectorSearchEngine,
+    private val settingsRepository: SettingsRepository,
 ) : IndexRepository {
     private val progress = MutableStateFlow(IndexProgress(0, 0, 0, 0, IndexState.IDLE))
 
@@ -281,49 +283,107 @@ class RoomIndexRepository(
      */
     private val rebuildMutex = Mutex()
     private var indexedThisSession = false
+    private var isPaused = false
 
-    override fun observeProgress(): Flow<IndexProgress> = progress
+    override fun observeProgress(): Flow<IndexProgress> = flow {
+        if (progress.value.total == 0) {
+            val allEntities = db.mediaDao().getAll()
+            val textEntities = db.mediaDao().getAllTextEntities()
+            val totalCount = allEntities.size
+            val indexedCount = textEntities.size
+            if (totalCount > 0 && progress.value.total == 0) {
+                val initialState = if (isPaused) IndexState.PAUSED_BATTERY else IndexState.IDLE
+                progress.value = IndexProgress(
+                    total = totalCount,
+                    indexed = indexedCount,
+                    pending = (totalCount - indexedCount).coerceAtLeast(0),
+                    failed = 0,
+                    state = initialState,
+                )
+            }
+        }
+        emitAll(progress)
+    }
 
-    override suspend fun retryFailed(): AppResult<Unit> {
-        // Force a full re-run even if we already indexed this session.
+    override suspend fun pause(): AppResult<Unit> {
+        isPaused = true
+        progress.value = progress.value.copy(state = IndexState.PAUSED_BATTERY)
+        return AppResult.Ok(Unit)
+    }
+
+    override suspend fun resume(): AppResult<Unit> {
+        isPaused = false
         indexedThisSession = false
         return rebuild()
     }
 
+    override suspend fun retryFailed(): AppResult<Unit> {
+        // Force a full re-run even if we already indexed this session.
+        indexedThisSession = false
+        isPaused = false
+        return rebuild()
+    }
+
     override suspend fun rebuild(): AppResult<Unit> = rebuildMutex.withLock {
+        val settings = settingsRepository.observe().first()
+        if (!settings.visualAnalysisEnabled || isPaused) {
+            isPaused = true
+            progress.value = progress.value.copy(state = IndexState.PAUSED_BATTERY)
+            return AppResult.Ok(Unit)
+        }
         // If indexing is already running (concurrent callers waiting on the
-        // mutex) or was successfully completed this session, skip.
-        if (indexedThisSession || progress.value.state == IndexState.RUNNING) {
+        // mutex), skip.
+        if (progress.value.state == IndexState.RUNNING) {
             return AppResult.Ok(Unit)
         }
         val source = mediaSource.queryDelta(0L)
         if (source !is AppResult.Ok) return source as AppResult.Err
         val excludedRefs = db.exclusionDao().getAllExclusions().toSet()
         val media = source.value.filter { it.uri !in excludedRefs }
-        progress.value = IndexProgress(media.size, 0, media.size, 0, IndexState.RUNNING)
 
         val currentRefs = media.map { it.uri }.toSet()
-        db.mediaDao().deleteNonExistingImages(currentRefs.toList())
+        if (currentRefs.isNotEmpty()) {
+            db.mediaDao().deleteNonExistingImages(currentRefs.toList())
+        }
+
+        // Upsert all media items with conflict fallback so no item is skipped
+        media.forEach { item ->
+            val entity = item.toEntity()
+            try {
+                db.mediaDao().upsert(listOf(entity))
+            } catch (_: Throwable) {
+                db.mediaDao().deleteByRef(entity.ref)
+                try {
+                    db.mediaDao().upsert(listOf(entity))
+                } catch (_: Throwable) {}
+            }
+        }
+
+        val initialIndexed = media.count { item ->
+            item.category == MediaCategory.VIDEO || db.mediaDao().getText(item.id.value) != null
+        }
+        progress.value = IndexProgress(media.size, initialIndexed, media.size - initialIndexed, 0, IndexState.RUNNING)
 
         var indexed = 0
         var failed = 0
-        media.forEach { item ->
+        for (item in media) {
+            if (isPaused || !settingsRepository.observe().first().visualAnalysisEnabled) {
+                isPaused = true
+                progress.value = IndexProgress(media.size, indexed, media.size - indexed - failed, failed, IndexState.PAUSED_BATTERY)
+                return AppResult.Ok(Unit)
+            }
             try {
-                // Persist every media item, including videos. OCR and image labeling
-                // are only available for still images.
-                db.mediaDao().upsert(listOf(item.toEntity()))
-                
                 // Resume where it left off: skip if already indexed in database
                 if (item.category != MediaCategory.VIDEO && db.mediaDao().getText(item.id.value) != null) {
                     indexed++
                     progress.value = IndexProgress(media.size, indexed, media.size - indexed - failed, failed, IndexState.RUNNING)
-                    return@forEach
+                    continue
                 }
 
                 if (item.category == MediaCategory.VIDEO) {
                     indexed++
                     progress.value = IndexProgress(media.size, indexed, media.size - indexed - failed, failed, IndexState.RUNNING)
-                    return@forEach
+                    continue
                 }
                 val ocr = (ocrEngine.recognizeText(item.uri) as? AppResult.Ok)?.value
                 val labelsList = (labelEngine.labelImage(item.uri) as? AppResult.Ok)?.value.orEmpty()
@@ -362,6 +422,8 @@ class RoomIndexRepository(
                     )
                 )
                 indexed++
+            } catch (e: CancellationException) {
+                throw e
             } catch (_: Throwable) {
                 failed++
             }

@@ -66,10 +66,12 @@ fun testAppSettings(
     onboardingDone: Boolean = false,
     indexOnlyWhileCharging: Boolean = false,
     vaultLockTimeoutSeconds: Int = 30,
+    visualAnalysisEnabled: Boolean = true,
 ): AppSettings = AppSettings(
     onboardingDone = onboardingDone,
     indexOnlyWhileCharging = indexOnlyWhileCharging,
     vaultLockTimeoutSeconds = vaultLockTimeoutSeconds,
+    visualAnalysisEnabled = visualAnalysisEnabled,
 )
 
 fun testScannedDocument(
