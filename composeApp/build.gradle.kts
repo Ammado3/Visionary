@@ -25,7 +25,6 @@ kotlin {
             implementation(project(":core:navigation"))
             implementation(project(":core:designsystem"))
             implementation(project(":core:database"))
-            implementation(project(":core:testing"))
             implementation(project(":domain"))
             implementation(project(":data"))
             implementation(project(":platform"))
