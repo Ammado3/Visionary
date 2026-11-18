@@ -126,7 +126,7 @@
     <string name="settings_ocr_indexing">OCR indexing</string>
     <string name="settings_indexed_count">%1$d of %2$d images indexed</string>
     <string name="settings_visual_analysis">Visual analysis</string>
-    <string name="settings_index_paused">Indexing paused · %1$d%% complete</string>
+    <string name="settings_index_paused">Indexing paused · %1$d% complete</string>
     <string name="settings_indexing">Indexing in progress</string>
     <string name="settings_reindex_library">Re-index library</string>
     <string name="settings_continue_device">Continue on this device</string>
