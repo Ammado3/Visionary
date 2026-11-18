@@ -8,12 +8,20 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.Permissions_Required
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.Permissions_Required_Description
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.Res
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.cancel
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.gps_enable
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.gps_on
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.gps_permission
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AppPermissionRationaleDialog(
     visible: Boolean,
-    title: String = "Permissions Required",
-    description: String = "This app requires location and system permissions to function securely. Please grant them in App Settings.",
+    title: String = stringResource(Res.string.Permissions_Required),
+    description: String = stringResource(Res.string.Permissions_Required_Description),
     onOpenSettings: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -44,12 +52,12 @@ fun AppPermissionRationaleDialog(
                     contentColor = VisionaryColors.colorF4FDF7,
                 ),
             ) {
-                Text("Open Settings")
+                Text(stringResource(Res.string.Permissions_Required_Description))
             }
         },
         dismissButton = {
             OutlinedButton(onClick = onDismiss) {
-                Text("Cancel", color = VisionaryColors.color496156)
+                Text(stringResource(Res.string.cancel), color = VisionaryColors.color496156)
             }
         },
     )
@@ -58,8 +66,8 @@ fun AppPermissionRationaleDialog(
 @Composable
 fun AppGpsEnableDialog(
     visible: Boolean,
-    title: String = "Enable Location/GPS",
-    description: String = "Your device Location/GPS service is disabled. Please turn it ON in settings to continue.",
+    title: String = stringResource(Res.string.gps_enable),
+    description: String = stringResource(Res.string.gps_permission),
     onOpenLocationSettings: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -90,12 +98,12 @@ fun AppGpsEnableDialog(
                     contentColor = VisionaryColors.colorF4FDF7,
                 ),
             ) {
-                Text("Turn ON GPS")
+                Text(stringResource(Res.string.gps_on))
             }
         },
         dismissButton = {
             OutlinedButton(onClick = onDismiss) {
-                Text("Cancel", color = VisionaryColors.color496156)
+                Text(stringResource(Res.string.cancel), color = VisionaryColors.color496156)
             }
         },
     )
