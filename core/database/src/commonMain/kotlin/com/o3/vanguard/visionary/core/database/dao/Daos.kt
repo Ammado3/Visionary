@@ -8,7 +8,9 @@ import kotlinx.coroutines.flow.Flow
 
 data class CategoryCount(
     val category: String,
-    val count: Int
+    val count: Int,
+    val coverRef: String?,
+    val newestSortKey: Long,
 )
 
 @Dao
@@ -16,10 +18,10 @@ interface MediaDao {
     @Query("SELECT * FROM media_item ORDER BY sortKey DESC")
     fun observeAll(): Flow<List<MediaEntity>>
 
-    @Query("SELECT * FROM media_item WHERE category = :category ORDER BY sortKey DESC")
-    fun observeByCategory(category: String): Flow<List<MediaEntity>>
+    @Query("SELECT * FROM media_item WHERE category IN (:categories) ORDER BY sortKey DESC")
+    fun observeByCategories(categories: List<String>): Flow<List<MediaEntity>>
 
-    @Query("SELECT category AS category, COUNT(*) AS count FROM media_item GROUP BY category")
+    @Query("SELECT category AS category, COUNT(*) AS count, ref AS coverRef, MAX(sortKey) AS newestSortKey FROM media_item GROUP BY category")
     fun observeCategoryCounts(): Flow<List<CategoryCount>>
 
     @Query("SELECT * FROM media_item WHERE id = :id")
