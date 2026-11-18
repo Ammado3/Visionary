@@ -9,11 +9,13 @@ import com.o3.vanguard.visionary.feature.teleport.domain.port.ReceivedPhotoStore
 import com.o3.vanguard.visionary.feature.teleport.domain.port.ThumbnailMaker
 import com.o3.vanguard.visionary.feature.teleport.domain.transport.TeleportTransport
 import org.koin.core.module.Module
+import org.koin.core.module.dsl.factoryOf
+import org.koin.dsl.bind
 import org.koin.dsl.module
 
 actual val teleportPlatformModule: Module = module {
-    factory<TeleportTransport> { NearbyTeleportTransport(get()) }
-    factory<ThumbnailMaker> { AndroidThumbnailMaker(get()) }
-    factory<ReceivedPhotoStore> { MediaStoreReceivedPhotoStore(get()) }
-    factory<DeviceNameProvider> { AndroidDeviceNameProvider() }
+    factoryOf(::NearbyTeleportTransport) bind TeleportTransport::class
+    factoryOf(::AndroidThumbnailMaker) bind ThumbnailMaker::class
+    factoryOf(::MediaStoreReceivedPhotoStore) bind ReceivedPhotoStore::class
+    factoryOf(::AndroidDeviceNameProvider) bind DeviceNameProvider::class
 }

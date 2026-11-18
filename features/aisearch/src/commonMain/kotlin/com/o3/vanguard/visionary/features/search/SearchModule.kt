@@ -4,5 +4,14 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val searchModule = module {
-    viewModel { (initialQuery: String) -> SearchViewModel(initialQuery, get(), get(), get(), get(), get()) }
+    viewModel { (initialQuery: String) ->
+        SearchViewModel(
+            initialQuery = initialQuery,
+            searchMediaUseCase = get(),
+            observeMediaUseCase = get(),
+            observeIndexProgressUseCase = get(),
+            rebuildIndexUseCase = get(),
+            searchRepository = get(),
+        )
+    }
 }
