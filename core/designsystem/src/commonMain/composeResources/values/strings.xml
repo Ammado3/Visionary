@@ -143,4 +143,10 @@
     <string name="settings_index_health">Index Health</string>
     <string name="settings_ocr_status">OCR indexing engine status: Healthy</string>
     <string name="settings_back">Back</string>
+    <string name ="Permissions_Required">Permission </string>
+    <string name = "Permissions_Required_Description">This app requires location and system permissions to function securely. Please grant them in App Settings.</string>"
+    <string name ="open_Setting">Open Settings</string>
+    <string name="gps_enable">Enable Location/GPS</string>
+    <string name="gps_permission"> Your device Location/GPS service is disabled. Please turn it ON in settings to continue.</string>
+    <string name="gps_on">Turn ON GPS</string>
 </resources>
