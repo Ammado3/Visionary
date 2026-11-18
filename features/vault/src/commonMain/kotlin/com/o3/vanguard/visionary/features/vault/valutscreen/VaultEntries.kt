@@ -1,5 +1,4 @@
-
-package com.o3.vanguard.visionary.features.vault
+package com.o3.vanguard.visionary.features.vault.valutscreen
 
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey

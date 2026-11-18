@@ -109,6 +109,9 @@ interface VaultDao {
     @Query("SELECT * FROM vault_item ORDER BY createdAtMs DESC")
     fun observeVaultItems(): Flow<List<VaultItemEntity>>
 
+    @Query("SELECT * FROM vault_item WHERE id = :id")
+    suspend fun getVaultItem(id: String): VaultItemEntity?
+
     @Upsert suspend fun upsertVaultItem(item: VaultItemEntity)
     @Query("DELETE FROM vault_item WHERE id = :id") suspend fun deleteVaultItem(id: String)
 }

@@ -167,9 +167,11 @@ sealed interface DeleteConsentResult {
 
 data class VaultItem(
     val id: String,
+    val filePath: String,
     val createdAtMs: Long,
     val width: Int,
     val height: Int,
+    val mime: String = "image/jpeg",
 )
 
 data class AppSettings(

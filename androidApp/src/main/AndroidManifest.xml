@@ -30,6 +30,10 @@
         android:usesPermissionFlags="neverForLocation"
         android:minSdkVersion="32"
         tools:targetApi="32" />
+
+<!--    Google recommends handling this permission explicitly for custom gallery implementations-->
+    <uses-permission
+        android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
     <!-- Saving received photos on API 26-28 only -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 
@@ -40,6 +44,7 @@
         android:name=".VisionaryApp"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
+        android:preserveLegacyExternalStorage="true"
         android:label="Visionary"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
