@@ -24,6 +24,8 @@ interface IndexRepository {
     fun observeProgress(): Flow<IndexProgress>
     suspend fun retryFailed(): AppResult<Unit>
     suspend fun rebuild(): AppResult<Unit>
+    suspend fun pause(): AppResult<Unit>
+    suspend fun resume(): AppResult<Unit>
 }
 
 interface SettingsRepository {
