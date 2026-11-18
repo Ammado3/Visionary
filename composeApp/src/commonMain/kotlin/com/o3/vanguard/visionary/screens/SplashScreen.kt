@@ -42,6 +42,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import visionary.composeapp.generated.resources.Res
 import visionary.composeapp.generated.resources.ic_ai_search
+import kotlin.time.Duration.Companion.seconds
 
 internal const val SPLASH_DURATION_MS = 3_000L
 
@@ -177,7 +178,7 @@ fun SplashScreen(
 
     // Automatically finish splash after 3 seconds
     LaunchedEffect(Unit) {
-        delay(SPLASH_DURATION_MS)
+        delay(3.seconds)
         onSplashFinished()
     }
 

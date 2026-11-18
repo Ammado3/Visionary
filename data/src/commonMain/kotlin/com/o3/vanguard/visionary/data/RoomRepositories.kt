@@ -14,6 +14,7 @@ import com.o3.vanguard.visionary.core.database.entity.IndexExclusionEntity
 import com.o3.vanguard.visionary.core.database.entity.MediaEntity
 import com.o3.vanguard.visionary.core.database.entity.MediaTextEntity
 import com.o3.vanguard.visionary.core.database.entity.TrashItemEntity
+import com.o3.vanguard.visionary.core.database.entity.AppSettingsEntity
 import com.o3.vanguard.visionary.domain.model.*
 import com.o3.vanguard.visionary.domain.port.ImageLabelEngine
 import com.o3.vanguard.visionary.domain.port.MediaSourceEngine
@@ -27,23 +28,37 @@ import kotlin.math.min
 import kotlin.time.Clock
 
 class RoomMediaRepository(private val db: AppDatabase) : MediaRepository {
-    override fun observeCollections(): Flow<List<CollectionSummary>> =
-        db.mediaDao().observeCategoryCounts().map { counts ->
-            val countMap = counts.associate { it.category to it.count }
-            CollectionKind.entries.map { kind ->
-                CollectionSummary(kind, countMap[kind.name] ?: 0, null)
-            }
-        }
-
     override fun observeMedia(kind: CollectionKind): Flow<List<MediaItem>> =
         (if (kind == CollectionKind.ALL) db.mediaDao().observeAll()
         else db.mediaDao().observeByCategory(kind.name))
             .map { list ->
+                val textByMediaId = if (list.isEmpty()) {
+                    emptyMap()
+                } else {
+                    db.mediaDao()
+                        .getTexts(list.map { it.id })
+                        .associateBy { it.mediaId }
+                }
                 list.map { entity ->
-                    val textEntity = db.mediaDao().getText(entity.id)
-                    entity.toDomain(textEntity)
+                    entity.toDomain(textByMediaId[entity.id])
                 }
             }
+
+    override fun observeMediaByAlbum(albumId: String): Flow<List<MediaItem>> =
+        db.mediaDao().observeByAlbum(albumId).map { list ->
+            val textByMediaId = if (list.isEmpty()) {
+                emptyMap()
+            } else {
+                db.mediaDao().getTexts(list.map { it.id }).associateBy { it.mediaId }
+            }
+            list.map { entity -> entity.toDomain(textByMediaId[entity.id]) }
+        }
+
+    override fun observeFavorites(): Flow<List<MediaItem>> =
+        db.mediaDao().observeFavorites().map { list ->
+            val textByMediaId = db.mediaDao().getTexts(list.map { it.id }).associateBy { it.mediaId }
+            list.map { entity -> entity.toDomain(textByMediaId[entity.id]) }
+        }
 
     override fun observeItem(id: MediaId): Flow<MediaItem?> =
         db.mediaDao().observeById(id.value).map { entity ->
@@ -56,16 +71,12 @@ class RoomMediaRepository(private val db: AppDatabase) : MediaRepository {
     override fun observeOcrLines(id: MediaId): Flow<List<OcrTextLine>> =
         flowOf(emptyList())
 
-    override fun observeRecentFinds(limit: Int): Flow<List<MediaItem>> =
-        db.mediaDao().observeAll().map { list ->
-            list.take(limit).map { entity ->
-                val textEntity = db.mediaDao().getText(entity.id)
-                entity.toDomain(textEntity)
-            }
-        }
-
     override suspend fun deleteMedia(id: MediaId) {
         db.mediaDao().delete(listOf(id.value))
+    }
+
+    override suspend fun setFavorite(id: MediaId, isFavorite: Boolean) {
+        db.mediaDao().updateFavorite(id.value, isFavorite)
     }
 }
 
@@ -348,7 +359,8 @@ class RoomIndexRepository(
 
         // Upsert all media items with conflict fallback so no item is skipped
         media.forEach { item ->
-            val entity = item.toEntity()
+            val existingFavorite = db.mediaDao().getById(item.id.value)?.isFavorite ?: item.isFavorite
+            val entity = item.copy(isFavorite = existingFavorite).toEntity()
             try {
                 db.mediaDao().upsert(listOf(entity))
             } catch (_: Throwable) {
@@ -435,15 +447,31 @@ class RoomIndexRepository(
     }
 }
 
-class RoomSettingsRepository : SettingsRepository {
-    private val settings = MutableStateFlow(AppSettings())
-
-    override fun observe(): Flow<AppSettings> = settings
+class RoomSettingsRepository(private val db: AppDatabase) : SettingsRepository {
+    override fun observe(): Flow<AppSettings> = db.settingsDao().observe()
+        .map { entity -> entity?.toDomain() ?: AppSettings() }
 
     override suspend fun update(transform: (AppSettings) -> AppSettings) {
-        settings.update(transform)
+        val current = db.settingsDao().get()?.toDomain() ?: AppSettings()
+        db.settingsDao().upsert(transform(current).toEntity())
     }
 }
+
+private fun AppSettingsEntity.toDomain() = AppSettings(
+    onboardingDone = onboardingDone,
+    indexOnlyWhileCharging = indexOnlyWhileCharging,
+    vaultLockTimeoutSeconds = vaultLockTimeoutSeconds,
+    visualAnalysisEnabled = visualAnalysisEnabled,
+    indexingCardShown = indexingCardShown,
+)
+
+private fun AppSettings.toEntity() = AppSettingsEntity(
+    onboardingDone = onboardingDone,
+    indexOnlyWhileCharging = indexOnlyWhileCharging,
+    vaultLockTimeoutSeconds = vaultLockTimeoutSeconds,
+    visualAnalysisEnabled = visualAnalysisEnabled,
+    indexingCardShown = indexingCardShown,
+)
 
 class RoomVaultRepository(
     private val db: AppDatabase,
@@ -570,6 +598,8 @@ internal fun MediaEntity.toDomain(textEntity: MediaTextEntity? = null): MediaIte
         labels = textEntity?.labelsText.orEmpty(),
         embedding = textEntity?.embedding,
         confidence = textEntity?.confidence ?: 0f,
+        albumId = albumId,
+        isFavorite = isFavorite,
     )
 }
 
@@ -585,6 +615,8 @@ private fun MediaItem.toEntity() = MediaEntity(
     isScreenshot = category == MediaCategory.SCREENSHOT,
     entityFlags = entityFlags,
     fingerprint = uri,
+    albumId = albumId,
+    isFavorite = isFavorite,
 )
 
 private fun buildSnippet(text: String, query: String): String {

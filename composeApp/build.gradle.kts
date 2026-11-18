@@ -31,10 +31,8 @@ kotlin {
             implementation(project(":platform"))
 
             implementation(project(":features:onboarding"))
-            implementation(project(":features:home"))
             implementation(project(":features:gallery"))
-            implementation(project(":features:search"))
-            implementation(project(":features:scanner"))
+            implementation(project(":features:aisearch"))
             implementation(project(":features:vault"))
             implementation(project(":features:settings"))
             implementation(project(":features:teleport"))
@@ -53,6 +51,7 @@ kotlin {
         }
         androidMain.dependencies {
             implementation(libs.androidx.material.icons.extended)
+            implementation(libs.androidx.activity.compose)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

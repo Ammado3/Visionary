@@ -34,11 +34,6 @@ interface ImageLabelEngine {
     suspend fun labelImage(uri: String): AppResult<List<String>>
 }
 
-interface ScannerPort {
-    suspend fun isAvailable(): Boolean
-    suspend fun scan(): AppResult<ScannedDocument>
-}
-
 interface BiometricAuthenticator {
     suspend fun authenticate(): AppResult<Unit>
 }

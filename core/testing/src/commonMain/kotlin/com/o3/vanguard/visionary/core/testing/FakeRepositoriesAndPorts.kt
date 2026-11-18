@@ -27,16 +27,14 @@ class FakeMediaRepository(private val controls: FakeControls) : MediaRepository 
             }
         }
 
-    override fun observeCollections(): Flow<List<CollectionSummary>> =
-        scenarioFlow(emptyList(), items.map { list ->
-            CollectionKind.entries.map { kind ->
-                val matching = list.filter { matchesKind(it, kind) }
-                CollectionSummary(kind, matching.size, matching.firstOrNull()?.uri)
-            }
-        })
-
     override fun observeMedia(kind: CollectionKind): Flow<List<MediaItem>> =
         scenarioFlow(emptyList(), items.map { list -> list.filter { matchesKind(it, kind) } })
+
+    override fun observeMediaByAlbum(albumId: String): Flow<List<MediaItem>> =
+        scenarioFlow(emptyList(), items.map { list -> list.filter { it.albumId == albumId } })
+
+    override fun observeFavorites(): Flow<List<MediaItem>> =
+        scenarioFlow(emptyList(), items.map { list -> list.filter { it.isFavorite } })
 
     override fun observeItem(id: MediaId): Flow<MediaItem?> =
         items.map { list -> list.firstOrNull { it.id == id } }
@@ -44,11 +42,12 @@ class FakeMediaRepository(private val controls: FakeControls) : MediaRepository 
     override fun observeOcrLines(id: MediaId): Flow<List<OcrTextLine>> =
         flowOf(listOf(OcrTextLine("Sample line text", NormalizedRect(0f, 0f, 1f, 0.1f), 0.99f)))
 
-    override fun observeRecentFinds(limit: Int): Flow<List<MediaItem>> =
-        scenarioFlow(emptyList(), items.map { list -> list.filter { it.textPreview != null }.take(limit) })
-
     override suspend fun deleteMedia(id: MediaId) {
         items.value = items.value.filterNot { it.id == id }
+    }
+
+    override suspend fun setFavorite(id: MediaId, isFavorite: Boolean) {
+        items.update { list -> list.map { if (it.id == id) it.copy(isFavorite = isFavorite) else it } }
     }
 
     private fun matchesKind(item: MediaItem, kind: CollectionKind): Boolean = when (kind) {
@@ -158,13 +157,6 @@ class FakePermissionGateway : PermissionGateway {
     override suspend fun requestAccess(): MediaAccess = MediaAccess.Full
 }
 
-class FakeScannerPort : ScannerPort {
-    override suspend fun isAvailable(): Boolean = true
-
-    override suspend fun scan(): AppResult<ScannedDocument> =
-        AppResult.Ok(ScannedDocument(listOf("fake://scanned/page1.jpg"), "fake://scanned/doc.pdf"))
-}
-
 class FakeBiometricAuthenticator : BiometricAuthenticator {
     override suspend fun authenticate(): AppResult<Unit> = AppResult.Ok(Unit)
 }
@@ -191,7 +183,6 @@ val fakeDataModule = module {
     single<SettingsRepository> { FakeSettingsRepository() }
     single<VaultRepository> { FakeVaultRepository() }
     single<PermissionGateway> { FakePermissionGateway() }
-    single<ScannerPort> { FakeScannerPort() }
     single<BiometricAuthenticator> { FakeBiometricAuthenticator() }
     single<TrashRepository> { FakeTrashRepository() }
 }

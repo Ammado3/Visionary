@@ -1,4 +1,4 @@
-package com.o3.vanguard.visionary.features.gallery
+package com.o3.vanguard.visionary.features.gallery.presentation.albums
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -38,10 +38,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -59,32 +59,28 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import coil3.compose.AsyncImage
-import com.o3.vanguard.visionary.core.common.AppResult
 import com.o3.vanguard.visionary.core.designsystem.AppBottomNavigation
 import com.o3.vanguard.visionary.core.designsystem.AppTab
 import com.o3.vanguard.visionary.core.designsystem.AppTypography
 import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
-import com.o3.vanguard.visionary.domain.model.CollectionKind
-import com.o3.vanguard.visionary.domain.model.StorageAlbum
-import com.o3.vanguard.visionary.domain.usecase.ObserveStorageAlbumsUseCase
-import org.koin.compose.koinInject
+import com.o3.vanguard.visionary.features.gallery.presentation.albums.AlbumsIntent
+import com.o3.vanguard.visionary.features.gallery.presentation.albums.AlbumsViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun AlbumsRoute(
-    onOpenAlbum: (CollectionKind) -> Unit,
+    onOpenAlbum: (String, String) -> Unit,
     onPhotos: () -> Unit,
     onSearch: () -> Unit,
     onVault: () -> Unit,
     onTrashBin: () -> Unit,
+    onFavorites: () -> Unit,
+    viewModel: AlbumsViewModel = koinViewModel(),
 ) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
     var searchOpen by rememberSaveable { mutableStateOf(false) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
-    val observeAlbums = koinInject<ObserveStorageAlbumsUseCase>()
-    val albumsResult by produceState<AppResult<List<StorageAlbum>>?>(initialValue = null, key1 = observeAlbums) {
-        value = observeAlbums()
-    }
-    val albums = (albumsResult as? AppResult.Ok<List<StorageAlbum>>)?.value.orEmpty()
-
     Surface(Modifier.fillMaxSize(), color = VisionaryColors.colorF4FDF7) {
         Column(Modifier.fillMaxSize()) {
             AlbumsHeader(
@@ -97,10 +93,12 @@ fun AlbumsRoute(
                     searchOpen = false
                 },
             )
-            if (albumsResult == null) {
+            if (state.loading) {
                 Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = VisionaryColors.color007847)
                 }
+            } else if (state.error != null) {
+                AlbumsError(onRetry = { viewModel.onIntent(AlbumsIntent.OnRetryClicked) })
             } else {
                 Column(Modifier.weight(1f).padding(horizontal = 20.dp, vertical = 24.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -113,9 +111,10 @@ fun AlbumsRoute(
                         )
                         ShortcutCard(
                             title = "Favorites",
-                            subtitle = "0 files",
+                            subtitle = "${state.favoriteCount} files",
                             icon = Res.drawable.favorite,
                             iconBackground = androidx.compose.ui.graphics.Color(0xFFE7E0F2),
+                            onClick = onFavorites,
                         )
                     }
                     Spacer(Modifier.height(12.dp))
@@ -129,7 +128,7 @@ fun AlbumsRoute(
                         color = VisionaryColors.color496156,
                     )
                     Spacer(Modifier.height(8.dp))
-                    val visibleAlbums = albums.filter { album ->
+                    val visibleAlbums = state.albums.filter { album ->
                         searchQuery.isBlank() || album.name.contains(searchQuery.trim(), ignoreCase = true)
                     }
                     LazyVerticalGrid(
@@ -145,7 +144,7 @@ fun AlbumsRoute(
                         }
                         items(visibleAlbums, key = { it.id }) { album ->
                             Column(
-                                modifier = Modifier.clickable { onOpenAlbum(CollectionKind.ALL) },
+                                modifier = Modifier.clickable { onOpenAlbum(album.id, album.name) },
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 AsyncImage(
@@ -174,6 +173,14 @@ fun AlbumsRoute(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AlbumsError(onRetry: () -> Unit) {
+    Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        Text("Failed to load albums", style = MaterialTheme.typography.titleMedium)
+        TextButton(onClick = onRetry) { Text("Retry") }
     }
 }
 

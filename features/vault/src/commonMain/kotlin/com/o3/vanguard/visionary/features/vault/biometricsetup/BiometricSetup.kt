@@ -12,10 +12,10 @@ fun EntryProviderScope<NavKey>. biometricSetupEntries(navigator: Navigator) {
     entry<AppRoute.BiometricSetup> {
        BiometricSetupRoute(
             onUnlocked = { navigator.replaceTop(AppRoute.VaultGrid) },
-            onBack = { navigator.back() },
+            onBack = { navigator.handleBack() },
             onNavigate = { tab ->
                 when (tab) {
-                    AppTab.PHOTOS -> navigator.replaceTop(AppRoute.Home)
+                    AppTab.PHOTOS -> navigator.replaceTop(AppRoute.Photos)
                     AppTab.ALBUMS -> navigator.replaceTop(AppRoute.Albums)
                     AppTab.SEARCH -> navigator.replaceTop(AppRoute.Search())
                     AppTab.VAULT -> Unit

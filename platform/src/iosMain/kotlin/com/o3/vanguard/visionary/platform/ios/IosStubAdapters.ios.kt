@@ -37,12 +37,6 @@ class IosStubImageLabelEngine : ImageLabelEngine {
         AppResult.Err(AppError.Unsupported("OS_NOT_SUPPORTED_YET"))
 }
 
-class IosStubScannerPort : ScannerPort {
-    override suspend fun isAvailable(): Boolean = false
-    override suspend fun scan(): AppResult<ScannedDocument> =
-        AppResult.Err(AppError.Unsupported("OS_NOT_SUPPORTED_YET"))
-}
-
 class IosStubBiometricAuthenticator : BiometricAuthenticator {
     override suspend fun authenticate(): AppResult<Unit> =
         AppResult.Err(AppError.Unsupported("OS_NOT_SUPPORTED_YET"))
