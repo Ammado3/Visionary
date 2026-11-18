@@ -19,6 +19,7 @@ import com.o3.vanguard.visionary.domain.port.ImageLabelEngine
 import com.o3.vanguard.visionary.domain.port.MediaSourceEngine
 import com.o3.vanguard.visionary.domain.port.OcrEngine
 import com.o3.vanguard.visionary.domain.repository.*
+import com.o3.vanguard.visionary.core.database.dao.CategoryCount
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
@@ -26,18 +27,31 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.math.min
 import kotlin.time.Clock
 
+internal fun summarizeCollections(counts: List<CategoryCount>): List<CollectionSummary> {
+    return CollectionKind.entries.map { kind ->
+        if (kind == CollectionKind.ALL) {
+            val totalCount = counts.sumOf { it.count }
+            val coverUri = counts.maxByOrNull { it.newestSortKey }?.coverRef
+            CollectionSummary(kind, totalCount, coverUri)
+        } else {
+            val allowedCategoryNames = kind.categories().map { it.name }.toSet()
+            val matchingRows = counts.filter { it.category in allowedCategoryNames }
+            val totalCount = matchingRows.sumOf { it.count }
+            val coverUri = matchingRows.maxByOrNull { it.newestSortKey }?.coverRef
+            CollectionSummary(kind, totalCount, coverUri)
+        }
+    }
+}
+
 class RoomMediaRepository(private val db: AppDatabase) : MediaRepository {
     override fun observeCollections(): Flow<List<CollectionSummary>> =
         db.mediaDao().observeCategoryCounts().map { counts ->
-            val countMap = counts.associate { it.category to it.count }
-            CollectionKind.entries.map { kind ->
-                CollectionSummary(kind, countMap[kind.name] ?: 0, null)
-            }
+            summarizeCollections(counts)
         }
 
     override fun observeMedia(kind: CollectionKind): Flow<List<MediaItem>> =
         (if (kind == CollectionKind.ALL) db.mediaDao().observeAll()
-        else db.mediaDao().observeByCategory(kind.name))
+        else db.mediaDao().observeByCategories(kind.categories().map { it.name }))
             .map { list ->
                 list.map { entity ->
                     val textEntity = db.mediaDao().getText(entity.id)
