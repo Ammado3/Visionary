@@ -175,6 +175,7 @@ data class AppSettings(
     val onboardingDone: Boolean = false,
     val indexOnlyWhileCharging: Boolean = false,
     val vaultLockTimeoutSeconds: Int = 30,
+    val visualAnalysisEnabled: Boolean = true,
 )
 
 data class TrashItem(
