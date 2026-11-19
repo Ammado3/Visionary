@@ -9,8 +9,8 @@ val dataModule = module {
     single { VectorSearchEngine() }
     single<MediaRepository> { RoomMediaRepository(get()) }
     single<SearchRepository> { RoomSearchRepository(get(), get()) }
-    single<IndexRepository> { RoomIndexRepository(get(), get(), get(), get(), get()) }
-    single<SettingsRepository> { RoomSettingsRepository() }
+    single<IndexRepository> { RoomIndexRepository(get(), get(), get(), get(), get(), get()) }
+    single<SettingsRepository> { RoomSettingsRepository(get()) }
     single<VaultRepository> { RoomVaultRepository(get(), get(), get()) }
     single<TrashRepository> { RoomTrashRepository(get(), get()) }
 }

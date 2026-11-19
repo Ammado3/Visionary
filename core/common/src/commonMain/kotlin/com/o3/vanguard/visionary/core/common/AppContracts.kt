@@ -1,8 +1,10 @@
 package com.o3.vanguard.visionary.core.common
 
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.SupervisorJob
 import org.koin.dsl.module
 
 sealed interface AppError {
@@ -47,4 +49,5 @@ data class AppConfig(
 
 val coreCommonModule = module {
     single<AppDispatchers> { DefaultAppDispatchers() }
+    single<CoroutineScope> { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
 }

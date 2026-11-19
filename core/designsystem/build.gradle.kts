@@ -22,7 +22,6 @@ kotlin {
             implementation(compose.material3)
             implementation(compose.materialIconsExtended)
             implementation(libs.coil.compose)
-            implementation("org.jetbrains.compose.components:components-ui-tooling-preview:1.7.3")
 
             // Compose Multiplatform resources
             implementation(compose.components.resources)
@@ -31,6 +30,8 @@ kotlin {
 
         androidMain.dependencies {
             implementation(libs.composeUiTooling)
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.lifecycle.runtime.compose)
             implementation("androidx.core:core-ktx:1.15.0")
         }
     }

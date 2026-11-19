@@ -1,36 +1,33 @@
-# Visionary Developer & Agent Guide
+# Repository Guidelines
 
-## Module Structure
-- **`:androidApp`**: Android application entry point.
-- **`:composeApp`**: Compose Multiplatform application UI & DI wiring.
-- **`:core:common`**: Core primitives, AppResult, AppError, AppDispatchers, VectorSearchEngine.
-- **`:core:database`**: Room 3 database entities, DAOs, AppDatabase.
-- **`:core:mvi`**: BaseMviViewModel, UiState, UiIntent, UiEvent.
-- **`:core:testkit`**: Shared unit test support module (`runViewModelTest`, `collectEvents`, model factories, fakes, `AppResult` assertions).
-- **`:domain`**: Pure Kotlin domain models, repository interfaces, ports, and use cases.
-- **`:data`**: Data layer repository implementations.
-- **`:features:*`**: Feature modules (`gallery`, `home`, `onboarding`, `scanner`, `search`, `settings`, `vault`, `teleport`).
+## Project Structure & Module Organization
 
-## Commands That Work Today
-- **Run all Android host unit tests**:
-  ```bash
-  ./gradlew testAndroidHostTest
-  ```
-- **Build Android debug app**:
-  ```bash
-  ./gradlew assembleDebug
-  ```
+Visionary is a Kotlin Multiplatform project targeting Android and iOS. Application entry points live in `androidApp/` and `iosApp/`; shared Compose UI and dependency wiring live in `composeApp/`. Reusable layers are split into `core/` (`common`, `mvi`, `navigation`, `designsystem`, `database`, and `testing`), `domain/`, `data/`, and `platform/`. Product areas are isolated under `features/` (for example, `features/home` and `features/vault`). Put shared Kotlin in `src/commonMain`; use `src/androidMain` or `src/iosMain` only for platform-specific implementations. Build conventions are maintained in `build-logic/`.
 
-## Testing Architecture & Guidelines
-1. **Host Unit Testing**:
-   - All KMP library modules use `com.android.kotlin.multiplatform.library` with host tests enabled (`withHostTest {}`).
-   - Run tests using `./gradlew testAndroidHostTest`.
-2. **Test Dependencies & `:core:testkit`**:
-   - Test dependencies (`kotlin("test")`, `kotlinx-coroutines-test`, `turbine`, `:core:testkit`) are automatically injected into `commonTest` source sets via `KmpLibraryConventionPlugin`.
-   - Use `:core:testkit` for shared fakes, factories, assertions, and test dispatchers. Never add `:core:testkit` as a production dependency (`commonMain` / `androidMain`).
-3. **No Mocking Libraries / Handwritten Fakes**:
-   - Use deterministic, stateful handwritten fakes from `:core:testkit` or feature-specific test doubles.
-4. **ViewModel Tests**:
-   - Wrap ViewModel tests with `runViewModelTest` and collect one-shot MVI events using `collectEvents(viewModel)`.
-5. **Data Layer / Room Testing Note**:
-   - In-memory Room 3 databases using `BundledSQLiteDriver` require native SQLite binary loading on the target platform. For host JVM unit testing, repository/use case unit tests use handwritten fakes (e.g. `FakeMediaRepository`), while full Room SQLite integration tests run as instrumented Android tests (`androidTest`).
+## Build, Test, and Development Commands
+
+Use the checked-in Gradle wrapper from the repository root:
+
+```powershell
+.\gradlew.bat build
+.\gradlew.bat :androidApp:assembleDebug
+.\gradlew.bat :androidApp:installDebug
+```
+
+`build` compiles and validates all configured modules, `assembleDebug` creates the Android debug APK, and `installDebug` installs it on a connected emulator/device. Open `iosApp/` in Xcode to build and run the iOS application. Run targeted Gradle tasks for a module while iterating, such as `.\gradlew.bat :features:home:build`.
+
+## Coding Style & Naming Conventions
+
+Follow Kotlin conventions with four-space indentation, trailing commas in multiline declarations, and explicit meaningful names. Use `PascalCase` for classes, composables, and modules; `camelCase` for functions, properties, and parameters; and `UPPER_SNAKE_CASE` for constants. Keep feature files grouped by responsibility (`*Screen`, `*ViewModel`, `*Contract`, `*Module`). Preserve the existing package root `com.o3.vanguard.visionary`. The build enables all compiler warnings as errors, so resolve warnings before committing.
+
+## Testing Guidelines
+
+Tests are not currently checked in. New shared tests should go under a module's `src/commonTest`, with platform-specific tests in `src/androidHostTest` or the relevant iOS test source set. Name test classes after the subject and behavior, such as `VaultViewModelTest`. Run module tests with `.\gradlew.bat :<module>:allTests` or the platform-specific task exposed by Gradle.
+
+## Commit & Pull Request Guidelines
+
+Recent commits use concise imperative summaries, for example `Restructure project into modular Kotlin Multiplatform architecture`. Keep commits focused and describe the affected module. Pull requests should explain the change and validation performed, link the relevant issue, and include screenshots or a short recording for UI changes. Call out Android/iOS behavior differences and any migration or configuration steps.
+
+## Security & Configuration Tips
+
+Do not commit secrets, signing files, or machine-specific values. Keep local SDK paths in `local.properties`; review dependency and database-schema changes carefully before merging.

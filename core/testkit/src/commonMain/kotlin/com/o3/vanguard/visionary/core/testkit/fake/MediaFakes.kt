@@ -2,7 +2,6 @@ package com.o3.vanguard.visionary.core.testkit.fake
 
 import com.o3.vanguard.visionary.core.common.AppResult
 import com.o3.vanguard.visionary.domain.model.CollectionKind
-import com.o3.vanguard.visionary.domain.model.CollectionSummary
 import com.o3.vanguard.visionary.domain.model.DeleteConsentResult
 import com.o3.vanguard.visionary.domain.model.MediaAccess
 import com.o3.vanguard.visionary.domain.model.MediaId
@@ -21,25 +20,26 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 
 class FakeMediaRepository : MediaRepository {
-    val collections = MutableStateFlow<List<CollectionSummary>>(emptyList())
     val mediaItemsByKind = MutableStateFlow<Map<CollectionKind, List<MediaItem>>>(emptyMap())
     val itemsById = MutableStateFlow<Map<MediaId, MediaItem>>(emptyMap())
     val ocrLinesById = MutableStateFlow<Map<MediaId, List<OcrTextLine>>>(emptyMap())
-    val recentFinds = MutableStateFlow<List<MediaItem>>(emptyList())
-
-    override fun observeCollections(): Flow<List<CollectionSummary>> = collections
 
     override fun observeMedia(kind: CollectionKind): Flow<List<MediaItem>> =
         mediaItemsByKind.map { it[kind] ?: emptyList() }
 
+    override fun observeMediaByAlbum(albumId: String): Flow<List<MediaItem>> =
+        mediaItemsByKind.map { values -> values.values.flatten().filter { it.albumId == albumId } }
+
+    override fun observeFavorites(): Flow<List<MediaItem>> =
+        mediaItemsByKind.map { values -> values.values.flatten().filter { it.isFavorite } }
+
     override fun observeItem(id: MediaId): Flow<MediaItem?> =
         itemsById.map { it[id] }
 
+    override suspend fun setFavorite(id: MediaId, isFavorite: Boolean) = Unit
+
     override fun observeOcrLines(id: MediaId): Flow<List<OcrTextLine>> =
         ocrLinesById.map { it[id] ?: emptyList() }
-
-    override fun observeRecentFinds(limit: Int): Flow<List<MediaItem>> =
-        recentFinds.map { it.take(limit) }
 
     val deleteMediaCalls = mutableListOf<MediaId>()
     override suspend fun deleteMedia(id: MediaId) {

@@ -73,55 +73,92 @@ class AndroidPermissionGateway(private val context: Context) : PermissionGateway
 class AndroidMediaStoreSource(private val context: Context) : MediaSourceEngine {
     override suspend fun queryDelta(sinceCheckpoint: Long): AppResult<List<MediaItem>> = try {
         val result = mutableListOf<MediaItem>()
-        val projection = arrayOf(
-            MediaStore.Files.FileColumns._ID,
-            MediaStore.Files.FileColumns.DATE_TAKEN,
-            MediaStore.Files.FileColumns.DATE_ADDED,
-            MediaStore.Files.FileColumns.WIDTH,
-            MediaStore.Files.FileColumns.HEIGHT,
-            MediaStore.Files.FileColumns.DISPLAY_NAME,
-            MediaStore.Files.FileColumns.MEDIA_TYPE,
+
+        // 1. Query Images
+        val imageProjection = arrayOf(
+            MediaStore.Images.Media._ID,
+            MediaStore.Images.Media.DATE_TAKEN,
+            MediaStore.Images.Media.DATE_ADDED,
+            MediaStore.Images.Media.WIDTH,
+            MediaStore.Images.Media.HEIGHT,
+            MediaStore.Images.Media.DISPLAY_NAME,
+            MediaStore.Images.Media.BUCKET_ID,
         )
-        val mediaUri = MediaStore.Files.getContentUri("external")
         context.contentResolver.query(
-            mediaUri,
-            projection,
-            "${MediaStore.Files.FileColumns.MEDIA_TYPE}=? OR ${MediaStore.Files.FileColumns.MEDIA_TYPE}=?",
-            arrayOf(
-                MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE.toString(),
-                MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO.toString(),
-            ),
-            "${MediaStore.Files.FileColumns.DATE_ADDED} DESC",
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            imageProjection,
+            null,
+            null,
+            "${MediaStore.Images.Media.DATE_ADDED} DESC",
         )?.use { cursor ->
-            val id = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns._ID)
-            val taken = cursor.getColumnIndex(MediaStore.Files.FileColumns.DATE_TAKEN)
-            val added = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATE_ADDED)
-            val width = cursor.getColumnIndex(MediaStore.Files.FileColumns.WIDTH)
-            val height = cursor.getColumnIndex(MediaStore.Files.FileColumns.HEIGHT)
-            val name = cursor.getColumnIndex(MediaStore.Files.FileColumns.DISPLAY_NAME)
-            val mediaType = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MEDIA_TYPE)
+            val id = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
+            val taken = cursor.getColumnIndex(MediaStore.Images.Media.DATE_TAKEN)
+            val added = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_ADDED)
+            val width = cursor.getColumnIndex(MediaStore.Images.Media.WIDTH)
+            val height = cursor.getColumnIndex(MediaStore.Images.Media.HEIGHT)
+            val name = cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME)
+            val bucketId = cursor.getColumnIndex(MediaStore.Images.Media.BUCKET_ID)
             while (cursor.moveToNext()) {
                 val mediaId = cursor.getLong(id)
-                val isVideo = cursor.getInt(mediaType) == MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO
-                val uri = Uri.withAppendedPath(mediaUri, mediaId.toString())
+                val uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, mediaId)
                 val fileName = cursor.getString(name).orEmpty()
                 val isScreenshot = fileName.contains("screenshot", ignoreCase = true)
                 result += MediaItem(
                     id = MediaId(mediaId),
                     uri = uri.toString(),
                     origin = MediaOrigin.LIBRARY,
-                    category = when {
-                        isVideo -> MediaCategory.VIDEO
-                        isScreenshot -> MediaCategory.SCREENSHOT
-                        else -> MediaCategory.PHOTO
-                    },
+                    category = if (isScreenshot) MediaCategory.SCREENSHOT else MediaCategory.PHOTO,
                     takenAtMs = cursor.getLong(taken).takeIf { it > 0 } ?: cursor.getLong(added) * 1000,
                     width = if (width >= 0) cursor.getInt(width) else 0,
                     height = if (height >= 0) cursor.getInt(height) else 0,
                     textPreview = null,
+                    albumId = bucketId.takeIf { it >= 0 }?.let(cursor::getString),
                 )
             }
         }
+
+        // 2. Query Videos
+        val videoProjection = arrayOf(
+            MediaStore.Video.Media._ID,
+            MediaStore.Video.Media.DATE_TAKEN,
+            MediaStore.Video.Media.DATE_ADDED,
+            MediaStore.Video.Media.WIDTH,
+            MediaStore.Video.Media.HEIGHT,
+            MediaStore.Video.Media.DISPLAY_NAME,
+            MediaStore.Video.Media.BUCKET_ID,
+        )
+        context.contentResolver.query(
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+            videoProjection,
+            null,
+            null,
+            "${MediaStore.Video.Media.DATE_ADDED} DESC",
+        )?.use { cursor ->
+            val id = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
+            val taken = cursor.getColumnIndex(MediaStore.Video.Media.DATE_TAKEN)
+            val added = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED)
+            val width = cursor.getColumnIndex(MediaStore.Video.Media.WIDTH)
+            val height = cursor.getColumnIndex(MediaStore.Video.Media.HEIGHT)
+            val name = cursor.getColumnIndex(MediaStore.Video.Media.DISPLAY_NAME)
+            val bucketId = cursor.getColumnIndex(MediaStore.Video.Media.BUCKET_ID)
+            while (cursor.moveToNext()) {
+                val mediaId = cursor.getLong(id)
+                val uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, mediaId)
+                result += MediaItem(
+                    id = MediaId(mediaId),
+                    uri = uri.toString(),
+                    origin = MediaOrigin.LIBRARY,
+                    category = MediaCategory.VIDEO,
+                    takenAtMs = cursor.getLong(taken).takeIf { it > 0 } ?: cursor.getLong(added) * 1000,
+                    width = if (width >= 0) cursor.getInt(width) else 0,
+                    height = if (height >= 0) cursor.getInt(height) else 0,
+                    textPreview = null,
+                    albumId = bucketId.takeIf { it >= 0 }?.let(cursor::getString),
+                )
+            }
+        }
+
+        result.sortByDescending { it.takenAtMs }
         AppResult.Ok(result)
     } catch (error: SecurityException) {
         AppResult.Err(com.o3.vanguard.visionary.core.common.AppError.PermissionDenied)
@@ -188,7 +225,12 @@ class AndroidStorageAlbumSource(private val context: Context) : StorageAlbumSour
                 if (isVideo) album.videos++
                 if (added > album.latestAdded) {
                     album.latestAdded = added
-                    album.coverUri = Uri.withAppendedPath(filesUri, cursor.getLong(idIndex).toString()).toString()
+                    val coverBaseUri = if (isVideo) {
+                        MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+                    } else {
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                    }
+                    album.coverUri = ContentUris.withAppendedId(coverBaseUri, cursor.getLong(idIndex)).toString()
                 }
             }
         }
@@ -430,12 +472,6 @@ class MlKitImageLabelEngine(private val context: Context) : ImageLabelEngine {
     } catch (error: Throwable) {
         AppResult.Err(com.o3.vanguard.visionary.core.common.AppError.Io(error.message ?: "Image labeling failed"))
     }
-}
-
-class MlKitDocumentScannerAdapter(private val context: Context, private val dirs: com.o3.vanguard.visionary.platform.AppDirectories) : ScannerPort {
-    override suspend fun isAvailable(): Boolean = true
-    override suspend fun scan(): AppResult<ScannedDocument> =
-        AppResult.Ok(ScannedDocument(emptyList(), null))
 }
 
 class AndroidBiometricAuthenticator(private val context: Context) : BiometricAuthenticator {

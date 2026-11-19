@@ -9,12 +9,11 @@ import kotlinx.serialization.modules.polymorphic
 @Serializable
 sealed interface AppRoute : NavKey {
     @Serializable data object Onboarding : AppRoute
-    @Serializable data object Home : AppRoute
+    @Serializable data object Photos : AppRoute
     @Serializable data object Albums : AppRoute
-    @Serializable data class Gallery(val collectionId: String) : AppRoute
+    @Serializable data class Gallery(val albumId: String, val albumName: String = "Album") : AppRoute
     @Serializable data class Viewer(val mediaId: Long, val highlight: String? = null) : AppRoute
     @Serializable data class Search(val initialQuery: String = "") : AppRoute
-    @Serializable data object Scanner : AppRoute
     @Serializable data object VaultLock : AppRoute
     @Serializable data object VaultGrid : AppRoute
     @Serializable data class VaultViewer(val itemId: String) : AppRoute
@@ -22,6 +21,7 @@ sealed interface AppRoute : NavKey {
     @Serializable data object IndexHealth : AppRoute
     @Serializable data object BiometricSetup : AppRoute
     @Serializable data object TrashBin : AppRoute
+    @Serializable data object Favorites : AppRoute
     @Serializable data class TeleportSender(
         val uri: String,
         val displayName: String,
@@ -35,12 +35,11 @@ val AppNavSavedStateConfig = SavedStateConfiguration {
     serializersModule = SerializersModule {
         polymorphic(NavKey::class) {
             subclass(AppRoute.Onboarding::class, AppRoute.Onboarding.serializer())
-            subclass(AppRoute.Home::class, AppRoute.Home.serializer())
+            subclass(AppRoute.Photos::class, AppRoute.Photos.serializer())
             subclass(AppRoute.Albums::class, AppRoute.Albums.serializer())
             subclass(AppRoute.Gallery::class, AppRoute.Gallery.serializer())
             subclass(AppRoute.Viewer::class, AppRoute.Viewer.serializer())
             subclass(AppRoute.Search::class, AppRoute.Search.serializer())
-            subclass(AppRoute.Scanner::class, AppRoute.Scanner.serializer())
             subclass(AppRoute.VaultLock::class, AppRoute.VaultLock.serializer())
             subclass(AppRoute.VaultGrid::class, AppRoute.VaultGrid.serializer())
             subclass(AppRoute.VaultViewer::class, AppRoute.VaultViewer.serializer())
@@ -50,6 +49,7 @@ val AppNavSavedStateConfig = SavedStateConfiguration {
             subclass(AppRoute.TeleportReceiver::class, AppRoute.TeleportReceiver.serializer())
             subclass(AppRoute.BiometricSetup::class, AppRoute.BiometricSetup.serializer())
             subclass(AppRoute.TrashBin::class, AppRoute.TrashBin.serializer())
+            subclass(AppRoute.Favorites::class, AppRoute.Favorites.serializer())
         }
     }
 }
@@ -62,6 +62,24 @@ class Navigator(private val backStack: MutableList<NavKey>) {
         if (backStack.size <= 1) return false
         backStack.removeAt(backStack.lastIndex)
         return true
+    }
+
+    /**
+     * Tab roots are not a nested history. Back from a secondary tab first
+     * returns to Photos; only a second back on Photos can leave the app.
+     */
+    fun handleBack(): Boolean {
+        return when (backStack.lastOrNull()) {
+            AppRoute.Albums,
+            is AppRoute.Search,
+            AppRoute.VaultLock,
+            AppRoute.VaultGrid
+            -> {
+                replaceTop(AppRoute.Photos)
+                true
+            }
+            else -> back()
+        }
     }
     fun replaceTop(route: AppRoute) {
         if (backStack.isNotEmpty()) backStack.removeAt(backStack.lastIndex)

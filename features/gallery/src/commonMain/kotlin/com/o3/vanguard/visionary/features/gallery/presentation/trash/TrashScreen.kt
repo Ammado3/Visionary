@@ -1,4 +1,4 @@
-package com.o3.vanguard.visionary.features.gallery
+package com.o3.vanguard.visionary.features.gallery.presentation.trash
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -311,6 +312,7 @@ private fun TrashSelectionBottomBar(
     ) {
         Row(
             modifier = Modifier
+                .navigationBarsPadding()
                 .fillMaxWidth()
                 .padding(horizontal = 32.dp, vertical = 16.dp),
             horizontalArrangement = Arrangement.SpaceAround,

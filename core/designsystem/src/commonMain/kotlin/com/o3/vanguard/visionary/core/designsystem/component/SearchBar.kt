@@ -32,7 +32,7 @@ import org.jetbrains.compose.resources.painterResource
 import com.o3.vanguard.visionary.core.designsystem.generated.resources.Res
 import com.o3.vanguard.visionary.core.designsystem.generated.resources.ai
 import com.o3.vanguard.visionary.core.designsystem.generated.resources.mic
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 fun VisionarySearchBar(

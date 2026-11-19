@@ -6,7 +6,7 @@ This is a Kotlin Multiplatform project targeting Android and iOS.
 * [/domain](./domain) contains pure Kotlin domain models, repository interfaces, and use cases.
 * [/data](./data) contains repository implementations.
 * [/platform](./platform) contains platform-specific implementations and bridges.
-* [/features](./features) contains modularized feature sets (`gallery`, `home`, `onboarding`, `scanner`, `search`, `settings`, `teleport`, `vault`).
+* [/features](./features) contains modularized feature sets (`gallery`, `onboarding`, `aisearch`, `settings`, `teleport`, `vault`). Gallery owns the Photos, Albums, collection, viewer, and trash flows.
 
 ### Running the apps
 

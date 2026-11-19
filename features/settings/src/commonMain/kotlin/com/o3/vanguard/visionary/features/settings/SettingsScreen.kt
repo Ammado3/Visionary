@@ -3,14 +3,25 @@ package com.o3.vanguard.visionary.features.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -29,10 +40,30 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.Res
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_about
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_ai_search
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_app_version
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_appearance
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_back
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_help
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_index_health
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_index_paused
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_indexed_count
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_indexing
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_ocr_indexing
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_ocr_status
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_privacy_policy
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_system_default
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_theme
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_theme_dark
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_theme_light
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_theme_system
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_title
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_version_value
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_visual_analysis
 import com.o3.vanguard.visionary.core.mvi.CollectEvents
 import com.o3.vanguard.visionary.domain.model.IndexState
-import com.o3.vanguard.visionary.core.designsystem.generated.resources.Res
-import com.o3.vanguard.visionary.core.designsystem.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -62,10 +93,12 @@ fun SettingsScreen(
     val total = progress?.total?.takeIf { it > 0 } ?: 2846
     val indexed = progress?.indexed ?: 1842
     val percent = ((indexed * 100f / total).toInt()).coerceIn(0, 100)
-    val progressStatus = when (progress?.state) {
-        IndexState.PAUSED_BATTERY -> "Indexing paused"
-        IndexState.RUNNING -> "Indexing..."
-        else -> "Indexing paused"
+    val isVisualAnalysisEnabled = state.settings.visualAnalysisEnabled
+    val progressStatus = when {
+        !isVisualAnalysisEnabled -> stringResource(Res.string.settings_index_paused, percent)
+        progress?.state == IndexState.PAUSED_BATTERY -> stringResource(Res.string.settings_index_paused, percent)
+        progress?.state == IndexState.RUNNING -> stringResource(Res.string.settings_indexing)
+        else -> stringResource(Res.string.settings_index_paused, percent)
     }
 
     Surface(modifier = modifier.fillMaxSize(), color = VisionaryColors.colorF4FDF7) {
@@ -83,13 +116,13 @@ fun SettingsScreen(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
+                        contentDescription = stringResource(Res.string.settings_back),
                         tint = VisionaryColors.color0B1B14,
                         modifier = Modifier.size(20.dp),
                     )
                 }
                 Text(
-                    text = "Settings",
+                    text = stringResource(Res.string.settings_title),
                     color = VisionaryColors.color0B1B14,
                     fontSize = 18.sp,
                     lineHeight = 28.sp,
@@ -104,11 +137,11 @@ fun SettingsScreen(
                     .padding(horizontal = 16.dp).padding(top = 24.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp),
             ) {
-                SettingsSection(title = "Appearance") {
+                SettingsSection(title = stringResource(Res.string.settings_appearance)) {
                     Column {
                         SettingsRow(
-                            title = "Theme",
-                            subtitle = "System default",
+                            title = stringResource(Res.string.settings_theme),
+                            subtitle = stringResource(Res.string.settings_system_default),
                             trailing = {
                                 Icon(
                                     Icons.Default.ExpandMore,
@@ -122,7 +155,7 @@ fun SettingsScreen(
                     }
                 }
 
-                SettingsSection(title = "AI Search") {
+                SettingsSection(title = stringResource(Res.string.settings_ai_search)) {
                     Column {
                         Column(
                             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp)
@@ -132,7 +165,7 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    "OCR Indexing",
+                                    stringResource(Res.string.settings_ocr_indexing),
                                     color = VisionaryColors.color0B1B14,
                                     fontSize = 16.sp,
                                     lineHeight = 24.sp,
@@ -147,7 +180,11 @@ fun SettingsScreen(
                                 )
                             }
                             Text(
-                                text = "Indexed $indexed of $total photos",
+                                text = stringResource(
+                                    Res.string.settings_indexed_count,
+                                    indexed,
+                                    total
+                                ),
                                 color = VisionaryColors.color496156, fontSize = 14.sp, lineHeight = 20.sp,
                             )
                             Spacer(Modifier.height(12.dp))
@@ -170,7 +207,7 @@ fun SettingsScreen(
                         ) {
                             Column(Modifier.weight(1f)) {
                                 Text(
-                                    "Visual Analysis",
+                                    stringResource(Res.string.settings_visual_analysis),
                                     color = VisionaryColors.color0B1B14,
                                     fontSize = 16.sp,
                                     lineHeight = 24.sp,
@@ -184,8 +221,10 @@ fun SettingsScreen(
                                 )
                             }
                             Switch(
-                                checked = false,
-                                onCheckedChange = null,
+                                checked = isVisualAnalysisEnabled,
+                                onCheckedChange = { enabled ->
+                                    onIntent(SettingsIntent.OnVisualAnalysisToggled(enabled))
+                                },
                                 colors = SwitchDefaults.colors(
                                     checkedTrackColor = VisionaryColors.color007847,
                                     uncheckedTrackColor = VisionaryColors.colorCEDED3,
@@ -193,36 +232,22 @@ fun SettingsScreen(
                                 ),
                             )
                         }
-                        SettingsDivider()
-                        SettingsRow(
-                            title = "Reindex library",
-                            subtitle = "Continue on this device",
-                            trailing = { Chevron() },
-                            onClick = { onIntent(SettingsIntent.OnOpenIndexHealthClicked) },
-                        )
-                        SettingsDivider()
-                        SettingsRow(
-                            title = "Indexing preferences",
-                            subtitle = "Wi-Fi only, ${if (state.settings.indexOnlyWhileCharging) "Charging only" else "Any power"}",
-                            trailing = { Chevron() },
-                            onClick = { onIntent(SettingsIntent.OnOpenIndexHealthClicked) },
-                        )
                     }
                 }
 
-                SettingsSection(title = "About") {
+                SettingsSection(title = stringResource(Res.string.settings_about)) {
                     Column {
                         SettingsRow(
-                            title = "Help",
+                            title = stringResource(Res.string.settings_help),
                             trailing = { Chevron() })
                         SettingsDivider()
                         SettingsRow(
-                            title = "Privacy policy",
+                            title = stringResource(Res.string.settings_privacy_policy),
                             trailing = { Chevron() })
                         SettingsDivider()
                         SettingsRow(
-                            title = "App Version",
-                            subtitle = "1.0.0",
+                            title = stringResource(Res.string.settings_app_version),
+                            subtitle = stringResource(Res.string.settings_version_value),
                         )
                     }
                 }
@@ -296,7 +321,11 @@ private fun ThemeSelector() {
         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp)
             .clip(RoundedCornerShape(8.dp)).background(VisionaryColors.colorE6F3EA).padding(3.dp),
     ) {
-        listOf("Light", "Dark", "System").forEachIndexed { index, label ->
+        listOf(
+            stringResource(Res.string.settings_theme_light),
+            stringResource(Res.string.settings_theme_dark),
+            stringResource(Res.string.settings_theme_system),
+        ).forEachIndexed { index, label ->
             Box(
                 modifier = Modifier.weight(1f).height(30.dp)
                     .clip(RoundedCornerShape(6.dp))
@@ -325,15 +354,15 @@ private fun IndexHealthScreen(onBack: () -> Unit) {
             verticalArrangement = Arrangement.Center,
         ) {
             Text(
-                "Index Health",
+                stringResource(Res.string.settings_index_health),
                 style = MaterialTheme.typography.headlineLarge,
                 color = VisionaryColors.color0B1B14
             )
             Spacer(Modifier.height(16.dp))
-            Text("OCR Status", color = VisionaryColors.color496156)
+            Text(stringResource(Res.string.settings_ocr_status), color = VisionaryColors.color496156)
             Spacer(Modifier.height(24.dp))
             Text(
-                "Back",
+                stringResource(Res.string.settings_back),
                 color = VisionaryColors.color007847,
                 modifier = Modifier.clickable(onClick = onBack)
             )
