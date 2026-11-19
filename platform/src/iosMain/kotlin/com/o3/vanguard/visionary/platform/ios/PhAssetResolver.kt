@@ -8,7 +8,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.CoreGraphics.CGSizeMake
 import platform.Foundation.NSData
 import platform.Photos.*
-import platform.UIKit.UIImage
 import platform.UIKit.UIImageJPEGRepresentation
 import kotlin.coroutines.resume
 

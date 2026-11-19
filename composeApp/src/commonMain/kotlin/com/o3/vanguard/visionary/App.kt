@@ -83,11 +83,7 @@ fun App() {
         }
 
         startRoute?.let { AppNavHost(it) }
-            ?: SplashScreen(
-                onSplashFinished = {
-                    // Permission flow handled by LaunchedEffect
-                }
-            )
+            ?: SplashScreen()
     }
 }
 

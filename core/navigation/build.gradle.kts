@@ -14,8 +14,5 @@ kotlin {
             implementation(project(":core:designsystem"))
             implementation(libs.kotlinx.serialization.json)
         }
-        commonTest.dependencies {
-            implementation(kotlin("test"))
-        }
     }
 }

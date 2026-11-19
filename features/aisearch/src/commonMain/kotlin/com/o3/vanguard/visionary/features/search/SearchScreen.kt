@@ -85,8 +85,6 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.o3.vanguard.visionary.core.mvi.CollectEvents
-import com.o3.vanguard.visionary.core.designsystem.AppBottomNavigation
-import com.o3.vanguard.visionary.core.designsystem.AppTab
 import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
 import com.o3.vanguard.visionary.domain.model.MediaId
 import com.o3.vanguard.visionary.domain.model.MediaItem
@@ -100,7 +98,6 @@ fun SearchRoute(
     initialQuery: String,
     onOpenViewer: (MediaId, String) -> Unit,
     onBack: () -> Unit,
-    onNavigate: (AppTab) -> Unit,
     viewModel: SearchViewModel = koinViewModel { parametersOf(initialQuery) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -121,14 +118,13 @@ fun SearchRoute(
         }
     }
 
-    SearchScreen(state = state, onIntent = viewModel::onIntent, onNavigate = onNavigate, onBack = onBack)
+    SearchScreen(state = state, onIntent = viewModel::onIntent, onBack = onBack)
 }
 
 @Composable
 fun SearchScreen(
     state: SearchState,
     onIntent: (SearchIntent) -> Unit,
-    onNavigate: (AppTab) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {

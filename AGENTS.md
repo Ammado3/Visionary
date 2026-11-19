@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Visionary is a Kotlin Multiplatform project targeting Android and iOS. Application entry points live in `androidApp/` and `iosApp/`; shared Compose UI and dependency wiring live in `composeApp/`. Reusable layers are split into `core/` (`common`, `mvi`, `navigation`, `designsystem`, `database`, and `testkit`), `domain/`, `data/`, and `platform/`. Product areas are isolated under `features/` (for example, `features/home` and `features/vault`). Put shared Kotlin in `src/commonMain`; use `src/androidMain` or `src/iosMain` only for platform-specific implementations. Build conventions are maintained in `build-logic/`.
+Visionary is a Kotlin Multiplatform project targeting Android and iOS. Application entry points live in `androidApp/` and `iosApp/`; shared Compose UI and dependency wiring live in `composeApp/`. Reusable layers are split into `core/` (`common`, `mvi`, `navigation`, `designsystem`, `database`, and `testkit`), `domain/`, `data/`, and `platform/`. Product areas are isolated under `features/` (for example, `features/gallery` and `features/vault`). Put shared Kotlin in `src/commonMain`; use `src/androidMain` or `src/iosMain` only for platform-specific implementations. Build conventions are maintained in `build-logic/`.
 
 ## Build, Test, and Development Commands
 

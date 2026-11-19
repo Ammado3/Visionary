@@ -59,8 +59,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import coil3.compose.AsyncImage
-import com.o3.vanguard.visionary.core.designsystem.AppBottomNavigation
-import com.o3.vanguard.visionary.core.designsystem.AppTab
 import com.o3.vanguard.visionary.core.designsystem.AppTypography
 import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
 import com.o3.vanguard.visionary.features.gallery.presentation.albums.AlbumsIntent
@@ -71,9 +69,6 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun AlbumsRoute(
     onOpenAlbum: (String, String) -> Unit,
-    onPhotos: () -> Unit,
-    onSearch: () -> Unit,
-    onVault: () -> Unit,
     onTrashBin: () -> Unit,
     onFavorites: () -> Unit,
     viewModel: AlbumsViewModel = koinViewModel(),
