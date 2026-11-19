@@ -49,17 +49,6 @@ fun testCollectionSummary(
     coverUri = coverUri,
 )
 
-fun testVaultItem(
-    id: String = "vault_item_1",
-    createdAtMs: Long = 1000L,
-    width: Int = 1080,
-    height: Int = 1920,
-): VaultItem = VaultItem(
-    id = id,
-    createdAtMs = createdAtMs,
-    width = width,
-    height = height,
-)
 
 fun testAppSettings(
     onboardingDone: Boolean = false,
