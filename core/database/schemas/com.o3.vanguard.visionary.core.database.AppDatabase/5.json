@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 5,
-    "identityHash": "25a9d14ba06a42601c75bf2e149e0205",
+    "identityHash": "1c1140431c1fd15f34ab8b040820d674",
     "entities": [
       {
         "tableName": "media_item",
@@ -285,11 +285,17 @@
       },
       {
         "tableName": "vault_item",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `createdAtMs` INTEGER NOT NULL, `mime` TEXT NOT NULL, `sizeBytes` INTEGER NOT NULL, `width` INTEGER NOT NULL, `height` INTEGER NOT NULL, `originalTakenAtMs` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `filePath` TEXT NOT NULL, `createdAtMs` INTEGER NOT NULL, `mime` TEXT NOT NULL, `sizeBytes` INTEGER NOT NULL, `width` INTEGER NOT NULL, `height` INTEGER NOT NULL, `originalTakenAtMs` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "filePath",
+            "columnName": "filePath",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -484,7 +490,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '25a9d14ba06a42601c75bf2e149e0205')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1c1140431c1fd15f34ab8b040820d674')"
     ]
   }
 }

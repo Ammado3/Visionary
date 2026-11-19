@@ -36,8 +36,7 @@ import com.o3.vanguard.visionary.features.gallery.navigation.galleryEntries
 import com.o3.vanguard.visionary.features.onboarding.onboardingEntries
 import com.o3.vanguard.visionary.features.search.searchEntries
 import com.o3.vanguard.visionary.features.settings.settingsEntries
-import com.o3.vanguard.visionary.features.vault.biometricsetup.biometricSetupEntries
-import com.o3.vanguard.visionary.features.vault.vault.vaultEntries
+
 import com.o3.vanguard.visionary.platform.getPlatformDecoderFactories
 import com.o3.vanguard.visionary.features.vault.navigation.vaultEntries
 import com.o3.vanguard.visionary.platform.getPlatformFetcherFactory
