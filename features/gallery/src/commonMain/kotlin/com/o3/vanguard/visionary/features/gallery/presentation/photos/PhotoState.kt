@@ -17,6 +17,7 @@ data class PhotoState(
     val items: List<MediaItem> = emptyList(),
     val indexProgress: IndexProgress? = null,
     val showProcessingCard: Boolean = false,
+    val voiceAvailable: Boolean = false,
 ) : UiState
 
 sealed interface PhotoIntent : UiIntent {

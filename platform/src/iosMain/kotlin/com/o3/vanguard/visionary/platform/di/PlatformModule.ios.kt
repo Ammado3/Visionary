@@ -11,6 +11,7 @@ import com.o3.vanguard.visionary.domain.port.SecureScreenPort
 import com.o3.vanguard.visionary.domain.port.ShareGateway
 import com.o3.vanguard.visionary.domain.port.StorageAlbumSourceEngine
 import com.o3.vanguard.visionary.domain.port.VaultCryptoEngine
+import com.o3.vanguard.visionary.domain.port.SpeechRecognizerPort
 import com.o3.vanguard.visionary.platform.AppDirectories
 import com.o3.vanguard.visionary.platform.ios.IosBiometricAuthenticator
 import com.o3.vanguard.visionary.platform.ios.IosImageLabelEngine
@@ -19,6 +20,7 @@ import com.o3.vanguard.visionary.platform.ios.IosMediaSourceEngine
 import com.o3.vanguard.visionary.platform.ios.IosOcrEngine
 import com.o3.vanguard.visionary.platform.ios.IosPermissionGateway
 import com.o3.vanguard.visionary.platform.ios.IosShareGateway
+import com.o3.vanguard.visionary.platform.ios.IosSpeechRecognizerStub
 import com.o3.vanguard.visionary.platform.ios.IosStorageAlbumSourceEngine
 import com.o3.vanguard.visionary.platform.ios.IosStubBackgroundSyncScheduler
 import com.o3.vanguard.visionary.platform.ios.IosStubSecureScreenPort
@@ -41,4 +43,5 @@ actual val platformModule: Module = module {
     singleOf(::IosStubSecureScreenPort) bind SecureScreenPort::class
     singleOf(::IosStubBackgroundSyncScheduler) bind BackgroundSyncScheduler::class
     singleOf(::IosShareGateway) bind ShareGateway::class
+    singleOf(::IosSpeechRecognizerStub) bind SpeechRecognizerPort::class
 }

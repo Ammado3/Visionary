@@ -27,6 +27,7 @@ class AppRouteSerializationTest {
         AppRoute.Favorites,
         AppRoute.TeleportSender(uri = "content://media/1", displayName = "a.jpg"),
         AppRoute.TeleportReceiver,
+        AppRoute.VoiceSearch,
     )
 
     @Test

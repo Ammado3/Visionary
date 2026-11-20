@@ -30,6 +30,7 @@ sealed interface AppRoute : NavKey {
         val sizeBytes: Long = 0L,
     ) : AppRoute
     @Serializable data object TeleportReceiver : AppRoute
+    @Serializable data object VoiceSearch : AppRoute
 }
 
 val AppRouteSerializersModule = SerializersModule {
@@ -50,6 +51,7 @@ val AppRouteSerializersModule = SerializersModule {
         subclass(AppRoute.BiometricSetup::class, AppRoute.BiometricSetup.serializer())
         subclass(AppRoute.TrashBin::class, AppRoute.TrashBin.serializer())
         subclass(AppRoute.Favorites::class, AppRoute.Favorites.serializer())
+        subclass(AppRoute.VoiceSearch::class, AppRoute.VoiceSearch.serializer())
     }
 }
 

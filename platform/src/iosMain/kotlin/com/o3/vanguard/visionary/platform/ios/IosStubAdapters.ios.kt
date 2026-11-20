@@ -6,6 +6,7 @@ import com.o3.vanguard.visionary.domain.model.*
 import com.o3.vanguard.visionary.domain.port.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 
 class IosStubPermissionGateway : PermissionGateway {
     private val access = MutableStateFlow<MediaAccess>(MediaAccess.Full)
@@ -69,5 +70,13 @@ class IosStubBackgroundSyncScheduler : BackgroundSyncScheduler {
 
 class IosStubShareGateway : ShareGateway {
     override fun share(uris: List<String>) {}
+}
+
+class IosSpeechRecognizerStub : SpeechRecognizerPort {
+    override fun availability(): SpeechAvailability = SpeechAvailability.UNAVAILABLE
+
+    override fun listen(): Flow<SpeechEvent> = flow {
+        emit(SpeechEvent.Failed(SpeechFailure.OTHER))
+    }
 }
 

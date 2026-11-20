@@ -16,6 +16,7 @@ fun EntryProviderScope<NavKey>.galleryEntries(navigator: Navigator) {
         PhotoRoute(
             onOpenViewer = { navigator.navigate(AppRoute.Viewer(it.value)) },
             onOpenSettings = { navigator.navigate(AppRoute.Settings) },
+            onOpenVoiceSearch = { navigator.navigate(AppRoute.VoiceSearch) },
             onOpenAirTeleportReceiver = { navigator.navigate(AppRoute.TeleportReceiver) },
         )
     }

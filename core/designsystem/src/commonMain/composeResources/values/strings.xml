@@ -149,4 +149,17 @@
     <string name="gps_enable">Enable Location/GPS</string>
     <string name="gps_permission"> Your device Location/GPS service is disabled. Please turn it ON in settings to continue.</string>
     <string name="gps_on">Turn ON GPS</string>
+    <string name="talk_to_visionary">Talk to Visionary</string>
+    <string name="try_voice_search_prompt">Try "find the receipt for Tehzeeb Bakers"</string>
+    <string name="system_speech_notice">Speech is processed by your phone\'s speech service.</string>
+    <string name="looking_for">Looking for</string>
+    <string name="no_photos_with_query">No photos with "%1$s" in them yet.</string>
+    <string name="try_again">Try again</string>
+    <string name="type_instead">Type instead</string>
+    <string name="no_keywords_prompt">Say a name or word that\'s written in the photo, like a shop name.</string>
+    <string name="mic_permission_required">Microphone permission is required for voice search.</string>
+    <string name="grant_permission">Grant Permission</string>
+    <string name="voice_offline_error">Voice isn\'t available offline on this phone. Type instead.</string>
+    <string name="start_voice_search">Start voice search</string>
+    <string name="stop_listening">Stop listening</string>
 </resources>

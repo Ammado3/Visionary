@@ -1,6 +1,8 @@
 package com.o3.vanguard.visionary.features.search
 
+import com.o3.vanguard.visionary.features.search.voice.VoiceSearchViewModel
 import org.koin.core.module.dsl.viewModel
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val searchModule = module {
@@ -14,4 +16,5 @@ val searchModule = module {
             searchRepository = get(),
         )
     }
+    viewModelOf(::VoiceSearchViewModel)
 }
