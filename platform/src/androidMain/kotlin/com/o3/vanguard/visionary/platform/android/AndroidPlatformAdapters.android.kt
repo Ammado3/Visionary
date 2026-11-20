@@ -537,9 +537,11 @@ class AndroidBiometricAuthenticator(private val context: Context) : BiometricAut
         )
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Unlock Vault")
-            .setSubtitle("Confirm your biometric credential to unlock Private Vault")
-            .setNegativeButtonText("Cancel")
+            .setTitle("Unlock Private Vault")
+            .setSubtitle("Confirm your biometric or device credential (PIN/Pattern/Password) to unlock")
+            .setAllowedAuthenticators(
+                BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
+            )
             .build()
 
         activity.runOnUiThread {

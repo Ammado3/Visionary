@@ -38,9 +38,9 @@ import com.o3.vanguard.visionary.features.gallery.navigation.galleryEntries
 import com.o3.vanguard.visionary.features.onboarding.onboardingEntries
 import com.o3.vanguard.visionary.features.search.searchEntries
 import com.o3.vanguard.visionary.features.settings.settingsEntries
-import com.o3.vanguard.visionary.features.vault.biometricsetup.biometricSetupEntries
-import com.o3.vanguard.visionary.features.vault.vault.vaultEntries
+
 import com.o3.vanguard.visionary.platform.getPlatformDecoderFactories
+import com.o3.vanguard.visionary.features.vault.navigation.vaultEntries
 import com.o3.vanguard.visionary.platform.getPlatformFetcherFactory
 import com.o3.vanguard.visionary.screens.SPLASH_DURATION_MS
 import com.o3.vanguard.visionary.screens.SplashScreen
@@ -147,7 +147,6 @@ private fun AppNavHost(start: AppRoute) {
                     vaultEntries(navigator)
                     settingsEntries(navigator)
                     teleportEntries(navigator)
-                    biometricSetupEntries(navigator)
                 },
             )
         }
