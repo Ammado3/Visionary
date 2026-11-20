@@ -58,5 +58,6 @@ interface SecureScreenPort {
 }
 
 interface BackgroundSyncScheduler {
-    fun scheduleIncrementalIndexing(chargingOnly: Boolean)
+    /** Starts an indexing pass now in the platform's right place (Android: foreground service). */
+    fun requestIndexing()
 }
