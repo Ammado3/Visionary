@@ -1,17 +1,16 @@
 package com.o3.vanguard.visionary.features.search
 
 import androidx.lifecycle.viewModelScope
-import com.o3.vanguard.visionary.core.common.AppResult
 import com.o3.vanguard.visionary.core.mvi.BaseMviViewModel
 import com.o3.vanguard.visionary.domain.model.CollectionKind
 import com.o3.vanguard.visionary.domain.model.DeleteConsentResult
 import com.o3.vanguard.visionary.domain.model.SearchFilter
 import com.o3.vanguard.visionary.domain.model.SearchMode
+import com.o3.vanguard.visionary.domain.port.BackgroundSyncScheduler
 import com.o3.vanguard.visionary.domain.repository.SearchRepository
 import com.o3.vanguard.visionary.domain.usecase.DeleteMediaUseCase
 import com.o3.vanguard.visionary.domain.usecase.ObserveIndexProgressUseCase
 import com.o3.vanguard.visionary.domain.usecase.ObserveMediaUseCase
-import com.o3.vanguard.visionary.domain.usecase.RebuildIndexUseCase
 import com.o3.vanguard.visionary.domain.usecase.SearchMediaUseCase
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
@@ -25,7 +24,7 @@ class SearchViewModel(
     private val searchMediaUseCase: SearchMediaUseCase,
     observeMediaUseCase: ObserveMediaUseCase,
     observeIndexProgressUseCase: ObserveIndexProgressUseCase,
-    private val rebuildIndexUseCase: RebuildIndexUseCase,
+    private val indexScheduler: BackgroundSyncScheduler,
     private val searchRepository: SearchRepository,
     private val deleteMediaUseCase: DeleteMediaUseCase,
 ) : BaseMviViewModel<SearchState, SearchIntent, SearchEvent>(
@@ -155,13 +154,9 @@ class SearchViewModel(
                 }
             }
             SearchIntent.OnReindexClicked -> {
-                viewModelScope.launch {
-                    updateState { copy(isIndexing = true, errorMessage = null) }
-                    val result = rebuildIndexUseCase()
-                    if (result is AppResult.Err) {
-                        updateState { copy(isIndexing = false, errorMessage = "Indexing failed") }
-                    }
-                }
+                // The pass runs in the foreground service; observeProgress() updates isIndexing.
+                updateState { copy(isIndexing = true, errorMessage = null) }
+                indexScheduler.requestIndexing()
             }
             SearchIntent.OnClearError -> updateState { copy(errorMessage = null) }
             SearchIntent.OnBackClicked -> sendEvent(SearchEvent.NavigateBack)

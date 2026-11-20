@@ -8,7 +8,6 @@ import org.koin.dsl.module
 
 val domainModule = module {
     factoryOf(::ObserveIndexProgressUseCase)
-    factoryOf(::RebuildIndexUseCase)
     factoryOf(::ObserveMediaUseCase)
     factoryOf(::ObserveAlbumMediaUseCase)
     factoryOf(::ObserveFavoriteMediaUseCase)

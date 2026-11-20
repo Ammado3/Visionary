@@ -12,7 +12,7 @@ val searchModule = module {
             searchMediaUseCase = get(),
             observeMediaUseCase = get(),
             observeIndexProgressUseCase = get(),
-            rebuildIndexUseCase = get(),
+            indexScheduler = get(),
             searchRepository = get(),
             deleteMediaUseCase = get(),
         )

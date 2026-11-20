@@ -3,6 +3,7 @@ package com.o3.vanguard.visionary.features.search
 import app.cash.turbine.test
 import com.o3.vanguard.visionary.core.testkit.dispatcher.runViewModelTest
 import com.o3.vanguard.visionary.core.testkit.factory.testMediaItem
+import com.o3.vanguard.visionary.core.testkit.fake.FakeBackgroundSyncScheduler
 import com.o3.vanguard.visionary.core.testkit.fake.FakeIndexRepository
 import com.o3.vanguard.visionary.core.testkit.fake.FakeMediaDeleteGateway
 import com.o3.vanguard.visionary.core.testkit.fake.FakeMediaRepository
@@ -16,7 +17,6 @@ import com.o3.vanguard.visionary.domain.model.SearchHit
 import com.o3.vanguard.visionary.domain.usecase.DeleteMediaUseCase
 import com.o3.vanguard.visionary.domain.usecase.ObserveIndexProgressUseCase
 import com.o3.vanguard.visionary.domain.usecase.ObserveMediaUseCase
-import com.o3.vanguard.visionary.domain.usecase.RebuildIndexUseCase
 import com.o3.vanguard.visionary.domain.usecase.SearchMediaUseCase
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -31,11 +31,11 @@ class SearchViewModelTest {
         trashRepository: FakeTrashRepository,
         deleteGateway: FakeMediaDeleteGateway,
         initialQuery: String = "cat",
+        indexScheduler: FakeBackgroundSyncScheduler = FakeBackgroundSyncScheduler(),
     ): SearchViewModel {
         val searchMediaUseCase = SearchMediaUseCase(searchRepository)
         val observeMediaUseCase = ObserveMediaUseCase(mediaRepository)
         val observeIndexProgressUseCase = ObserveIndexProgressUseCase(indexRepository)
-        val rebuildIndexUseCase = RebuildIndexUseCase(indexRepository)
         val deleteMediaUseCase = DeleteMediaUseCase(deleteGateway, mediaRepository, trashRepository)
 
         return SearchViewModel(
@@ -43,7 +43,7 @@ class SearchViewModelTest {
             searchMediaUseCase = searchMediaUseCase,
             observeMediaUseCase = observeMediaUseCase,
             observeIndexProgressUseCase = observeIndexProgressUseCase,
-            rebuildIndexUseCase = rebuildIndexUseCase,
+            indexScheduler = indexScheduler,
             searchRepository = searchRepository,
             deleteMediaUseCase = deleteMediaUseCase,
         )
@@ -165,5 +165,28 @@ class SearchViewModelTest {
 
         assertEquals(1, events.size)
         assertEquals(SearchEvent.ShowToast("Couldn't delete image"), events[0])
+    }
+
+    @Test
+    fun onReindexClicked_requestsIndexingThroughTheSchedulerAndShowsIndexing() = runViewModelTest {
+        val indexRepository = FakeIndexRepository()
+        val indexScheduler = FakeBackgroundSyncScheduler()
+        val viewModel = createViewModel(
+            searchRepository = FakeSearchRepository(),
+            mediaRepository = FakeMediaRepository(),
+            indexRepository = indexRepository,
+            trashRepository = FakeTrashRepository(),
+            deleteGateway = FakeMediaDeleteGateway(),
+            initialQuery = "",
+            indexScheduler = indexScheduler,
+        )
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onIntent(SearchIntent.OnReindexClicked)
+
+        assertEquals(1, indexScheduler.requestIndexingCalls)
+        assertEquals(0, indexRepository.rebuildCalls)
+        assertTrue(viewModel.state.value.isIndexing)
+        assertEquals(null, viewModel.state.value.errorMessage)
     }
 }

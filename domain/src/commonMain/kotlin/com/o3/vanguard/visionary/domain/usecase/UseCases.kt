@@ -14,10 +14,6 @@ class ObserveIndexProgressUseCase(private val indexRepository: IndexRepository) 
     operator fun invoke(): Flow<IndexProgress> = indexRepository.observeProgress()
 }
 
-class RebuildIndexUseCase(private val indexRepository: IndexRepository) {
-    suspend operator fun invoke(): AppResult<Unit> = indexRepository.rebuild()
-}
-
 class ObserveMediaUseCase(private val mediaRepository: MediaRepository) {
     operator fun invoke(kind: CollectionKind): Flow<List<MediaItem>> = mediaRepository.observeMedia(kind)
 }
