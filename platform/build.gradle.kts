@@ -29,6 +29,7 @@ kotlin {
             implementation(compose.material3)
             implementation(libs.androidx.activity.compose)
             implementation(libs.lifecycle.runtime.compose)
+            implementation(libs.androidx.lifecycle.process)
             implementation(libs.mlkit.text.recognition)
             implementation(libs.mlkit.image.labeling)
             implementation(libs.kotlinx.coroutines.play.services)
