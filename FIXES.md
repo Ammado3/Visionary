@@ -190,7 +190,7 @@ One commit per task, as asked. `fb1d7e4` and `6b0d21f` don't build on their own 
 - **No new fake.** `FakeBackgroundSyncScheduler` already existed, so it was updated instead of added. Nothing uses it in tests yet; onboarding has no testable view model.
 
 **Checks:**
-- `./gradlew testAndroidHostTest`: PASS, 115 tests, 0 failures. `IndexRunGuardTest` has 10, 4 of them new:
+- `./gradlew testAndroidHostTest`: PASS, 112 tests, 0 failures. (Corrected in follow-up 1b: the first count of 115 included a stale 3-test report from the deleted `features/search` module.) `IndexRunGuardTest` has 10, 4 of them new:
   - a call during a pass causes exactly one extra pass;
   - three calls still cause one;
   - no extra pass after a cancellation, or after an error;
@@ -204,6 +204,54 @@ One commit per task, as asked. `fb1d7e4` and `6b0d21f` don't build on their own 
 - On Android, `MainActivity` requests indexing on create, and `App.kt` does too once the start route is `Photos`. While the first pass runs, the service ignores the second start. If the first pass finishes before the splash ends (a small, already-indexed library), a second, quick pass runs.
 - `MainActivity` still has its own media-permission request on first launch, separate from onboarding's `AppPermissionGate` (Step 8).
 - The notification texts are still hardcoded (Step 10).
+
+#### Report — follow-up 1b (background-safe scheduler, scheduler-only callers)
+
+Implemented by Claude, from the human's follow-up spec.
+
+**Commits:**
+- `a4a13ac` Fix 1b.1: Defer indexing requests while the app is in the background
+- `a796a03` Fix 1b.2: Remove MainActivity's indexing trigger
+- `2a66f71` Fix 1b.3: Resume indexing from Settings through the scheduler
+- `7fb402f` Fix 1b.4: Rebuild index from Search through the scheduler
+
+**What changed:**
+- **`AndroidIndexScheduler`:**
+  - In the foreground (`ProcessLifecycleOwner` at least `STARTED`), it starts the service as before.
+  - In the background, it keeps the request in an `AtomicBoolean`. One `DefaultLifecycleObserver`, registered once on the main thread, starts the service on the next `onStart` if a request is pending.
+  - `startForegroundService` is wrapped in `catch (IllegalStateException)` (which covers `ForegroundServiceStartNotAllowedException`); a failure keeps the request pending.
+  - Calls from other threads are posted to the main thread.
+  - The only log line is "Indexing start deferred until the app is in the foreground".
+- **Dependency:** `androidx.lifecycle:lifecycle-process` was added to `:platform` `androidMain` through the catalog (`androidxLifecycle = "2.10.0"`). It resolves to 2.10.0, the same as the rest of the `androidx.lifecycle` group.
+- **`MainActivity`:**
+  - `startIndexing()`, its two calls and the scheduler injection are removed;
+  - `onRequestPermissionsResult` is removed too, since it existed only to start indexing;
+  - the media permission request itself is unchanged.
+- **Settings:**
+  - `IndexRepository.resume()` only clears the pause (`isPaused = false`, and `PAUSED_BATTERY` → `IDLE`) and returns `Ok`. It's documented on the interface.
+  - `SettingsViewModel` gets `BackgroundSyncScheduler`. Visual analysis on → `resume()`, then `requestIndexing()`. Off → `pause()`, as before.
+  - `retryFailed()` has the TODO comment.
+- **Search:**
+  - `SearchViewModel` takes `BackgroundSyncScheduler` instead of `RebuildIndexUseCase`.
+  - `OnReindexClicked` sets `isIndexing = true`, clears `errorMessage`, and calls `requestIndexing()` without awaiting.
+  - `RebuildIndexUseCase` had no other users, so it and its `domainModule` registration are deleted.
+- **`FakeIndexRepository`:** has `pauseCalls` and `resumeCalls`. Its `resume()` now matches the real one (it clears a pause instead of setting `RUNNING`). No existing test depended on the old behaviour.
+
+**Deviations:** none from the follow-up spec. `SettingsModule` needed no change (`viewModelOf` picks up the new parameter).
+
+**Checks:**
+- `./gradlew testAndroidHostTest`: PASS, 115 tests, 0 failures, counted without the stale `features/search` report. New tests:
+  - `SettingsViewModelTest` (2): on → 1 resume and 1 request; off → 1 pause and 0 requests;
+  - `SearchViewModelTest` (1, now 4 in total): reindex → 1 request, 0 direct rebuilds, `isIndexing == true`.
+- `./gradlew :androidApp:assembleDebug`: PASS.
+- iOS: not run (the known vault-adapter errors).
+
+**Device checks:** not run. No device is connected (`adb devices` lists none). The only phone available is the Pixel 2 (Android 10), which doesn't have the Android 12 restriction, so check 1 needs an Android 12+ device to really exercise the crash path. Check 2 needs an uninstall, which wipes the app's data on the phone.
+
+**Noticed but not touched:**
+- `SearchViewModel` sets `isIndexing = true` and relies on `observeProgress()` to set it back. If a pass ends without changing the state (for example `queryDelta` fails before the state becomes `RUNNING`), the progress flow doesn't emit, and `isIndexing` stays `true` until the next progress change.
+- First launch with access already granted: `MainActivity` no longer starts indexing, so the first pass starts when `App.kt` reaches `Photos` after the 3-second splash, or when onboarding's gate reports access. Step 2 shortens the splash.
+- The stale `features/search/build/` folder (the module was moved to `features/aisearch`) still holds old test reports; deleting it would stop them from being counted.
 
 ---
 
