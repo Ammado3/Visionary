@@ -3,21 +3,12 @@ package com.o3.vanguard.visionary.domain.usecase
 import com.o3.vanguard.visionary.core.common.AppResult
 import com.o3.vanguard.visionary.domain.model.*
 import com.o3.vanguard.visionary.domain.port.MediaDeleteGateway
-import com.o3.vanguard.visionary.domain.port.ScannerPort
 import com.o3.vanguard.visionary.domain.port.StorageAlbumSourceEngine
 import com.o3.vanguard.visionary.domain.repository.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
-
-class ObserveCollectionsUseCase(private val mediaRepository: MediaRepository) {
-    operator fun invoke(): Flow<List<CollectionSummary>> = mediaRepository.observeCollections()
-}
-
-class ObserveRecentFindsUseCase(private val mediaRepository: MediaRepository) {
-    operator fun invoke(limit: Int): Flow<List<MediaItem>> = mediaRepository.observeRecentFinds(limit)
-}
 
 class ObserveIndexProgressUseCase(private val indexRepository: IndexRepository) {
     operator fun invoke(): Flow<IndexProgress> = indexRepository.observeProgress()
@@ -29,6 +20,18 @@ class RebuildIndexUseCase(private val indexRepository: IndexRepository) {
 
 class ObserveMediaUseCase(private val mediaRepository: MediaRepository) {
     operator fun invoke(kind: CollectionKind): Flow<List<MediaItem>> = mediaRepository.observeMedia(kind)
+}
+
+class ObserveAlbumMediaUseCase(private val mediaRepository: MediaRepository) {
+    operator fun invoke(albumId: String): Flow<List<MediaItem>> = mediaRepository.observeMediaByAlbum(albumId)
+}
+
+class ObserveFavoriteMediaUseCase(private val mediaRepository: MediaRepository) {
+    operator fun invoke(): Flow<List<MediaItem>> = mediaRepository.observeFavorites()
+}
+
+class SetFavoriteUseCase(private val mediaRepository: MediaRepository) {
+    suspend operator fun invoke(id: MediaId, isFavorite: Boolean) = mediaRepository.setFavorite(id, isFavorite)
 }
 
 class ObserveItemUseCase(private val mediaRepository: MediaRepository) {
@@ -101,10 +104,6 @@ class DeleteMediaUseCase(
         }
         return result
     }
-}
-
-class StartScanUseCase(private val scannerPort: ScannerPort) {
-    suspend operator fun invoke(): AppResult<ScannedDocument> = scannerPort.scan()
 }
 
 class SmartMediaClassifier {

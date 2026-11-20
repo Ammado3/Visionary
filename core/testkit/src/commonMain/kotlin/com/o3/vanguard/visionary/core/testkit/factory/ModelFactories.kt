@@ -7,7 +7,6 @@ import com.o3.vanguard.visionary.domain.model.MediaCategory
 import com.o3.vanguard.visionary.domain.model.MediaId
 import com.o3.vanguard.visionary.domain.model.MediaItem
 import com.o3.vanguard.visionary.domain.model.MediaOrigin
-import com.o3.vanguard.visionary.domain.model.ScannedDocument
 import com.o3.vanguard.visionary.domain.model.VaultItem
 
 fun testMediaItem(
@@ -52,30 +51,29 @@ fun testCollectionSummary(
 
 fun testVaultItem(
     id: String = "vault_item_1",
+    filePath: String = "/vault/item_1",
     createdAtMs: Long = 1000L,
     width: Int = 1080,
     height: Int = 1920,
+    mime: String = "image/jpeg",
 ): VaultItem = VaultItem(
     id = id,
+    filePath = filePath,
     createdAtMs = createdAtMs,
     width = width,
     height = height,
+    mime = mime,
 )
 
 fun testAppSettings(
     onboardingDone: Boolean = false,
     indexOnlyWhileCharging: Boolean = false,
     vaultLockTimeoutSeconds: Int = 30,
+    visualAnalysisEnabled: Boolean = true,
 ): AppSettings = AppSettings(
     onboardingDone = onboardingDone,
     indexOnlyWhileCharging = indexOnlyWhileCharging,
     vaultLockTimeoutSeconds = vaultLockTimeoutSeconds,
+    visualAnalysisEnabled = visualAnalysisEnabled,
 )
 
-fun testScannedDocument(
-    pageUris: List<String> = listOf("content://scan/1"),
-    pdfUri: String? = "content://scan/pdf/1",
-): ScannedDocument = ScannedDocument(
-    pageUris = pageUris,
-    pdfUri = pdfUri,
-)

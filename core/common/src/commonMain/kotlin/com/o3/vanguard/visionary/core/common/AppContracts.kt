@@ -44,7 +44,6 @@ class DefaultAppDispatchers : AppDispatchers {
 data class AppConfig(
     val versionName: String,
     val isDebug: Boolean,
-    val useFakeData: Boolean,
 )
 
 val coreCommonModule = module {

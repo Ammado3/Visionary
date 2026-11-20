@@ -6,6 +6,7 @@ import com.o3.vanguard.visionary.domain.model.*
 import com.o3.vanguard.visionary.domain.port.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 
 class IosStubPermissionGateway : PermissionGateway {
     private val access = MutableStateFlow<MediaAccess>(MediaAccess.Full)
@@ -37,12 +38,6 @@ class IosStubImageLabelEngine : ImageLabelEngine {
         AppResult.Err(AppError.Unsupported("OS_NOT_SUPPORTED_YET"))
 }
 
-class IosStubScannerPort : ScannerPort {
-    override suspend fun isAvailable(): Boolean = false
-    override suspend fun scan(): AppResult<ScannedDocument> =
-        AppResult.Err(AppError.Unsupported("OS_NOT_SUPPORTED_YET"))
-}
-
 class IosStubBiometricAuthenticator : BiometricAuthenticator {
     override suspend fun authenticate(): AppResult<Unit> =
         AppResult.Err(AppError.Unsupported("OS_NOT_SUPPORTED_YET"))
@@ -60,6 +55,9 @@ class IosStubVaultCryptoEngine : VaultCryptoEngine {
         AppResult.Err(AppError.Unsupported("OS_NOT_SUPPORTED_YET"))
     override suspend fun copyToTrash(sourceUri: String, itemId: String): AppResult<String> =
         AppResult.Err(AppError.Unsupported("OS_NOT_SUPPORTED_YET"))
+    override suspend fun restoreToStorage(itemId: String): AppResult<String> =
+        AppResult.Err(AppError.Unsupported("OS_NOT_SUPPORTED_YET"))
+    override fun getBlobPath(itemId: String): String = ""
 }
 
 class IosStubSecureScreenPort : SecureScreenPort {
@@ -72,5 +70,13 @@ class IosStubBackgroundSyncScheduler : BackgroundSyncScheduler {
 
 class IosStubShareGateway : ShareGateway {
     override fun share(uris: List<String>) {}
+}
+
+class IosSpeechRecognizerStub : SpeechRecognizerPort {
+    override fun availability(): SpeechAvailability = SpeechAvailability.UNAVAILABLE
+
+    override fun listen(): Flow<SpeechEvent> = flow {
+        emit(SpeechEvent.Failed(SpeechFailure.OTHER))
+    }
 }
 

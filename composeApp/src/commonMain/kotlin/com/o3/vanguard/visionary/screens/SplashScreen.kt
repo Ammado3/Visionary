@@ -171,16 +171,7 @@ private val SplashIconVector: ImageVector by lazy {
 }
 
 @Composable
-fun SplashScreen(
-    onSplashFinished: () -> Unit
-) {
-
-    // Automatically finish splash after 3 seconds
-    LaunchedEffect(Unit) {
-        delay(SPLASH_DURATION_MS)
-        onSplashFinished()
-    }
-
+fun SplashScreen() {
     Column(
         modifier = Modifier.fillMaxSize().background(VisionaryColors.colorF4FDF7)
             .padding(bottom = 30.dp)

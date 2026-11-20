@@ -25,16 +25,13 @@ kotlin {
             implementation(project(":core:navigation"))
             implementation(project(":core:designsystem"))
             implementation(project(":core:database"))
-            implementation(project(":core:testing"))
             implementation(project(":domain"))
             implementation(project(":data"))
             implementation(project(":platform"))
 
             implementation(project(":features:onboarding"))
-            implementation(project(":features:home"))
             implementation(project(":features:gallery"))
-            implementation(project(":features:search"))
-            implementation(project(":features:scanner"))
+            implementation(project(":features:aisearch"))
             implementation(project(":features:vault"))
             implementation(project(":features:settings"))
             implementation(project(":features:teleport"))
@@ -53,10 +50,7 @@ kotlin {
         }
         androidMain.dependencies {
             implementation(libs.androidx.material.icons.extended)
-        }
-        commonTest.dependencies {
-            implementation(kotlin("test"))
-            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.androidx.activity.compose)
         }
     }
 }

@@ -12,7 +12,6 @@ class VisionaryApp : Application() {
         val config = AppConfig(
             versionName = "1.0",
             isDebug = true,
-            useFakeData = false
         )
         startKoin {
             androidContext(this@VisionaryApp)

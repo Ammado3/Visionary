@@ -6,13 +6,6 @@ import androidx.room3.Upsert
 import com.o3.vanguard.visionary.core.database.entity.*
 import kotlinx.coroutines.flow.Flow
 
-data class CategoryCount(
-    val category: String,
-    val count: Int,
-    val coverRef: String?,
-    val newestSortKey: Long,
-)
-
 @Dao
 interface MediaDao {
     @Query("SELECT * FROM media_item ORDER BY sortKey DESC")
@@ -21,8 +14,11 @@ interface MediaDao {
     @Query("SELECT * FROM media_item WHERE category IN (:categories) ORDER BY sortKey DESC")
     fun observeByCategories(categories: List<String>): Flow<List<MediaEntity>>
 
-    @Query("SELECT category AS category, COUNT(*) AS count, ref AS coverRef, MAX(sortKey) AS newestSortKey FROM media_item GROUP BY category")
-    fun observeCategoryCounts(): Flow<List<CategoryCount>>
+    @Query("SELECT * FROM media_item WHERE albumId = :albumId ORDER BY sortKey DESC")
+    fun observeByAlbum(albumId: String): Flow<List<MediaEntity>>
+
+    @Query("SELECT * FROM media_item WHERE isFavorite = 1 ORDER BY sortKey DESC")
+    fun observeFavorites(): Flow<List<MediaEntity>>
 
     @Query("SELECT * FROM media_item WHERE id = :id")
     fun observeById(id: Long): Flow<MediaEntity?>
@@ -32,6 +28,9 @@ interface MediaDao {
 
     @Query("SELECT * FROM media_text WHERE mediaId = :mediaId")
     suspend fun getText(mediaId: Long): MediaTextEntity?
+
+    @Query("SELECT * FROM media_text WHERE mediaId IN (:mediaIds)")
+    suspend fun getTexts(mediaIds: List<Long>): List<MediaTextEntity>
 
     @Query("SELECT * FROM media_text WHERE mediaId = :mediaId")
     fun observeText(mediaId: Long): Flow<MediaTextEntity?>
@@ -84,6 +83,9 @@ interface MediaDao {
     @Upsert suspend fun upsert(items: List<MediaEntity>)
     @Upsert suspend fun upsertText(items: List<MediaTextEntity>)
     @Query("DELETE FROM media_item WHERE id IN (:ids)") suspend fun delete(ids: List<Long>)
+
+    @Query("UPDATE media_item SET isFavorite = :isFavorite WHERE id = :id")
+    suspend fun updateFavorite(id: Long, isFavorite: Boolean)
 }
 
 @Dao
@@ -106,6 +108,9 @@ interface IndexJobDao {
 interface VaultDao {
     @Query("SELECT * FROM vault_item ORDER BY createdAtMs DESC")
     fun observeVaultItems(): Flow<List<VaultItemEntity>>
+
+    @Query("SELECT * FROM vault_item WHERE id = :id")
+    suspend fun getVaultItem(id: String): VaultItemEntity?
 
     @Upsert suspend fun upsertVaultItem(item: VaultItemEntity)
     @Query("DELETE FROM vault_item WHERE id = :id") suspend fun deleteVaultItem(id: String)
@@ -133,4 +138,16 @@ interface ExclusionDao {
 
     @Query("DELETE FROM index_exclusion WHERE ref = :ref")
     suspend fun deleteExclusion(ref: String)
+}
+
+@Dao
+interface SettingsDao {
+    @Query("SELECT * FROM app_settings WHERE id = 1")
+    fun observe(): Flow<AppSettingsEntity?>
+
+    @Query("SELECT * FROM app_settings WHERE id = 1")
+    suspend fun get(): AppSettingsEntity?
+
+    @Upsert
+    suspend fun upsert(settings: AppSettingsEntity)
 }

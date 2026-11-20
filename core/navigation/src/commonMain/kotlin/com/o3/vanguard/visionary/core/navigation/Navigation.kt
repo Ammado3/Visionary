@@ -1,5 +1,6 @@
 package com.o3.vanguard.visionary.core.navigation
 
+import com.o3.vanguard.visionary.core.designsystem.AppTab
 import androidx.navigation3.runtime.NavKey
 import androidx.savedstate.serialization.SavedStateConfiguration
 import kotlinx.serialization.Serializable
@@ -9,12 +10,11 @@ import kotlinx.serialization.modules.polymorphic
 @Serializable
 sealed interface AppRoute : NavKey {
     @Serializable data class Onboarding(val skipIntro: Boolean = false) : AppRoute
-    @Serializable data object Home : AppRoute
+    @Serializable data object Photos : AppRoute
     @Serializable data object Albums : AppRoute
-    @Serializable data class Gallery(val collectionId: String) : AppRoute
+    @Serializable data class Gallery(val albumId: String, val albumName: String = "Album") : AppRoute
     @Serializable data class Viewer(val mediaId: Long, val highlight: String? = null) : AppRoute
     @Serializable data class Search(val initialQuery: String = "") : AppRoute
-    @Serializable data object Scanner : AppRoute
     @Serializable data object VaultLock : AppRoute
     @Serializable data object VaultGrid : AppRoute
     @Serializable data class VaultViewer(val itemId: String) : AppRoute
@@ -22,6 +22,7 @@ sealed interface AppRoute : NavKey {
     @Serializable data object IndexHealth : AppRoute
     @Serializable data object BiometricSetup : AppRoute
     @Serializable data object TrashBin : AppRoute
+    @Serializable data object Favorites : AppRoute
     @Serializable data class TeleportSender(
         val uri: String,
         val displayName: String,
@@ -29,29 +30,33 @@ sealed interface AppRoute : NavKey {
         val sizeBytes: Long = 0L,
     ) : AppRoute
     @Serializable data object TeleportReceiver : AppRoute
+    @Serializable data object VoiceSearch : AppRoute
+}
+
+val AppRouteSerializersModule = SerializersModule {
+    polymorphic(NavKey::class) {
+        subclass(AppRoute.Onboarding::class, AppRoute.Onboarding.serializer())
+        subclass(AppRoute.Photos::class, AppRoute.Photos.serializer())
+        subclass(AppRoute.Albums::class, AppRoute.Albums.serializer())
+        subclass(AppRoute.Gallery::class, AppRoute.Gallery.serializer())
+        subclass(AppRoute.Viewer::class, AppRoute.Viewer.serializer())
+        subclass(AppRoute.Search::class, AppRoute.Search.serializer())
+        subclass(AppRoute.VaultLock::class, AppRoute.VaultLock.serializer())
+        subclass(AppRoute.VaultGrid::class, AppRoute.VaultGrid.serializer())
+        subclass(AppRoute.VaultViewer::class, AppRoute.VaultViewer.serializer())
+        subclass(AppRoute.Settings::class, AppRoute.Settings.serializer())
+        subclass(AppRoute.IndexHealth::class, AppRoute.IndexHealth.serializer())
+        subclass(AppRoute.TeleportSender::class, AppRoute.TeleportSender.serializer())
+        subclass(AppRoute.TeleportReceiver::class, AppRoute.TeleportReceiver.serializer())
+        subclass(AppRoute.BiometricSetup::class, AppRoute.BiometricSetup.serializer())
+        subclass(AppRoute.TrashBin::class, AppRoute.TrashBin.serializer())
+        subclass(AppRoute.Favorites::class, AppRoute.Favorites.serializer())
+        subclass(AppRoute.VoiceSearch::class, AppRoute.VoiceSearch.serializer())
+    }
 }
 
 val AppNavSavedStateConfig = SavedStateConfiguration {
-    serializersModule = SerializersModule {
-        polymorphic(NavKey::class) {
-            subclass(AppRoute.Onboarding::class, AppRoute.Onboarding.serializer())
-            subclass(AppRoute.Home::class, AppRoute.Home.serializer())
-            subclass(AppRoute.Albums::class, AppRoute.Albums.serializer())
-            subclass(AppRoute.Gallery::class, AppRoute.Gallery.serializer())
-            subclass(AppRoute.Viewer::class, AppRoute.Viewer.serializer())
-            subclass(AppRoute.Search::class, AppRoute.Search.serializer())
-            subclass(AppRoute.Scanner::class, AppRoute.Scanner.serializer())
-            subclass(AppRoute.VaultLock::class, AppRoute.VaultLock.serializer())
-            subclass(AppRoute.VaultGrid::class, AppRoute.VaultGrid.serializer())
-            subclass(AppRoute.VaultViewer::class, AppRoute.VaultViewer.serializer())
-            subclass(AppRoute.Settings::class, AppRoute.Settings.serializer())
-            subclass(AppRoute.IndexHealth::class, AppRoute.IndexHealth.serializer())
-            subclass(AppRoute.TeleportSender::class, AppRoute.TeleportSender.serializer())
-            subclass(AppRoute.TeleportReceiver::class, AppRoute.TeleportReceiver.serializer())
-            subclass(AppRoute.BiometricSetup::class, AppRoute.BiometricSetup.serializer())
-            subclass(AppRoute.TrashBin::class, AppRoute.TrashBin.serializer())
-        }
-    }
+    serializersModule = AppRouteSerializersModule
 }
 
 class Navigator(private val backStack: MutableList<NavKey>) {
@@ -62,6 +67,20 @@ class Navigator(private val backStack: MutableList<NavKey>) {
         if (backStack.size <= 1) return false
         backStack.removeAt(backStack.lastIndex)
         return true
+    }
+
+    /**
+     * Tab roots are not a nested history. Back from a secondary tab first
+     * returns to Photos; only a second back on Photos can leave the app.
+     */
+    fun handleBack(): Boolean {
+        val tab = (backStack.lastOrNull() as? AppRoute)?.tabOrNull()
+        return if (tab != null && tab != AppTab.PHOTOS) {
+            navigateToTab(AppTab.PHOTOS)
+            true
+        } else {
+            back()
+        }
     }
     fun replaceTop(route: AppRoute) {
         if (backStack.isNotEmpty()) backStack.removeAt(backStack.lastIndex)

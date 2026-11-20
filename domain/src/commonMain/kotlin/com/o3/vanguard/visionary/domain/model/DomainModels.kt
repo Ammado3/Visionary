@@ -57,6 +57,8 @@ data class MediaItem(
     val labels: String = "",
     val embedding: ByteArray? = null,
     val confidence: Float = 0f,
+    val albumId: String? = null,
+    val isFavorite: Boolean = false,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -78,6 +80,8 @@ data class MediaItem(
             if (!embedding.contentEquals(other.embedding)) return false
         } else if (other.embedding != null) return false
         if (confidence != other.confidence) return false
+        if (albumId != other.albumId) return false
+        if (isFavorite != other.isFavorite) return false
         return true
     }
 
@@ -95,6 +99,8 @@ data class MediaItem(
         result = 31 * result + labels.hashCode()
         result = 31 * result + (embedding?.contentHashCode() ?: 0)
         result = 31 * result + confidence.hashCode()
+        result = 31 * result + (albumId?.hashCode() ?: 0)
+        result = 31 * result + isFavorite.hashCode()
         return result
     }
 }
@@ -161,20 +167,19 @@ sealed interface DeleteConsentResult {
 
 data class VaultItem(
     val id: String,
+    val filePath: String,
     val createdAtMs: Long,
     val width: Int,
     val height: Int,
-)
-
-data class ScannedDocument(
-    val pageUris: List<String>,
-    val pdfUri: String?,
+    val mime: String = "image/jpeg",
 )
 
 data class AppSettings(
     val onboardingDone: Boolean = false,
     val indexOnlyWhileCharging: Boolean = false,
     val vaultLockTimeoutSeconds: Int = 30,
+    val visualAnalysisEnabled: Boolean = true,
+    val indexingCardShown: Boolean = false,
 )
 
 data class TrashItem(

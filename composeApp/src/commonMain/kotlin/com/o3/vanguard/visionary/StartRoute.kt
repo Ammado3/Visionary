@@ -7,6 +7,6 @@ import com.o3.vanguard.visionary.domain.usecase.StartDestination
 internal fun chooseStartRoute(destination: StartDestination, access: MediaAccess): AppRoute =
     when {
         destination == StartDestination.ONBOARDING -> AppRoute.Onboarding()
-        access is MediaAccess.Full || access is MediaAccess.Partial -> AppRoute.Home
+        access is MediaAccess.Full || access is MediaAccess.Partial -> AppRoute.Photos
         else -> AppRoute.Onboarding(skipIntro = true)
     }

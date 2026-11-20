@@ -3,14 +3,25 @@ package com.o3.vanguard.visionary.features.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -25,15 +36,34 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.Res
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_about
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_ai_search
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_app_version
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_appearance
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_back
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_help
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_index_health
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_index_paused
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_indexed_count
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_indexing
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_ocr_indexing
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_ocr_status
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_privacy_policy
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_system_default
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_theme
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_theme_dark
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_theme_light
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_theme_system
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_title
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_version_value
+import com.o3.vanguard.visionary.core.designsystem.generated.resources.settings_visual_analysis
 import com.o3.vanguard.visionary.core.mvi.CollectEvents
 import com.o3.vanguard.visionary.domain.model.IndexState
-import com.o3.vanguard.visionary.core.designsystem.generated.resources.Res
-import com.o3.vanguard.visionary.core.designsystem.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -63,10 +93,12 @@ fun SettingsScreen(
     val total = progress?.total?.takeIf { it > 0 } ?: 2846
     val indexed = progress?.indexed ?: 1842
     val percent = ((indexed * 100f / total).toInt()).coerceIn(0, 100)
-    val progressStatus = when (progress?.state) {
-        IndexState.PAUSED_BATTERY -> stringResource(Res.string.settings_index_paused)
-        IndexState.RUNNING -> stringResource(Res.string.settings_indexing)
-        else -> stringResource(Res.string.settings_index_paused)
+    val isVisualAnalysisEnabled = state.settings.visualAnalysisEnabled
+    val progressStatus = when {
+        !isVisualAnalysisEnabled -> stringResource(Res.string.settings_index_paused, percent)
+        progress?.state == IndexState.PAUSED_BATTERY -> stringResource(Res.string.settings_index_paused, percent)
+        progress?.state == IndexState.RUNNING -> stringResource(Res.string.settings_indexing)
+        else -> stringResource(Res.string.settings_index_paused, percent)
     }
 
     Surface(modifier = modifier.fillMaxSize(), color = VisionaryColors.colorF4FDF7) {
@@ -189,8 +221,10 @@ fun SettingsScreen(
                                 )
                             }
                             Switch(
-                                checked = false,
-                                onCheckedChange = null,
+                                checked = isVisualAnalysisEnabled,
+                                onCheckedChange = { enabled ->
+                                    onIntent(SettingsIntent.OnVisualAnalysisToggled(enabled))
+                                },
                                 colors = SwitchDefaults.colors(
                                     checkedTrackColor = VisionaryColors.color007847,
                                     uncheckedTrackColor = VisionaryColors.colorCEDED3,
@@ -198,26 +232,6 @@ fun SettingsScreen(
                                 ),
                             )
                         }
-                        SettingsDivider()
-                        SettingsRow(
-                            title = stringResource(Res.string.settings_reindex_library),
-                            subtitle = stringResource(Res.string.settings_continue_device),
-                            trailing = { Chevron() },
-                            onClick = { onIntent(SettingsIntent.OnOpenIndexHealthClicked) },
-                        )
-                        SettingsDivider()
-                        SettingsRow(
-                            title = stringResource(Res.string.settings_indexing_preferences),
-                            subtitle = stringResource(
-                                Res.string.settings_preferences_summary,
-                                stringResource(Res.string.settings_wifi_only),
-                                if (state.settings.indexOnlyWhileCharging) stringResource(Res.string.settings_charging_only) else stringResource(
-                                    Res.string.settings_any_power
-                                ),
-                            ),
-                            trailing = { Chevron() },
-                            onClick = { onIntent(SettingsIntent.OnOpenIndexHealthClicked) },
-                        )
                     }
                 }
 
@@ -359,11 +373,3 @@ private fun IndexHealthScreen(onBack: () -> Unit) {
 @Composable
 fun IndexHealthRoute(onBack: () -> Unit) = IndexHealthScreen(onBack)
 
-@Preview
-@Composable
-fun SettingsScreenPreview() {
-    SettingsScreen(
-        state = SettingsState(),
-        onIntent = {},
-    )
-}

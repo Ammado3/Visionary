@@ -34,11 +34,6 @@ interface ImageLabelEngine {
     suspend fun labelImage(uri: String): AppResult<List<String>>
 }
 
-interface ScannerPort {
-    suspend fun isAvailable(): Boolean
-    suspend fun scan(): AppResult<ScannedDocument>
-}
-
 interface BiometricAuthenticator {
     suspend fun authenticate(): AppResult<Unit>
 }
@@ -50,6 +45,12 @@ interface VaultCryptoEngine {
     suspend fun decryptFromVault(itemId: String, thumbnail: Boolean): AppResult<ByteArray>
     suspend fun deleteVaultBlobs(itemId: String): AppResult<Unit>
     suspend fun copyToTrash(sourceUri: String, itemId: String): AppResult<String>
+    suspend fun restoreToStorage(
+        itemId: String,
+        mime: String? = null,
+        takenAtMs: Long = 0L,
+    ): AppResult<String>
+    fun getBlobPath(itemId: String): String
 }
 
 interface SecureScreenPort {

@@ -33,7 +33,7 @@ fun EntryProviderScope<NavKey>.onboardingEntries(navigator: Navigator) {
                         permissionGateway.requestAccess()
                         indexRepository.rebuild()
                     }
-                    navigator.replaceAll(AppRoute.Home)
+                    navigator.replaceAll(AppRoute.Photos)
                 },
             )
         } else {

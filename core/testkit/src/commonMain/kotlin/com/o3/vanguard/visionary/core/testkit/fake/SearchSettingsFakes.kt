@@ -15,10 +15,12 @@ class FakeSearchRepository : SearchRepository {
     val recentSearches = MutableStateFlow<List<String>>(emptyList())
     val saveRecentSearchCalls = mutableListOf<String>()
     var searchHits: List<SearchHit> = emptyList()
+    var hitsByQuery: Map<String, List<SearchHit>> = emptyMap()
 
     override fun search(query: String, filter: SearchFilter, mode: SearchMode): Flow<List<SearchHit>> {
         searchCalls.add(Triple(query, filter, mode))
-        return MutableStateFlow(searchHits)
+        val hits = hitsByQuery[query] ?: searchHits
+        return MutableStateFlow(hits)
     }
 
     override fun observeRecentSearches(): Flow<List<String>> = recentSearches

@@ -15,15 +15,15 @@ class StartRouteTest {
     }
 
     @Test
-    fun onboardingDone_withFullAccess_returnsHome() {
+    fun onboardingDone_withFullAccess_returnsPhotos() {
         val route = chooseStartRoute(StartDestination.HOME, MediaAccess.Full)
-        assertEquals(AppRoute.Home, route)
+        assertEquals(AppRoute.Photos, route)
     }
 
     @Test
-    fun onboardingDone_withPartialAccess_returnsHome() {
+    fun onboardingDone_withPartialAccess_returnsPhotos() {
         val route = chooseStartRoute(StartDestination.HOME, MediaAccess.Partial(10))
-        assertEquals(AppRoute.Home, route)
+        assertEquals(AppRoute.Photos, route)
     }
 
     @Test

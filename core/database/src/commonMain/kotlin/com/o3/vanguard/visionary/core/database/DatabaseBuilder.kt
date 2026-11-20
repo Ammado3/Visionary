@@ -21,9 +21,11 @@ fun buildAppDatabase(
     .setDriver(BundledSQLiteDriver())
     .setQueryCoroutineContext(dispatchers.io)
     .addCallback(FtsCallback)
-    // Never add a blanket destructive fallback. Every version bump after 3 needs an explicit
+    // Never add a blanket destructive fallback. Every version bump needs an explicit
     // Migration and a committed schema JSON in core/database/schemas/.
-    .fallbackToDestructiveMigrationFrom(dropAllTables = true, 1, 2)
+    // TEMPORARY: versions 3 and 4 are reset (as Develop did before this merge) so old dev
+    // installs don't crash on launch. Fix-plan Step 04 replaces 3 and 4 with real migrations.
+    .fallbackToDestructiveMigrationFrom(dropAllTables = true, 1, 2, 3, 4)
     .build()
 
 val databaseModule = module {

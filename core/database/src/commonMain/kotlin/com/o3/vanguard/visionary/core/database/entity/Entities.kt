@@ -6,7 +6,7 @@ import androidx.room3.PrimaryKey
 
 @Entity(
     tableName = "media_item",
-    indices = [Index("sortKey"), Index("category"), Index("ref", unique = true)]
+    indices = [Index("sortKey"), Index("category"), Index("albumId"), Index("ref", unique = true)]
 )
 data class MediaEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -21,6 +21,8 @@ data class MediaEntity(
     val isScreenshot: Boolean,
     val entityFlags: Int,
     val fingerprint: String,
+    val albumId: String? = null,
+    val isFavorite: Boolean = false,
 )
 
 @Entity(tableName = "media_text")
@@ -89,6 +91,7 @@ data class IndexExclusionEntity(
 @Entity(tableName = "vault_item")
 data class VaultItemEntity(
     @PrimaryKey val id: String,
+    val filePath: String,
     val createdAtMs: Long,
     val mime: String,
     val sizeBytes: Long,
@@ -117,4 +120,14 @@ data class TrashItemEntity(
     val category: String,
     val fileName: String,
     val deletedAtMs: Long,
+)
+
+@Entity(tableName = "app_settings")
+data class AppSettingsEntity(
+    @PrimaryKey val id: Int = 1,
+    val onboardingDone: Boolean = false,
+    val indexOnlyWhileCharging: Boolean = false,
+    val vaultLockTimeoutSeconds: Int = 30,
+    val visualAnalysisEnabled: Boolean = true,
+    val indexingCardShown: Boolean = false,
 )

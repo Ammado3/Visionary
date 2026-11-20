@@ -16,7 +16,6 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.coil.compose)
-            implementation(libs.datastore.preferences.core)
         }
 
         androidMain.dependencies {
@@ -28,10 +27,10 @@ kotlin {
             implementation(libs.lifecycle.runtime.compose)
             implementation(libs.mlkit.text.recognition)
             implementation(libs.mlkit.image.labeling)
-            implementation(libs.mlkit.document.scanner)
             implementation(libs.kotlinx.coroutines.play.services)
             implementation(libs.androidx.biometric)
             implementation(libs.androidx.work.runtime)
+            implementation(libs.coil.video)
         }
     }
 }

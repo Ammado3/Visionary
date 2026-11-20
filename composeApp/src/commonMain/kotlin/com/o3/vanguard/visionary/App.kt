@@ -28,19 +28,18 @@ import com.o3.vanguard.visionary.core.designsystem.VisionaryTheme
 import com.o3.vanguard.visionary.core.navigation.AppNavSavedStateConfig
 import com.o3.vanguard.visionary.core.navigation.AppRoute
 import com.o3.vanguard.visionary.core.navigation.Navigator
-import com.o3.vanguard.visionary.domain.model.MediaAccess
+import com.o3.vanguard.visionary.core.navigation.tabOrNull
+import com.o3.vanguard.visionary.core.navigation.navigateToTab
 import com.o3.vanguard.visionary.domain.port.PermissionGateway
 import com.o3.vanguard.visionary.domain.repository.IndexRepository
 import com.o3.vanguard.visionary.domain.usecase.ResolveStartRouteUseCase
 import com.o3.vanguard.visionary.feature.teleport.teleportEntries
 import com.o3.vanguard.visionary.features.gallery.navigation.galleryEntries
-import com.o3.vanguard.visionary.features.home.homeEntries
 import com.o3.vanguard.visionary.features.onboarding.onboardingEntries
-import com.o3.vanguard.visionary.features.scanner.scannerEntries
 import com.o3.vanguard.visionary.features.search.searchEntries
 import com.o3.vanguard.visionary.features.settings.settingsEntries
-import com.o3.vanguard.visionary.features.vault.biometricsetup.biometricSetupEntries
-import com.o3.vanguard.visionary.features.vault.vault.vaultEntries
+import com.o3.vanguard.visionary.platform.getPlatformDecoderFactories
+import com.o3.vanguard.visionary.features.vault.navigation.vaultEntries
 import com.o3.vanguard.visionary.platform.getPlatformFetcherFactory
 import com.o3.vanguard.visionary.screens.SPLASH_DURATION_MS
 import com.o3.vanguard.visionary.screens.SplashScreen
@@ -61,6 +60,7 @@ fun App() {
         ImageLoader.Builder(context)
             .components {
                 getPlatformFetcherFactory()?.let { add(it) }
+                getPlatformDecoderFactories().forEach { add(it) }
             }
             .build()
     }
@@ -75,16 +75,12 @@ fun App() {
             delay(SPLASH_DURATION_MS)
             val access = permissionGateway.requestAccess()
             val route = chooseStartRoute(resolveStartRoute(), access)
-            if (route == AppRoute.Home) launch { indexRepository.rebuild() }
+            if (route == AppRoute.Photos) launch { indexRepository.rebuild() }
             startRoute = route
         }
 
         startRoute?.let { AppNavHost(it) }
-            ?: SplashScreen(
-                onSplashFinished = {
-                    // Permission flow handled by LaunchedEffect
-                }
-            )
+            ?: SplashScreen()
     }
 }
 
@@ -94,12 +90,11 @@ private fun AppNavHost(start: AppRoute) {
     val navigator = remember(backStack) { Navigator(backStack) }
 
     val currentRoute = backStack.lastOrNull() as? AppRoute
-    val currentTab: AppTab? = when (currentRoute) {
-        AppRoute.Home -> AppTab.PHOTOS
-        AppRoute.Albums -> AppTab.ALBUMS
-        is AppRoute.Search -> AppTab.SEARCH
-        AppRoute.VaultLock, AppRoute.VaultGrid -> AppTab.VAULT
-        else -> null
+    val currentTab: AppTab? = currentRoute?.tabOrNull()
+    val isSecondaryTab = currentTab != null && currentTab != AppTab.PHOTOS
+
+    AppBackHandler(enabled = isSecondaryTab) {
+        navigator.navigateToTab(AppTab.PHOTOS)
     }
 
     val systemBarConfig = when (currentRoute) {
@@ -107,7 +102,7 @@ private fun AppNavHost(start: AppRoute) {
             val darkGreen = Color(0xFF050B09)
             SystemBarConfig(darkGreen, false, darkGreen, false)
         }
-        is AppRoute.Viewer, AppRoute.Scanner, is AppRoute.VaultViewer -> {
+        is AppRoute.Viewer, is AppRoute.VaultViewer -> {
             SystemBarConfig(Color.Black, false, Color.Black, false)
         }
         else -> {
@@ -129,14 +124,7 @@ private fun AppNavHost(start: AppRoute) {
                 currentTab?.let { selectedTab ->
                     AppBottomNavigation(
                         selected = selectedTab,
-                        onSelected = { tab ->
-                            when (tab) {
-                                AppTab.PHOTOS -> navigator.replaceTop(AppRoute.Home)
-                                AppTab.ALBUMS -> navigator.replaceTop(AppRoute.Albums)
-                                AppTab.SEARCH -> navigator.replaceTop(AppRoute.Search())
-                                AppTab.VAULT -> navigator.replaceTop(AppRoute.VaultLock)
-                            }
-                        }
+                        onSelected = { tab -> navigator.navigateToTab(tab) }
                     )
                 }
             }
@@ -144,21 +132,18 @@ private fun AppNavHost(start: AppRoute) {
             NavDisplay(
                 modifier = Modifier.fillMaxSize().padding(paddingValues).consumeWindowInsets(paddingValues),
                 backStack = backStack,
-                onBack = { navigator.back() },
+                onBack = { navigator.handleBack() },
                 entryDecorators = listOf(
                     rememberSaveableStateHolderNavEntryDecorator(),
                     rememberViewModelStoreNavEntryDecorator(),
                 ),
                 entryProvider = entryProvider {
                     onboardingEntries(navigator)
-                    homeEntries(navigator)
                     galleryEntries(navigator)
                     searchEntries(navigator)
-                    scannerEntries(navigator)
                     vaultEntries(navigator)
                     settingsEntries(navigator)
                     teleportEntries(navigator)
-                    biometricSetupEntries(navigator)
                 },
             )
         }

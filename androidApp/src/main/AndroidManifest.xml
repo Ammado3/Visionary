@@ -12,6 +12,9 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <!-- Nearby Connections -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -28,6 +31,10 @@
         android:usesPermissionFlags="neverForLocation"
         android:minSdkVersion="32"
         tools:targetApi="32" />
+
+<!--    Google recommends handling this permission explicitly for custom gallery implementations-->
+    <uses-permission
+        android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
     <!-- Saving received photos on API 26-28 only -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 
@@ -38,6 +45,7 @@
         android:name=".VisionaryApp"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
+        android:preserveLegacyExternalStorage="true"
         android:label="Visionary"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
@@ -50,6 +58,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".IndexingForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
     </application>
+
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
 
 </manifest>

@@ -13,9 +13,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":core:designsystem"))
             implementation(compose.components.resources)
-            implementation(libs.composeUiToolingPreview)
         }
     }
 }
@@ -23,4 +21,3 @@ kotlin {
 compose.resources {
     packageOfResClass = "com.o3.vanguard.visionary.features.settings.generated.resources"
 }
-
