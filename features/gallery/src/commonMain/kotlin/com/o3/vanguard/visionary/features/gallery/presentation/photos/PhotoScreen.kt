@@ -97,7 +97,6 @@ fun PhotoRoute(
     PhotoScreen(state, viewModel::onIntent, onOpenVoiceSearch, onOpenAirTeleportReceiver)
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PhotoScreen(
     state: PhotoState,
