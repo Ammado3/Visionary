@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.o3.vanguard.visionary.core.mvi.BaseMviViewModel
 import com.o3.vanguard.visionary.domain.model.CollectionKind
 import com.o3.vanguard.visionary.domain.model.DeleteConsentResult
+import com.o3.vanguard.visionary.domain.model.IndexState
 import com.o3.vanguard.visionary.domain.model.SearchFilter
 import com.o3.vanguard.visionary.domain.model.SearchMode
 import com.o3.vanguard.visionary.domain.port.BackgroundSyncScheduler
@@ -30,6 +31,8 @@ class SearchViewModel(
 ) : BaseMviViewModel<SearchState, SearchIntent, SearchEvent>(
     SearchState(query = initialQuery)
 ) {
+    private var reindexBaseline: Int? = null
+
     init {
         viewModelScope.launch {
             observeMediaUseCase(CollectionKind.ALL).collectLatest { images ->
@@ -38,10 +41,14 @@ class SearchViewModel(
         }
         viewModelScope.launch {
             observeIndexProgressUseCase().collectLatest { progress ->
+                val baseline = reindexBaseline
+                val finished = baseline != null && progress.completedPasses > baseline
+                if (finished) reindexBaseline = null
                 updateState {
                     copy(
                         indexProgress = progress,
-                        isIndexing = progress.state.name == "RUNNING"
+                        isIndexing = progress.state == IndexState.RUNNING || reindexBaseline != null,
+                        errorMessage = if (finished && progress.lastPassFailed) "Indexing failed" else errorMessage,
                     )
                 }
             }
@@ -154,7 +161,7 @@ class SearchViewModel(
                 }
             }
             SearchIntent.OnReindexClicked -> {
-                // The pass runs in the foreground service; observeProgress() updates isIndexing.
+                reindexBaseline = state.value.indexProgress?.completedPasses ?: 0
                 updateState { copy(isIndexing = true, errorMessage = null) }
                 indexScheduler.requestIndexing()
             }

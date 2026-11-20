@@ -64,18 +64,27 @@ internal class IndexRunGuard(private val progress: MutableStateFlow<IndexProgres
         }
     }
 
-    private suspend fun runOnce(pass: suspend () -> AppResult<Unit>): AppResult<Unit> =
-        try {
+    private suspend fun runOnce(pass: suspend () -> AppResult<Unit>): AppResult<Unit> {
+        val result = try {
             pass()
         } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            AppResult.Err(AppError.Unknown(e::class.simpleName ?: "IndexingFailed"))
-        } finally {
             if (progress.value.state == IndexState.RUNNING) {
                 progress.value = progress.value.copy(state = IndexState.IDLE)
             }
+            throw e
+        } catch (e: Exception) {
+            AppResult.Err(AppError.Unknown(e::class.simpleName ?: "IndexingFailed"))
         }
+
+        val current = progress.value
+        val nextState = if (current.state == IndexState.RUNNING) IndexState.IDLE else current.state
+        progress.value = current.copy(
+            state = nextState,
+            completedPasses = current.completedPasses + 1,
+            lastPassFailed = result is AppResult.Err,
+        )
+        return result
+    }
 
     private companion object {
         const val IDLE = 0

@@ -12,6 +12,8 @@ import com.o3.vanguard.visionary.core.testkit.fake.FakeTrashRepository
 import com.o3.vanguard.visionary.core.testkit.mvi.collectEvents
 import com.o3.vanguard.visionary.domain.model.CollectionKind
 import com.o3.vanguard.visionary.domain.model.DeleteConsentResult
+import com.o3.vanguard.visionary.domain.model.IndexProgress
+import com.o3.vanguard.visionary.domain.model.IndexState
 import com.o3.vanguard.visionary.domain.model.MediaId
 import com.o3.vanguard.visionary.domain.model.SearchHit
 import com.o3.vanguard.visionary.domain.usecase.DeleteMediaUseCase
@@ -20,6 +22,8 @@ import com.o3.vanguard.visionary.domain.usecase.ObserveMediaUseCase
 import com.o3.vanguard.visionary.domain.usecase.SearchMediaUseCase
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class SearchViewModelTest {
@@ -188,5 +192,90 @@ class SearchViewModelTest {
         assertEquals(0, indexRepository.rebuildCalls)
         assertTrue(viewModel.state.value.isIndexing)
         assertEquals(null, viewModel.state.value.errorMessage)
+    }
+
+    @Test
+    fun onReindexClicked_passEndsWithoutRunning_isIndexingBecomesFalse() = runViewModelTest {
+        val indexRepository = FakeIndexRepository()
+        val viewModel = createViewModel(
+            searchRepository = FakeSearchRepository(),
+            mediaRepository = FakeMediaRepository(),
+            indexRepository = indexRepository,
+            trashRepository = FakeTrashRepository(),
+            deleteGateway = FakeMediaDeleteGateway(),
+            initialQuery = "",
+        )
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onIntent(SearchIntent.OnReindexClicked)
+        assertTrue(viewModel.state.value.isIndexing)
+
+        indexRepository.progress.value = IndexProgress(
+            total = 0, indexed = 0, pending = 0, failed = 0,
+            state = IndexState.IDLE, completedPasses = 1, lastPassFailed = false
+        )
+        testScheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.state.value.isIndexing)
+        assertNull(viewModel.state.value.errorMessage)
+    }
+
+    @Test
+    fun onReindexClicked_passEndsWithFailure_showsErrorMessageAndIsIndexingBecomesFalse() = runViewModelTest {
+        val indexRepository = FakeIndexRepository()
+        val viewModel = createViewModel(
+            searchRepository = FakeSearchRepository(),
+            mediaRepository = FakeMediaRepository(),
+            indexRepository = indexRepository,
+            trashRepository = FakeTrashRepository(),
+            deleteGateway = FakeMediaDeleteGateway(),
+            initialQuery = "",
+        )
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onIntent(SearchIntent.OnReindexClicked)
+        assertTrue(viewModel.state.value.isIndexing)
+
+        indexRepository.progress.value = IndexProgress(
+            total = 0, indexed = 0, pending = 0, failed = 1,
+            state = IndexState.IDLE, completedPasses = 1, lastPassFailed = true
+        )
+        testScheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.state.value.isIndexing)
+        assertEquals("Indexing failed", viewModel.state.value.errorMessage)
+    }
+
+    @Test
+    fun onReindexClicked_passGoesRunningThenIdle_isIndexingIsTrueWhileRunningAndFalseAfter() = runViewModelTest {
+        val indexRepository = FakeIndexRepository()
+        val viewModel = createViewModel(
+            searchRepository = FakeSearchRepository(),
+            mediaRepository = FakeMediaRepository(),
+            indexRepository = indexRepository,
+            trashRepository = FakeTrashRepository(),
+            deleteGateway = FakeMediaDeleteGateway(),
+            initialQuery = "",
+        )
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onIntent(SearchIntent.OnReindexClicked)
+        assertTrue(viewModel.state.value.isIndexing)
+
+        indexRepository.progress.value = IndexProgress(
+            total = 10, indexed = 2, pending = 8, failed = 0,
+            state = IndexState.RUNNING, completedPasses = 0, lastPassFailed = false
+        )
+        testScheduler.advanceUntilIdle()
+        assertTrue(viewModel.state.value.isIndexing)
+
+        indexRepository.progress.value = IndexProgress(
+            total = 10, indexed = 10, pending = 0, failed = 0,
+            state = IndexState.IDLE, completedPasses = 1, lastPassFailed = false
+        )
+        testScheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.state.value.isIndexing)
+        assertNull(viewModel.state.value.errorMessage)
     }
 }

@@ -216,4 +216,51 @@ class IndexRunGuardTest {
         }
         assertIs<CancellationException>(caught)
     }
+
+    @Test
+    fun run_successfulPass_raisesCompletedPassesAndLastPassFailedIsFalse() = runTest {
+        assertEquals(0, progress.value.completedPasses)
+
+        val result = guard.run {
+            markRunning()
+            AppResult.Ok(Unit)
+        }
+
+        assertEquals(AppResult.Ok(Unit), result)
+        assertEquals(1, progress.value.completedPasses)
+        assertEquals(false, progress.value.lastPassFailed)
+    }
+
+    @Test
+    fun run_failedPass_raisesCompletedPassesAndLastPassFailedIsTrue() = runTest {
+        assertEquals(0, progress.value.completedPasses)
+
+        val result = guard.run {
+            markRunning()
+            AppResult.Err(AppError.Unknown("Failed"))
+        }
+
+        assertIs<AppResult.Err>(result)
+        assertEquals(1, progress.value.completedPasses)
+        assertEquals(true, progress.value.lastPassFailed)
+    }
+
+    @Test
+    fun run_cancelledPass_doesNotChangeCompletedPasses() = runTest {
+        assertEquals(0, progress.value.completedPasses)
+
+        val started = CompletableDeferred<Unit>()
+        val job = launch {
+            guard.run {
+                markRunning()
+                started.complete(Unit)
+                awaitCancellation()
+            }
+        }
+        started.await()
+        job.cancel()
+        job.join()
+
+        assertEquals(0, progress.value.completedPasses)
+    }
 }

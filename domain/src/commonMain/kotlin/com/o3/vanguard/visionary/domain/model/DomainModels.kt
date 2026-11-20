@@ -151,6 +151,10 @@ data class IndexProgress(
     val pending: Int,
     val failed: Int,
     val state: IndexState,
+    /** Increases by 1 every time a pass ends (success or error, not cancellation). */
+    val completedPasses: Int = 0,
+    /** Whether the most recent finished pass returned an error. */
+    val lastPassFailed: Boolean = false,
 )
 
 sealed interface MediaAccess {
