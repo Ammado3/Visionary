@@ -3,9 +3,10 @@ package com.o3.vanguard.visionary.core.testkit.fake
 import com.o3.vanguard.visionary.domain.port.BackgroundSyncScheduler
 
 class FakeBackgroundSyncScheduler : BackgroundSyncScheduler {
-    val scheduleCalls = mutableListOf<Boolean>()
+    var requestIndexingCalls: Int = 0
+        private set
 
-    override fun scheduleIncrementalIndexing(chargingOnly: Boolean) {
-        scheduleCalls.add(chargingOnly)
+    override fun requestIndexing() {
+        requestIndexingCalls++
     }
 }

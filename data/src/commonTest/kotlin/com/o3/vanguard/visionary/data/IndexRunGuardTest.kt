@@ -1,5 +1,6 @@
 package com.o3.vanguard.visionary.data
 
+import com.o3.vanguard.visionary.core.common.AppError
 import com.o3.vanguard.visionary.core.common.AppResult
 import com.o3.vanguard.visionary.domain.model.IndexProgress
 import com.o3.vanguard.visionary.domain.model.IndexState
@@ -74,14 +75,16 @@ class IndexRunGuardTest {
     }
 
     @Test
-    fun run_callWhileAPassIsRunning_isSkipped() = runTest {
+    fun run_callDuringAPass_returnsAtOnceAndCausesExactlyOneExtraPass() = runTest {
         val release = CompletableDeferred<Unit>()
         var passes = 0
         val first = async {
             guard.run {
                 passes++
-                markRunning()
-                release.await()
+                if (passes == 1) {
+                    markRunning()
+                    release.await()
+                }
                 AppResult.Ok(Unit)
             }
         }
@@ -92,13 +95,105 @@ class IndexRunGuardTest {
             AppResult.Ok(Unit)
         }
 
+        // The second call doesn't run its own pass and doesn't wait.
         assertEquals(AppResult.Ok(Unit), second)
         assertEquals(1, passes)
         assertEquals(IndexState.RUNNING, progress.value.state)
 
         release.complete(Unit)
         assertEquals(AppResult.Ok(Unit), first.await())
+        assertEquals(2, passes)
         assertEquals(IndexState.IDLE, progress.value.state)
+    }
+
+    @Test
+    fun run_threeCallsDuringAPass_stillCauseOneExtraPass() = runTest {
+        val release = CompletableDeferred<Unit>()
+        var passes = 0
+        val pass: suspend () -> AppResult<Unit> = {
+            passes++
+            if (passes == 1) release.await()
+            AppResult.Ok(Unit)
+        }
+        val first = async { guard.run(pass) }
+        runCurrent()
+
+        repeat(3) { guard.run(pass) }
+        release.complete(Unit)
+        first.await()
+
+        assertEquals(2, passes)
+    }
+
+    @Test
+    fun run_passCancelledAfterACallCameIn_noExtraPass() = runTest {
+        val started = CompletableDeferred<Unit>()
+        var passes = 0
+        val job = launch {
+            guard.run {
+                passes++
+                started.complete(Unit)
+                awaitCancellation()
+            }
+        }
+        started.await()
+        guard.run {
+            passes++
+            AppResult.Ok(Unit)
+        }
+
+        job.cancel()
+        job.join()
+        runCurrent()
+
+        assertEquals(1, passes)
+    }
+
+    @Test
+    fun run_passFailsAfterACallCameIn_noExtraPass() = runTest {
+        val release = CompletableDeferred<Unit>()
+        var passes = 0
+        val first = async {
+            guard.run {
+                passes++
+                release.await()
+                AppResult.Err(AppError.Io("scan failed"))
+            }
+        }
+        runCurrent()
+        guard.run {
+            passes++
+            AppResult.Ok(Unit)
+        }
+
+        release.complete(Unit)
+
+        assertIs<AppResult.Err>(first.await())
+        assertEquals(1, passes)
+    }
+
+    @Test
+    fun run_afterTheExtraPass_guardIsFreeAgain() = runTest {
+        val release = CompletableDeferred<Unit>()
+        var passes = 0
+        val first = async {
+            guard.run {
+                passes++
+                if (passes == 1) release.await()
+                AppResult.Ok(Unit)
+            }
+        }
+        runCurrent()
+        guard.run { AppResult.Ok(Unit) }
+        release.complete(Unit)
+        first.await()
+
+        var ranAgain = false
+        guard.run {
+            ranAgain = true
+            AppResult.Ok(Unit)
+        }
+        assertTrue(ranAgain)
     }
 
     @Test
