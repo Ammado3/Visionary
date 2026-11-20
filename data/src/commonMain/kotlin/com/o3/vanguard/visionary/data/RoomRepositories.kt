@@ -22,8 +22,6 @@ import com.o3.vanguard.visionary.domain.port.OcrEngine
 import com.o3.vanguard.visionary.domain.repository.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlin.math.min
 import kotlin.time.Clock
 
@@ -283,14 +281,8 @@ class RoomIndexRepository(
 ) : IndexRepository {
     private val progress = MutableStateFlow(IndexProgress(0, 0, 0, 0, IndexState.IDLE))
 
-    /**
-     * Mutex that serialises concurrent rebuild() calls.
-     * [indexedThisSession] is set to true once the first successful run completes
-     * so that subsequent calls (e.g. from Activity re-creation on rotation) are
-     * cheap no-ops instead of full MediaStore + OCR re-scans.
-     */
-    private val rebuildMutex = Mutex()
-    private var indexedThisSession = false
+    /** One pass at a time; a call during a pass is skipped, and the state never stays RUNNING. */
+    private val runGuard = IndexRunGuard(progress)
     private var isPaused = false
 
     override fun observeProgress(): Flow<IndexProgress> = flow {
@@ -321,27 +313,21 @@ class RoomIndexRepository(
 
     override suspend fun resume(): AppResult<Unit> {
         isPaused = false
-        indexedThisSession = false
         return rebuild()
     }
 
     override suspend fun retryFailed(): AppResult<Unit> {
-        // Force a full re-run even if we already indexed this session.
-        indexedThisSession = false
         isPaused = false
         return rebuild()
     }
 
-    override suspend fun rebuild(): AppResult<Unit> = rebuildMutex.withLock {
+    override suspend fun rebuild(): AppResult<Unit> = runGuard.run { indexPass() }
+
+    private suspend fun indexPass(): AppResult<Unit> {
         val settings = settingsRepository.observe().first()
         if (!settings.visualAnalysisEnabled || isPaused) {
             isPaused = true
             progress.value = progress.value.copy(state = IndexState.PAUSED_BATTERY)
-            return AppResult.Ok(Unit)
-        }
-        // If indexing is already running (concurrent callers waiting on the
-        // mutex), skip.
-        if (progress.value.state == IndexState.RUNNING) {
             return AppResult.Ok(Unit)
         }
         val source = mediaSource.queryDelta(0L)
@@ -360,11 +346,17 @@ class RoomIndexRepository(
             val entity = item.copy(isFavorite = existingFavorite).toEntity()
             try {
                 db.mediaDao().upsert(listOf(entity))
-            } catch (_: Throwable) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
                 db.mediaDao().deleteByRef(entity.ref)
                 try {
                     db.mediaDao().upsert(listOf(entity))
-                } catch (_: Throwable) {}
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    // Skip this item; the next pass retries it.
+                }
             }
         }
 
@@ -433,13 +425,12 @@ class RoomIndexRepository(
                 indexed++
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
                 failed++
             }
             progress.value = IndexProgress(media.size, indexed, media.size - indexed - failed, failed, IndexState.RUNNING)
         }
         progress.value = IndexProgress(media.size, indexed, 0, failed, IndexState.IDLE)
-        indexedThisSession = true
         return AppResult.Ok(Unit)
     }
 }

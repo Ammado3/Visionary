@@ -75,7 +75,7 @@ fun App() {
             delay(SPLASH_DURATION_MS)
             val access = permissionGateway.requestAccess()
             val route = chooseStartRoute(resolveStartRoute(), access)
-            if (route == AppRoute.Photos) launch { indexRepository.rebuild() }
+            if (route == AppRoute.Photos && startsIndexingFromApp) launch { indexRepository.rebuild() }
             startRoute = route
         }
 
