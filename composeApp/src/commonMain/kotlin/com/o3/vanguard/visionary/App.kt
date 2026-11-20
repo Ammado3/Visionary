@@ -30,8 +30,8 @@ import com.o3.vanguard.visionary.core.navigation.AppRoute
 import com.o3.vanguard.visionary.core.navigation.Navigator
 import com.o3.vanguard.visionary.core.navigation.tabOrNull
 import com.o3.vanguard.visionary.core.navigation.navigateToTab
+import com.o3.vanguard.visionary.domain.port.BackgroundSyncScheduler
 import com.o3.vanguard.visionary.domain.port.PermissionGateway
-import com.o3.vanguard.visionary.domain.repository.IndexRepository
 import com.o3.vanguard.visionary.domain.usecase.ResolveStartRouteUseCase
 import com.o3.vanguard.visionary.feature.teleport.teleportEntries
 import com.o3.vanguard.visionary.features.gallery.navigation.galleryEntries
@@ -44,7 +44,6 @@ import com.o3.vanguard.visionary.platform.getPlatformFetcherFactory
 import com.o3.vanguard.visionary.screens.SPLASH_DURATION_MS
 import com.o3.vanguard.visionary.screens.SplashScreen
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 private data class SystemBarConfig(
@@ -67,7 +66,7 @@ fun App() {
 
     VisionaryTheme {
         val permissionGateway = koinInject<PermissionGateway>()
-        val indexRepository = koinInject<IndexRepository>()
+        val indexScheduler = koinInject<BackgroundSyncScheduler>()
         val resolveStartRoute = koinInject<ResolveStartRouteUseCase>()
         var startRoute by remember { mutableStateOf<AppRoute?>(null) }
 
@@ -75,7 +74,7 @@ fun App() {
             delay(SPLASH_DURATION_MS)
             val access = permissionGateway.requestAccess()
             val route = chooseStartRoute(resolveStartRoute(), access)
-            if (route == AppRoute.Photos && startsIndexingFromApp) launch { indexRepository.rebuild() }
+            if (route == AppRoute.Photos) indexScheduler.requestIndexing()
             startRoute = route
         }
 

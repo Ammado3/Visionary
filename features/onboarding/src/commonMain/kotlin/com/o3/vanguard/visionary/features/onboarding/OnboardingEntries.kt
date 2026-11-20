@@ -8,8 +8,8 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.o3.vanguard.visionary.core.navigation.AppRoute
 import com.o3.vanguard.visionary.core.navigation.Navigator
+import com.o3.vanguard.visionary.domain.port.BackgroundSyncScheduler
 import com.o3.vanguard.visionary.domain.port.PermissionGateway
-import com.o3.vanguard.visionary.domain.repository.IndexRepository
 import com.o3.vanguard.visionary.platform.permission.AppPermissionGate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -20,7 +20,7 @@ fun EntryProviderScope<NavKey>.onboardingEntries(navigator: Navigator) {
         var showPermissionGate by remember { mutableStateOf(key.skipIntro) }
         var navigated by remember { mutableStateOf(false) }
         val permissionGateway = koinInject<PermissionGateway>()
-        val indexRepository = koinInject<IndexRepository>()
+        val indexScheduler = koinInject<BackgroundSyncScheduler>()
         val appScope = koinInject<CoroutineScope>()
 
         if (showPermissionGate) {
@@ -31,7 +31,7 @@ fun EntryProviderScope<NavKey>.onboardingEntries(navigator: Navigator) {
                     navigated = true
                     appScope.launch {
                         permissionGateway.requestAccess()
-                        indexRepository.rebuild()
+                        indexScheduler.requestIndexing()
                     }
                     navigator.replaceAll(AppRoute.Photos)
                 },
