@@ -12,14 +12,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.ui.graphics.toArgb
 import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
-import com.o3.vanguard.visionary.domain.port.BackgroundSyncScheduler
 import com.o3.vanguard.visionary.platform.android.AndroidBiometricAuthenticator
 import com.o3.vanguard.visionary.platform.android.AndroidMediaDeleteGateway
-import org.koin.android.ext.android.inject
 
 class MainActivity : AppCompatActivity(){
-    private val indexScheduler: BackgroundSyncScheduler by inject()
-
     private val deleteRequestLauncher = registerForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
@@ -43,8 +39,8 @@ class MainActivity : AppCompatActivity(){
         setContent {
             App()
         }
-        // Only trigger indexing on a true first launch of this process, not on
-        // Activity re-creation (e.g. screen rotation or system-initiated restart).
+        // Ask for media access only on a true first launch of this process, not on Activity
+        // re-creation (rotation, system restart). Indexing is started by App and onboarding.
         if (savedInstanceState == null) {
             requestMediaAccessIfNeeded()
         }
@@ -56,33 +52,17 @@ class MainActivity : AppCompatActivity(){
         } else {
             arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
-        if (permissions.all { checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED }) {
-            startIndexing()
-        } else {
+        if (!permissions.all { checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED }) {
             requestPermissions(permissions, MEDIA_PERMISSION_REQUEST)
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == MEDIA_PERMISSION_REQUEST && grantResults.any { it == PackageManager.PERMISSION_GRANTED }) {
-            startIndexing()
-        }
-    }
     override fun onDestroy() {
         if (isFinishing) {
             AndroidMediaDeleteGateway.currentLauncher = null
             AndroidBiometricAuthenticator.currentActivityProvider = null
         }
         super.onDestroy()
-    }
-
-    private fun startIndexing() {
-        indexScheduler.requestIndexing()
     }
 
     private companion object {
