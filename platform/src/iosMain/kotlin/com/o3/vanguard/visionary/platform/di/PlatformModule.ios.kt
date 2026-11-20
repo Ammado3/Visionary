@@ -15,6 +15,7 @@ import com.o3.vanguard.visionary.domain.port.SpeechRecognizerPort
 import com.o3.vanguard.visionary.platform.AppDirectories
 import com.o3.vanguard.visionary.platform.ios.IosBiometricAuthenticator
 import com.o3.vanguard.visionary.platform.ios.IosImageLabelEngine
+import com.o3.vanguard.visionary.platform.ios.IosIndexScheduler
 import com.o3.vanguard.visionary.platform.ios.IosMediaDeleteGateway
 import com.o3.vanguard.visionary.platform.ios.IosMediaSourceEngine
 import com.o3.vanguard.visionary.platform.ios.IosOcrEngine
@@ -22,7 +23,6 @@ import com.o3.vanguard.visionary.platform.ios.IosPermissionGateway
 import com.o3.vanguard.visionary.platform.ios.IosShareGateway
 import com.o3.vanguard.visionary.platform.ios.IosSpeechRecognizerStub
 import com.o3.vanguard.visionary.platform.ios.IosStorageAlbumSourceEngine
-import com.o3.vanguard.visionary.platform.ios.IosStubBackgroundSyncScheduler
 import com.o3.vanguard.visionary.platform.ios.IosStubSecureScreenPort
 import com.o3.vanguard.visionary.platform.ios.IosVaultCryptoEngine
 import org.koin.core.module.Module
@@ -41,7 +41,7 @@ actual val platformModule: Module = module {
     singleOf(::IosBiometricAuthenticator) bind BiometricAuthenticator::class
     singleOf(::IosVaultCryptoEngine) bind VaultCryptoEngine::class
     singleOf(::IosStubSecureScreenPort) bind SecureScreenPort::class
-    singleOf(::IosStubBackgroundSyncScheduler) bind BackgroundSyncScheduler::class
+    singleOf(::IosIndexScheduler) bind BackgroundSyncScheduler::class
     singleOf(::IosShareGateway) bind ShareGateway::class
     singleOf(::IosSpeechRecognizerStub) bind SpeechRecognizerPort::class
 }

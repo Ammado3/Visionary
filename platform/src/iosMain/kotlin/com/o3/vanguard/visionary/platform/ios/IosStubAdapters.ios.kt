@@ -64,10 +64,6 @@ class IosStubSecureScreenPort : SecureScreenPort {
     override fun setSecureScreen(enabled: Boolean) {}
 }
 
-class IosStubBackgroundSyncScheduler : BackgroundSyncScheduler {
-    override fun scheduleIncrementalIndexing(chargingOnly: Boolean) {}
-}
-
 class IosStubShareGateway : ShareGateway {
     override fun share(uris: List<String>) {}
 }
