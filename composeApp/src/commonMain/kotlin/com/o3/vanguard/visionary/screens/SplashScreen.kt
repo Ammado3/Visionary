@@ -43,7 +43,7 @@ import kotlinx.coroutines.launch
 import visionary.composeapp.generated.resources.Res
 import visionary.composeapp.generated.resources.ic_ai_search
 
-internal const val SPLASH_DURATION_MS = 3_000L
+internal const val MIN_SPLASH_MS = 600L
 
 private val SplashIconVector: ImageVector by lazy {
     ImageVector.Builder(

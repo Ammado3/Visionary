@@ -41,8 +41,10 @@ import com.o3.vanguard.visionary.features.settings.settingsEntries
 import com.o3.vanguard.visionary.platform.getPlatformDecoderFactories
 import com.o3.vanguard.visionary.features.vault.navigation.vaultEntries
 import com.o3.vanguard.visionary.platform.getPlatformFetcherFactory
-import com.o3.vanguard.visionary.screens.SPLASH_DURATION_MS
+import com.o3.vanguard.visionary.screens.MIN_SPLASH_MS
 import com.o3.vanguard.visionary.screens.SplashScreen
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeSource
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
 
@@ -71,10 +73,12 @@ fun App() {
         var startRoute by remember { mutableStateOf<AppRoute?>(null) }
 
         LaunchedEffect(Unit) {
-            delay(SPLASH_DURATION_MS)
+            val started = TimeSource.Monotonic.markNow()
             val access = permissionGateway.requestAccess()
             val route = chooseStartRoute(resolveStartRoute(), access)
             if (route == AppRoute.Photos) indexScheduler.requestIndexing()
+            val remaining = MIN_SPLASH_MS.milliseconds - started.elapsedNow()
+            if (remaining.isPositive()) delay(remaining)
             startRoute = route
         }
 
