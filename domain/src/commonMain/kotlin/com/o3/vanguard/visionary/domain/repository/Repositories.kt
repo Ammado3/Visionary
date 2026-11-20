@@ -26,6 +26,8 @@ interface IndexRepository {
     suspend fun retryFailed(): AppResult<Unit>
     suspend fun rebuild(): AppResult<Unit>
     suspend fun pause(): AppResult<Unit>
+
+    /** Clears a pause. Doesn't start a pass; use `BackgroundSyncScheduler.requestIndexing()` for that. */
     suspend fun resume(): AppResult<Unit>
 }
 

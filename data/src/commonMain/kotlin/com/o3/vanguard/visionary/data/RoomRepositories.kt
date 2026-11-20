@@ -313,9 +313,13 @@ class RoomIndexRepository(
 
     override suspend fun resume(): AppResult<Unit> {
         isPaused = false
-        return rebuild()
+        if (progress.value.state == IndexState.PAUSED_BATTERY) {
+            progress.value = progress.value.copy(state = IndexState.IDLE)
+        }
+        return AppResult.Ok(Unit)
     }
 
+    // TODO: route through BackgroundSyncScheduler if a UI caller is added
     override suspend fun retryFailed(): AppResult<Unit> {
         isPaused = false
         return rebuild()
