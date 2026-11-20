@@ -6,6 +6,10 @@ plugins {
 kotlin {
     android {
         namespace = "com.o3.vanguard.visionary.platform"
+        // For IndexingForegroundService's notification icon (res/drawable).
+        androidResources {
+            enable = true
+        }
     }
 
     sourceSets {

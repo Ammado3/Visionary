@@ -1,4 +1,4 @@
-package com.o3.vanguard.visionary
+package com.o3.vanguard.visionary.platform.android
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -11,22 +11,25 @@ import android.os.IBinder
 import androidx.core.app.ServiceCompat
 import com.o3.vanguard.visionary.core.common.AppDispatchers
 import com.o3.vanguard.visionary.domain.repository.IndexRepository
+import com.o3.vanguard.visionary.platform.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import org.koin.android.ext.android.inject
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 /**
- * Android's only indexing trigger (started by [MainActivity]). Runs one pass, then stops.
+ * Where every Android indexing pass runs. Started only by [AndroidIndexScheduler]; runs one pass,
+ * then stops. Repeated starts while a pass is active don't start a second one.
  *
  * - `START_NOT_STICKY`: if the process dies, the next app launch indexes again instead of the
  *   system restarting a full scan in the background.
  * - Android 15+ limits `dataSync` services to 6 hours a day and calls [onTimeout] when the limit
  *   is reached; the service must stop within seconds or the app crashes.
  */
-class IndexingForegroundService : Service() {
+class IndexingForegroundService : Service(), KoinComponent {
     private val indexRepository: IndexRepository by inject()
     private val dispatchers: AppDispatchers by inject()
     private val serviceScope by lazy { CoroutineScope(SupervisorJob() + dispatchers.default) }

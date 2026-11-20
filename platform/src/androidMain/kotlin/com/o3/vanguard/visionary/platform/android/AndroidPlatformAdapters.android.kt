@@ -701,10 +701,6 @@ class AndroidSecureScreenPort(private val context: Context) : SecureScreenPort {
     override fun setSecureScreen(enabled: Boolean) {}
 }
 
-class WorkManagerSyncScheduler(private val context: Context) : BackgroundSyncScheduler {
-    override fun scheduleIncrementalIndexing(chargingOnly: Boolean) {}
-}
-
 class AndroidShareGateway(private val context: Context) : ShareGateway {
     override fun share(uris: List<String>) {
         val resolvedUris = uris.mapNotNull { s ->

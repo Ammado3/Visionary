@@ -19,7 +19,7 @@ actual val platformModule: Module = module {
     singleOf(::AndroidBiometricAuthenticator) bind BiometricAuthenticator::class
     singleOf(::AndroidVaultCryptoEngine) bind VaultCryptoEngine::class
     singleOf(::AndroidSecureScreenPort) bind SecureScreenPort::class
-    singleOf(::WorkManagerSyncScheduler) bind BackgroundSyncScheduler::class
+    singleOf(::AndroidIndexScheduler) bind BackgroundSyncScheduler::class
     singleOf(::AndroidShareGateway) bind ShareGateway::class
     single<SpeechRecognizerPort> { AndroidSpeechRecognizer(get(), get()) }
 }
