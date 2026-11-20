@@ -25,7 +25,6 @@ kotlin {
             implementation(project(":core:navigation"))
             implementation(project(":core:designsystem"))
             implementation(project(":core:database"))
-            implementation(project(":core:testing"))
             implementation(project(":domain"))
             implementation(project(":data"))
             implementation(project(":platform"))
@@ -52,10 +51,6 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.androidx.material.icons.extended)
             implementation(libs.androidx.activity.compose)
-        }
-        commonTest.dependencies {
-            implementation(kotlin("test"))
-            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }

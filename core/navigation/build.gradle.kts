@@ -11,6 +11,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(libs.nav3.ui)
+            implementation(project(":core:designsystem"))
             implementation(libs.kotlinx.serialization.json)
         }
     }

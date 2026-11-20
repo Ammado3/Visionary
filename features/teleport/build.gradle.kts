@@ -24,14 +24,5 @@ kotlin {
             implementation(libs.androidx.camera.view)
             implementation(libs.mediapipe.tasks.vision)
         }
-        commonTest.dependencies {
-            implementation(kotlin("test"))
-            implementation(libs.kotlinx.coroutines.test)
-            implementation(project(":core:testing"))
-        }
-        androidUnitTest.dependencies {
-            implementation(kotlin("test"))
-            implementation(libs.kotlinx.coroutines.test)
-        }
     }
 }

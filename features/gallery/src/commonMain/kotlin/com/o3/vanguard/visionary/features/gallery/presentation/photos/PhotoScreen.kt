@@ -29,8 +29,9 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.PlayArrow
@@ -82,6 +83,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun PhotoRoute(
     onOpenViewer: (MediaId) -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenVoiceSearch: () -> Unit = {},
     onOpenAirTeleportReceiver: () -> Unit = {},
     viewModel: PhotoViewModel = koinViewModel(),
 ) {
@@ -92,14 +94,14 @@ fun PhotoRoute(
             PhotoEvent.OpenSettings -> onOpenSettings()
         }
     }
-    PhotoScreen(state, viewModel::onIntent, onOpenAirTeleportReceiver)
+    PhotoScreen(state, viewModel::onIntent, onOpenVoiceSearch, onOpenAirTeleportReceiver)
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PhotoScreen(
     state: PhotoState,
     onIntent: (PhotoIntent) -> Unit,
+    onOpenVoiceSearch: () -> Unit = {},
     onOpenAirTeleportReceiver: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -138,7 +140,9 @@ fun PhotoScreen(
                 query = query,
                 selectionMode = selectionMode,
                 selectedCount = selectedIds.size,
+                voiceAvailable = state.voiceAvailable,
                 onMenu = { onIntent(PhotoIntent.OnSettingsClicked) },
+                onVoiceSearch = onOpenVoiceSearch,
                 onSearch = { searchOpen = true },
                 onQueryChanged = { query = it },
                 onCloseSearch = { query = ""; searchOpen = false },
@@ -204,7 +208,8 @@ fun PhotoScreen(
 @Composable
 private fun PhotoHeader(
     searchOpen: Boolean, query: String, selectionMode: Boolean, selectedCount: Int,
-    onMenu: () -> Unit, onSearch: () -> Unit, onQueryChanged: (String) -> Unit,
+    voiceAvailable: Boolean,
+    onMenu: () -> Unit, onVoiceSearch: () -> Unit, onSearch: () -> Unit, onQueryChanged: (String) -> Unit,
     onCloseSearch: () -> Unit, onAirTeleportReceiver: () -> Unit, onClearSelection: () -> Unit,
     showMore: Boolean, onShowMore: (Boolean) -> Unit,
 ) {
@@ -240,6 +245,10 @@ private fun PhotoHeader(
     ) {
         IconButton(onClick = onMenu) { Icon(Icons.Default.Menu, "Open settings") }
         Text("Gallery", Modifier.weight(1f).padding(start = 8.dp), fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        if (voiceAvailable) {
+            IconButton(onClick = onVoiceSearch) { Icon(Icons.Default.Mic, "Talk to Visionary") }
+        }
+        IconButton(onClick = onAirTeleportReceiver) { Icon(Icons.Default.Download, "Air Teleport Receiver") }
         IconButton(onClick = onSearch) { Icon(Icons.Default.Search, "Search") }
         Box {
             IconButton(onClick = { onShowMore(true) }) { Icon(Icons.Default.MoreVert, "More options") }

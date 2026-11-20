@@ -3,7 +3,6 @@ package com.o3.vanguard.visionary.di
 import com.o3.vanguard.visionary.core.common.AppConfig
 import com.o3.vanguard.visionary.core.common.coreCommonModule
 import com.o3.vanguard.visionary.core.database.databaseModule
-import com.o3.vanguard.visionary.core.testing.fakeDataModule
 import com.o3.vanguard.visionary.data.di.dataModule
 import com.o3.vanguard.visionary.domain.di.domainModule
 import com.o3.vanguard.visionary.feature.teleport.di.teleportModule
@@ -32,11 +31,7 @@ fun appModules(config: AppConfig): List<Module> = buildList {
     add(coreCommonModule)
     add(domainModule)
     addAll(featureModules)
-    if (config.useFakeData) {
-        add(fakeDataModule)
-    } else {
-        add(databaseModule)
-        add(dataModule)
-        add(platformModule)
-    }
+    add(databaseModule)
+    add(dataModule)
+    add(platformModule)
 }

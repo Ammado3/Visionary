@@ -14,7 +14,6 @@ fun initKoin() {
     val config = AppConfig(
         versionName = "1.0",
         isDebug = true,
-        useFakeData = false
     )
     startKoin {
         modules(appModules(config))

@@ -28,6 +28,8 @@ import com.o3.vanguard.visionary.core.designsystem.VisionaryTheme
 import com.o3.vanguard.visionary.core.navigation.AppNavSavedStateConfig
 import com.o3.vanguard.visionary.core.navigation.AppRoute
 import com.o3.vanguard.visionary.core.navigation.Navigator
+import com.o3.vanguard.visionary.core.navigation.tabOrNull
+import com.o3.vanguard.visionary.core.navigation.navigateToTab
 import com.o3.vanguard.visionary.domain.model.MediaAccess
 import com.o3.vanguard.visionary.domain.port.PermissionGateway
 import com.o3.vanguard.visionary.domain.repository.IndexRepository
@@ -81,11 +83,7 @@ fun App() {
         }
 
         startRoute?.let { AppNavHost(it) }
-            ?: SplashScreen(
-                onSplashFinished = {
-                    // Permission flow handled by LaunchedEffect
-                }
-            )
+            ?: SplashScreen()
     }
 }
 
@@ -95,20 +93,11 @@ private fun AppNavHost(start: AppRoute) {
     val navigator = remember(backStack) { Navigator(backStack) }
 
     val currentRoute = backStack.lastOrNull() as? AppRoute
-    val currentTab: AppTab? = when (currentRoute) {
-        AppRoute.Photos -> AppTab.PHOTOS
-        AppRoute.Albums -> AppTab.ALBUMS
-        is AppRoute.Search -> AppTab.SEARCH
-        AppRoute.VaultLock, AppRoute.VaultGrid -> AppTab.VAULT
-        else -> null
-    }
-    val isSecondaryTab = currentRoute == AppRoute.Albums ||
-        currentRoute is AppRoute.Search ||
-        currentRoute == AppRoute.VaultLock ||
-        currentRoute == AppRoute.VaultGrid
+    val currentTab: AppTab? = currentRoute?.tabOrNull()
+    val isSecondaryTab = currentTab != null && currentTab != AppTab.PHOTOS
 
     AppBackHandler(enabled = isSecondaryTab) {
-        navigator.replaceTop(AppRoute.Photos)
+        navigator.navigateToTab(AppTab.PHOTOS)
     }
 
     val systemBarConfig = when (currentRoute) {
@@ -138,14 +127,7 @@ private fun AppNavHost(start: AppRoute) {
                 currentTab?.let { selectedTab ->
                     AppBottomNavigation(
                         selected = selectedTab,
-                        onSelected = { tab ->
-                            when (tab) {
-                                AppTab.PHOTOS -> navigator.replaceTop(AppRoute.Photos)
-                                AppTab.ALBUMS -> navigator.replaceTop(AppRoute.Albums)
-                                AppTab.SEARCH -> navigator.replaceTop(AppRoute.Search())
-                                AppTab.VAULT -> navigator.replaceTop(AppRoute.VaultLock)
-                            }
-                        }
+                        onSelected = { tab -> navigator.navigateToTab(tab) }
                     )
                 }
             }

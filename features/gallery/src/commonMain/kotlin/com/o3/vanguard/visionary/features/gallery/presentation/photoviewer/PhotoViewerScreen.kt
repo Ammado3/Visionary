@@ -48,7 +48,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -64,7 +63,6 @@ import androidx.compose.ui.graphics.Color
 import com.o3.vanguard.visionary.core.designsystem.SystemBarColors
 import com.o3.vanguard.visionary.core.designsystem.VisionaryColors
 import com.o3.vanguard.visionary.domain.model.MediaCategory
-import com.o3.vanguard.visionary.domain.model.MediaId
 import com.o3.vanguard.visionary.domain.model.MediaItem
 import com.o3.vanguard.visionary.features.gallery.PlatformVideoPlayer
 import org.koin.compose.viewmodel.koinViewModel

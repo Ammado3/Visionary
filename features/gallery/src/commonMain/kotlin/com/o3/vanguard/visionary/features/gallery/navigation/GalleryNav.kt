@@ -16,15 +16,13 @@ fun EntryProviderScope<NavKey>.galleryEntries(navigator: Navigator) {
         PhotoRoute(
             onOpenViewer = { navigator.navigate(AppRoute.Viewer(it.value)) },
             onOpenSettings = { navigator.navigate(AppRoute.Settings) },
+            onOpenVoiceSearch = { navigator.navigate(AppRoute.VoiceSearch) },
             onOpenAirTeleportReceiver = { navigator.navigate(AppRoute.TeleportReceiver) },
         )
     }
     entry<AppRoute.Albums> {
         AlbumsRoute(
             onOpenAlbum = { albumId, albumName -> navigator.navigate(AppRoute.Gallery(albumId, albumName)) },
-            onPhotos = { navigator.replaceTop(AppRoute.Photos) },
-            onSearch = { navigator.replaceTop(AppRoute.Search()) },
-            onVault = { navigator.replaceTop(AppRoute.VaultLock) },
             onTrashBin = { navigator.navigate(AppRoute.TrashBin) },
             onFavorites = { navigator.navigate(AppRoute.Favorites) },
         )

@@ -1,5 +1,6 @@
 package com.o3.vanguard.visionary.core.navigation
 
+import com.o3.vanguard.visionary.core.designsystem.AppTab
 import androidx.navigation3.runtime.NavKey
 import androidx.savedstate.serialization.SavedStateConfiguration
 import kotlinx.serialization.Serializable
@@ -29,29 +30,33 @@ sealed interface AppRoute : NavKey {
         val sizeBytes: Long = 0L,
     ) : AppRoute
     @Serializable data object TeleportReceiver : AppRoute
+    @Serializable data object VoiceSearch : AppRoute
+}
+
+val AppRouteSerializersModule = SerializersModule {
+    polymorphic(NavKey::class) {
+        subclass(AppRoute.Onboarding::class, AppRoute.Onboarding.serializer())
+        subclass(AppRoute.Photos::class, AppRoute.Photos.serializer())
+        subclass(AppRoute.Albums::class, AppRoute.Albums.serializer())
+        subclass(AppRoute.Gallery::class, AppRoute.Gallery.serializer())
+        subclass(AppRoute.Viewer::class, AppRoute.Viewer.serializer())
+        subclass(AppRoute.Search::class, AppRoute.Search.serializer())
+        subclass(AppRoute.VaultLock::class, AppRoute.VaultLock.serializer())
+        subclass(AppRoute.VaultGrid::class, AppRoute.VaultGrid.serializer())
+        subclass(AppRoute.VaultViewer::class, AppRoute.VaultViewer.serializer())
+        subclass(AppRoute.Settings::class, AppRoute.Settings.serializer())
+        subclass(AppRoute.IndexHealth::class, AppRoute.IndexHealth.serializer())
+        subclass(AppRoute.TeleportSender::class, AppRoute.TeleportSender.serializer())
+        subclass(AppRoute.TeleportReceiver::class, AppRoute.TeleportReceiver.serializer())
+        subclass(AppRoute.BiometricSetup::class, AppRoute.BiometricSetup.serializer())
+        subclass(AppRoute.TrashBin::class, AppRoute.TrashBin.serializer())
+        subclass(AppRoute.Favorites::class, AppRoute.Favorites.serializer())
+        subclass(AppRoute.VoiceSearch::class, AppRoute.VoiceSearch.serializer())
+    }
 }
 
 val AppNavSavedStateConfig = SavedStateConfiguration {
-    serializersModule = SerializersModule {
-        polymorphic(NavKey::class) {
-            subclass(AppRoute.Onboarding::class, AppRoute.Onboarding.serializer())
-            subclass(AppRoute.Photos::class, AppRoute.Photos.serializer())
-            subclass(AppRoute.Albums::class, AppRoute.Albums.serializer())
-            subclass(AppRoute.Gallery::class, AppRoute.Gallery.serializer())
-            subclass(AppRoute.Viewer::class, AppRoute.Viewer.serializer())
-            subclass(AppRoute.Search::class, AppRoute.Search.serializer())
-            subclass(AppRoute.VaultLock::class, AppRoute.VaultLock.serializer())
-            subclass(AppRoute.VaultGrid::class, AppRoute.VaultGrid.serializer())
-            subclass(AppRoute.VaultViewer::class, AppRoute.VaultViewer.serializer())
-            subclass(AppRoute.Settings::class, AppRoute.Settings.serializer())
-            subclass(AppRoute.IndexHealth::class, AppRoute.IndexHealth.serializer())
-            subclass(AppRoute.TeleportSender::class, AppRoute.TeleportSender.serializer())
-            subclass(AppRoute.TeleportReceiver::class, AppRoute.TeleportReceiver.serializer())
-            subclass(AppRoute.BiometricSetup::class, AppRoute.BiometricSetup.serializer())
-            subclass(AppRoute.TrashBin::class, AppRoute.TrashBin.serializer())
-            subclass(AppRoute.Favorites::class, AppRoute.Favorites.serializer())
-        }
-    }
+    serializersModule = AppRouteSerializersModule
 }
 
 class Navigator(private val backStack: MutableList<NavKey>) {
@@ -69,16 +74,12 @@ class Navigator(private val backStack: MutableList<NavKey>) {
      * returns to Photos; only a second back on Photos can leave the app.
      */
     fun handleBack(): Boolean {
-        return when (backStack.lastOrNull()) {
-            AppRoute.Albums,
-            is AppRoute.Search,
-            AppRoute.VaultLock,
-            AppRoute.VaultGrid
-            -> {
-                replaceTop(AppRoute.Photos)
-                true
-            }
-            else -> back()
+        val tab = (backStack.lastOrNull() as? AppRoute)?.tabOrNull()
+        return if (tab != null && tab != AppTab.PHOTOS) {
+            navigateToTab(AppTab.PHOTOS)
+            true
+        } else {
+            back()
         }
     }
     fun replaceTop(route: AppRoute) {

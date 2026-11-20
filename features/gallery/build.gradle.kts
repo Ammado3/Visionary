@@ -1,6 +1,5 @@
 plugins {
     id("visionary.kmp.feature")
-    alias(libs.plugins.compose.multiplatform)
 }
 
 kotlin {
@@ -13,7 +12,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation("org.jetbrains.compose.components:components-resources:1.12.2")
+            implementation(compose.components.resources)
         }
     }
 }

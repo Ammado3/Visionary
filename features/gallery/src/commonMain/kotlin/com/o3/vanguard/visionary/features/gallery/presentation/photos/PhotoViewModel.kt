@@ -9,6 +9,8 @@ import com.o3.vanguard.visionary.domain.usecase.ObserveIndexProgressUseCase
 import com.o3.vanguard.visionary.domain.usecase.ObserveMediaUseCase
 import com.o3.vanguard.visionary.domain.repository.SettingsRepository
 import com.o3.vanguard.visionary.domain.model.IndexState
+import com.o3.vanguard.visionary.domain.port.SpeechAvailability
+import com.o3.vanguard.visionary.domain.port.SpeechRecognizerPort
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -20,11 +22,14 @@ class PhotoViewModel(
     private val deleteMedia: DeleteMediaUseCase,
     private val shareGateway: ShareGateway,
     private val settingsRepository: SettingsRepository,
+    private val speechRecognizerPort: SpeechRecognizerPort,
 ) : BaseMviViewModel<PhotoState, PhotoIntent, PhotoEvent>(PhotoState()) {
 
     private var observeJob: Job? = null
+    private val isVoiceAvailable = speechRecognizerPort.availability() != SpeechAvailability.UNAVAILABLE
 
     init {
+        updateState { copy(voiceAvailable = isVoiceAvailable) }
         observePhotos()
     }
 
@@ -43,12 +48,13 @@ class PhotoViewModel(
                     items = items,
                     indexProgress = progress,
                     showProcessingCard = showProcessingCard,
+                    voiceAvailable = isVoiceAvailable,
                 )
             }.catch {
-                emit(PhotoState(loading = false, error = true))
-            }.collect { state ->
-                updateState { state }
-                if (state.showProcessingCard) {
+                emit(PhotoState(loading = false, error = true, voiceAvailable = isVoiceAvailable))
+            }.collect { newState ->
+                updateState { newState }
+                if (newState.showProcessingCard) {
                     settingsRepository.update { it.copy(indexingCardShown = true) }
                 }
             }

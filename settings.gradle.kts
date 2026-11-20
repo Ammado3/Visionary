@@ -17,7 +17,7 @@ dependencyResolutionManagement {
 rootProject.name = "Visionary"
 
 include(":androidApp", ":composeApp")
-include(":core:common", ":core:mvi", ":core:navigation", ":core:designsystem", ":core:database", ":core:testing", ":core:testkit")
+include(":core:common", ":core:mvi", ":core:navigation", ":core:designsystem", ":core:database", ":core:testkit")
 include(":domain", ":data", ":platform")
 include(
     ":features:onboarding", ":features:gallery",

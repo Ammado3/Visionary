@@ -20,7 +20,6 @@ import java.io.File
 import java.io.FileOutputStream
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.launch
-import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt

@@ -25,14 +25,10 @@ kotlin {
 
             // Compose Multiplatform resources
             implementation(compose.components.resources)
-            implementation(libs.composeUiToolingPreview)
         }
 
         androidMain.dependencies {
-            implementation(libs.composeUiTooling)
-            implementation(libs.androidx.activity.compose)
-            implementation(libs.lifecycle.runtime.compose)
-            implementation("androidx.core:core-ktx:1.15.0")
+            implementation(libs.androidx.core.ktx)
         }
     }
 }
