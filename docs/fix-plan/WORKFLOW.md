@@ -24,6 +24,14 @@ The repo is the handoff. Both agents start every session the same way:
 - Never claim a check you did not run. If you couldn't run something (no device, no emulator), write "not run" and why.
 - All fix-plan files live in `docs/fix-plan/`.
 
+### Keeping in step with `Develop`
+
+The human keeps building features on `Develop` while this plan runs. To stop the branches drifting apart again:
+
+- **Reviewer, at the start of every review turn:** `git fetch origin` and check `git log --oneline review-fixes..origin/Develop`. If `Develop` has new commits, merge it into `review-fixes` **before** reviewing (`git merge origin/Develop`). Resolve conflicts by keeping both sides' intent, run `./gradlew testAndroidHostTest assembleDebug`, and commit as `Sync: merge Develop into review-fixes`. If a conflict needs a product decision, stop and set `Next: Human`.
+- **Before writing a spec:** re-read the current code it touches on `review-fixes` (after the sync), not the code `PLAN.md` describes.
+- **Human:** merge `review-fixes` into `Develop` (through a PR) after each phase in `PLAN.md`, not only at the end. Small, frequent merges keep conflicts small.
+
 ---
 
 ## Implementer (Gemini)
@@ -79,6 +87,8 @@ When `STATUS.md` says `Next: Reviewer`:
 6. Update `Last reviewed commit` in `STATUS.md`. Commit only files in `docs/fix-plan/`. Push.
 
 The reviewer may edit `AGENTS.md` only when a step spec says so.
+
+**One exception to "reviewer never edits code":** merging `Develop` into `review-fixes` (the `Sync:` commits, and Step R0). Conflict resolution needs the review context, so the reviewer does it. It must not add new behaviour while resolving conflicts. Anything beyond a merge goes into a spec for the Implementer.
 
 ### Review checklist
 
