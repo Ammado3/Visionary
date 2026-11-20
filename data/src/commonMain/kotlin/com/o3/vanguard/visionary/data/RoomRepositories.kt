@@ -293,7 +293,7 @@ class RoomIndexRepository(
             val indexedCount = textEntities.size
             if (totalCount > 0 && progress.value.total == 0) {
                 val initialState = if (isPaused) IndexState.PAUSED_BATTERY else IndexState.IDLE
-                progress.value = IndexProgress(
+                progress.value = progress.value.withCounts(
                     total = totalCount,
                     indexed = indexedCount,
                     pending = (totalCount - indexedCount).coerceAtLeast(0),
@@ -367,27 +367,27 @@ class RoomIndexRepository(
         val initialIndexed = media.count { item ->
             item.category == MediaCategory.VIDEO || db.mediaDao().getText(item.id.value) != null
         }
-        progress.value = IndexProgress(media.size, initialIndexed, media.size - initialIndexed, 0, IndexState.RUNNING)
+        progress.value = progress.value.withCounts(media.size, initialIndexed, media.size - initialIndexed, 0, IndexState.RUNNING)
 
         var indexed = 0
         var failed = 0
         for (item in media) {
             if (isPaused || !settingsRepository.observe().first().visualAnalysisEnabled) {
                 isPaused = true
-                progress.value = IndexProgress(media.size, indexed, media.size - indexed - failed, failed, IndexState.PAUSED_BATTERY)
+                progress.value = progress.value.withCounts(media.size, indexed, media.size - indexed - failed, failed, IndexState.PAUSED_BATTERY)
                 return AppResult.Ok(Unit)
             }
             try {
                 // Resume where it left off: skip if already indexed in database
                 if (item.category != MediaCategory.VIDEO && db.mediaDao().getText(item.id.value) != null) {
                     indexed++
-                    progress.value = IndexProgress(media.size, indexed, media.size - indexed - failed, failed, IndexState.RUNNING)
+                    progress.value = progress.value.withCounts(media.size, indexed, media.size - indexed - failed, failed, IndexState.RUNNING)
                     continue
                 }
 
                 if (item.category == MediaCategory.VIDEO) {
                     indexed++
-                    progress.value = IndexProgress(media.size, indexed, media.size - indexed - failed, failed, IndexState.RUNNING)
+                    progress.value = progress.value.withCounts(media.size, indexed, media.size - indexed - failed, failed, IndexState.RUNNING)
                     continue
                 }
                 val ocr = (ocrEngine.recognizeText(item.uri) as? AppResult.Ok)?.value
@@ -432,9 +432,9 @@ class RoomIndexRepository(
             } catch (_: Exception) {
                 failed++
             }
-            progress.value = IndexProgress(media.size, indexed, media.size - indexed - failed, failed, IndexState.RUNNING)
+            progress.value = progress.value.withCounts(media.size, indexed, media.size - indexed - failed, failed, IndexState.RUNNING)
         }
-        progress.value = IndexProgress(media.size, indexed, 0, failed, IndexState.IDLE)
+        progress.value = progress.value.withCounts(media.size, indexed, 0, failed, IndexState.IDLE)
         return AppResult.Ok(Unit)
     }
 }

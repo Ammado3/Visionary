@@ -263,4 +263,61 @@ class IndexRunGuardTest {
 
         assertEquals(0, progress.value.completedPasses)
     }
+
+    @Test
+    fun withCounts_keepsPassHistoryAndUpdatesCountsAndState() {
+        val initial = IndexProgress(
+            total = 10,
+            indexed = 5,
+            pending = 5,
+            failed = 0,
+            state = IndexState.RUNNING,
+            completedPasses = 4,
+            lastPassFailed = true,
+        )
+
+        val updated = initial.withCounts(
+            total = 20,
+            indexed = 15,
+            pending = 3,
+            failed = 2,
+            state = IndexState.IDLE,
+        )
+
+        assertEquals(20, updated.total)
+        assertEquals(15, updated.indexed)
+        assertEquals(3, updated.pending)
+        assertEquals(2, updated.failed)
+        assertEquals(IndexState.IDLE, updated.state)
+        assertEquals(4, updated.completedPasses)
+        assertEquals(true, updated.lastPassFailed)
+    }
+
+    @Test
+    fun run_threePassesInARowWithWithCounts_incrementsCompletedPassesTo1Then2Then3() = runTest {
+        assertEquals(0, progress.value.completedPasses)
+
+        repeat(3) { passIndex ->
+            val result = guard.run {
+                progress.value = progress.value.withCounts(
+                    total = 10,
+                    indexed = 5,
+                    pending = 5,
+                    failed = 0,
+                    state = IndexState.RUNNING,
+                )
+                progress.value = progress.value.withCounts(
+                    total = 10,
+                    indexed = 10,
+                    pending = 0,
+                    failed = 0,
+                    state = IndexState.IDLE,
+                )
+                AppResult.Ok(Unit)
+            }
+            assertEquals(AppResult.Ok(Unit), result)
+            assertEquals(passIndex + 1, progress.value.completedPasses)
+            assertEquals(false, progress.value.lastPassFailed)
+        }
+    }
 }

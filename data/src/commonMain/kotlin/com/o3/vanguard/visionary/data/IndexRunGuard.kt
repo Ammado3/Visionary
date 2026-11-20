@@ -92,3 +92,13 @@ internal class IndexRunGuard(private val progress: MutableStateFlow<IndexProgres
         const val RERUN_REQUESTED = 2
     }
 }
+
+/** Updates the counts and state, keeping the pass history (completedPasses, lastPassFailed). */
+internal fun IndexProgress.withCounts(
+    total: Int,
+    indexed: Int,
+    pending: Int,
+    failed: Int,
+    state: IndexState,
+): IndexProgress = copy(total = total, indexed = indexed, pending = pending, failed = failed, state = state)
+
